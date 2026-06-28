@@ -1,0 +1,12 @@
+﻿#nullable enable
+
+
+using System;
+
+public interface IGameController : IDisposable
+{
+    IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position) where TRoom : IRoom where TPos : struct;
+    IResult MovePiece<TRoom, TPos>(IndexOfPlayer owner, IPath<TPos> path) where TRoom : IRoom where TPos : struct;
+    IResult MeleeAttack<TRoom, TPos>(IndexOfPlayer attackerOwner, IPath<TPos> path) where TRoom : IRoom where TPos : struct;
+    IResult ChangeRoom<TRoomFrom, TRoomTo, TPosFrom, TPosTo>(IndexOfPlayer owner, TPosFrom fromPosition, TPosTo toPosition) where TRoomFrom : IRoom where TRoomTo : IRoom where TPosFrom : struct where TPosTo : struct;
+}
