@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public static class AttackFactory
 {
     public static IMeleeAttack CreateDamageMelee(int damage)

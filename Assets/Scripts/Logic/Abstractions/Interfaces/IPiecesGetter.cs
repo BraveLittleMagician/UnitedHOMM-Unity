@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 using System.Collections.Generic;
 
 public interface IPiecesGetter

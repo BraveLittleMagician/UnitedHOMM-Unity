@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public enum CountOfDimensions
 {
     Zero = 0,

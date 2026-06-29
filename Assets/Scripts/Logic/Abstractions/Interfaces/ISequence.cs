@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 using System;
 
 public interface ISequence : ICopyable<ISequence>, ICanHaveNotStayable { }

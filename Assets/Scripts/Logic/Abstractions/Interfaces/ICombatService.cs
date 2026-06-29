@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public interface ICombatService
 {
     IResult PerformMeleeAttack(IPiece attacker, IPiece target, IRoom room);

@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public class LoggerNull : ILogger
 {
     public void Log(string message, LogLevel level = LogLevel.Info) { }

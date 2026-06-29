@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 using System;
 
 public interface IEventBus

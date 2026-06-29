@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public enum MultipleAxesFromTwoToThree 
 {
     Two = MultipleAxesFromTwo.Two,

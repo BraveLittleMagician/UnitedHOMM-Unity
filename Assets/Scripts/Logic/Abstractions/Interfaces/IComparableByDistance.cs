@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public interface IComparableByDistance
 {
     public int CompareByDistanseTo(object? obj);

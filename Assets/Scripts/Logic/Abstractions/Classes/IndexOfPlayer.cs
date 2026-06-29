@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 using System;
 
 public readonly struct IndexOfPlayer : IEquatable<IndexOfPlayer>

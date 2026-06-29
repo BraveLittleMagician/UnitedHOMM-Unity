@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public abstract record Operation : IOperation
 {
     protected Operation(int value) => Value = value;

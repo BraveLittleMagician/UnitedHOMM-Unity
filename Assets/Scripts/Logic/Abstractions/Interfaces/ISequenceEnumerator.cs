@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 using System.Collections.Generic;
 
 public interface ISequenceEnumerator<TPosition> where TPosition : struct

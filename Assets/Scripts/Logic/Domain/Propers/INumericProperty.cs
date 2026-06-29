@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public interface INumericProperty
 {
     void Add(int amount);

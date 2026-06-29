@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 using System;
 
 public sealed class Health : Property, INumericProperty, ISettableProperty, IRecoverableProperty, IResettableProperty, ISettableNormalProperty

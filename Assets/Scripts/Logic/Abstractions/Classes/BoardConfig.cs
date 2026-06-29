@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public sealed record BoardConfig
 {
     public bool Is3D { get; init; } = false;

@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public abstract class OneFieldEffect : IEffect
 {
     protected readonly Operation _operation;

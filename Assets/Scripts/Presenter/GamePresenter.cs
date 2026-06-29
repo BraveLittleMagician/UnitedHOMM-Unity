@@ -1,4 +1,6 @@
-﻿using VContainer.Unity;
+﻿#nullable enable
+
+using VContainer.Unity;
 
 public class GamePresenter : IStartable
 {

@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 using System.Numerics;
 
 public sealed class PieceFactory

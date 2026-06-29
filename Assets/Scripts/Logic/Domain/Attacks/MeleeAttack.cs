@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public sealed class MeleeAttack : AttackBase, IMeleeAttack
 {
     public MeleeAttack(Operation operation) : base(operation, range: 1) { }

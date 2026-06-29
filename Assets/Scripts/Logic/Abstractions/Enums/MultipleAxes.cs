@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public enum MultipleAxes
 {
     None = 0,

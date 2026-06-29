@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-
 public interface IAttack 
 {
     void Execute(IPiece target, IRoom context);

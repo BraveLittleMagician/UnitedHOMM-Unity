@@ -29,4 +29,7 @@ public class GameView : MonoBehaviour, IGameView
             _pieces.Remove(piece);
         }
     }
+
+    public event Action<IPiece>? PieceClicked;
+    public event Action<Square>? CellClicked;
 }
