@@ -60,7 +60,7 @@ public sealed class Flow : IFlow, IDisposable
             }
 
             _abilityService.ActivateAbilities(piece);
-            _eventBus.Publish(new PieceDeployedEvent(piece, room));
+            _eventBus.Publish(new PieceDeployedEvent<TPos>(piece, position, room));
             _logger.Log($"Фигура {piece} добавлена в {room.Name} на позицию {position}");
 
             return Result<IPiece>.Success(piece);

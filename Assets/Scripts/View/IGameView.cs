@@ -1,7 +1,5 @@
 ﻿#nullable enable
 
-using System;
-
 public interface IGameView
 {
     void ShowPiece(IPiece piece, Square position);

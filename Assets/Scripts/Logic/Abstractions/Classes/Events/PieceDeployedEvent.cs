@@ -1,3 +1,3 @@
 ﻿#nullable enable
 
-public record PieceDeployedEvent(IPiece Piece, IRoom Room);
+public record PieceDeployedEvent<TPos>(IPiece Piece, TPos Position, IRoom Room) where TPos : struct;
