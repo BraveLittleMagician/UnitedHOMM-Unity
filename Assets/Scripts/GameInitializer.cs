@@ -9,9 +9,9 @@ public class GameInitializer : IStartable
     private readonly ILogger _logger;
     private readonly Seats _seats;
     private readonly BoardConfig _boardConfig;
-    private readonly IGameController _controller;
+    private readonly IFlow _controller;
 
-    public GameInitializer(IHouse house, IEventBus eventBus, ILogger logger, Seats seats, BoardConfig boardConfig, IGameController controller) 
+    public GameInitializer(IHouse house, IEventBus eventBus, ILogger logger, Seats seats, BoardConfig boardConfig, IFlow controller) 
     {
         _house = house;
         _eventBus = eventBus;

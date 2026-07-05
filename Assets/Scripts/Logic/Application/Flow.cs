@@ -2,7 +2,7 @@
 
 using System;
 
-public sealed class Flow : IGameController, IDisposable
+public sealed class Flow : IFlow, IDisposable
 {
     private readonly IHouse _house;
     private readonly IEventBus _eventBus;

@@ -24,7 +24,7 @@ public class GameLifetimeScope : LifetimeScope
         builder.Register<CombatService>(Lifetime.Singleton).As<ICombatService>();
         builder.Register<MovementValidator>(Lifetime.Singleton).As<IMovementValidator>();
         builder.Register<AbilityService>(Lifetime.Singleton).As<IAbilityService>();
-        builder.Register<Flow>(Lifetime.Singleton).As<IGameController>();
+        builder.Register<Flow>(Lifetime.Singleton).As<IFlow>();
         builder.RegisterComponent(_gameView).As<IGameView>();
         builder.Register<GamePresenter>(Lifetime.Singleton);
         builder.RegisterEntryPoint<GameInitializer>();

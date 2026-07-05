@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,7 +8,7 @@ public class GridRenderer : MonoBehaviour
 {
     private readonly Dictionary<Vector2Int, GameObject> _cells = new();
 
-    [SerializeField] private GameObject? _cellPrefab;
+    [SerializeField] private GameObject _cellPrefab = null!;
     [SerializeField] private int _gridSize = 8;
     [SerializeField] private float _cellSize = 1f;
     [SerializeField] private float _cellSpacing = 0.1f;
@@ -15,6 +16,7 @@ public class GridRenderer : MonoBehaviour
 
     private void Awake()
     {
+        if (_cellPrefab == null) throw new NullReferenceException(nameof(_cellPrefab));
         CreateGrid();
     }
 
@@ -37,6 +39,6 @@ public class GridRenderer : MonoBehaviour
     {
         float x = _gridOrigin.x + square.X * (_cellSize + _cellSpacing);
         float y = _gridOrigin.y + square.Y * (_cellSize + _cellSpacing);
-        return new Vector3(x, y, 0);
+        return new Vector3(x, 0, y);
     }
 }

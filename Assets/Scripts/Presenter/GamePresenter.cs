@@ -4,11 +4,11 @@ using VContainer.Unity;
 
 public class GamePresenter : IStartable
 {
-    private readonly IGameController _controller;
+    private readonly IFlow _controller;
     private readonly IGameView _view;
     private readonly IEventBus _eventBus;
 
-    public GamePresenter(IGameController controller, IGameView view, IEventBus eventBus)
+    public GamePresenter(IFlow controller, IGameView view, IEventBus eventBus)
     {
         _controller = controller;
         _view = view;

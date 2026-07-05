@@ -2,7 +2,7 @@
 
 using System;
 
-public interface IGameController : IDisposable
+public interface IFlow : IDisposable
 {
     IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position) where TRoom : IRoom where TPos : struct;
     IResult MovePiece<TRoom, TPos>(IndexOfPlayer owner, IPath<TPos> path) where TRoom : IRoom where TPos : struct;

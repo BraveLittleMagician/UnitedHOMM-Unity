@@ -1,12 +1,13 @@
 ﻿#nullable enable
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PieceRenderer : MonoBehaviour
 {
-    [SerializeField] private GameObject? _piecePrefab;
-    [SerializeField] private GameObject? _selectedMarkerPrefab;
+    [SerializeField] private GameObject _piecePrefab = null!;
+    [SerializeField] private GameObject _selectedMarkerPrefab = null!;
 
     private readonly Dictionary<IPiece, GameObject> _pieceObjects = new();
     private GameObject? _selectedMarkerInstance;
@@ -14,10 +15,11 @@ public class PieceRenderer : MonoBehaviour
 
     private void Awake()
     {
-        if (_selectedMarkerPrefab != null)
-            _selectedMarkerInstance = Instantiate(_selectedMarkerPrefab, transform);
-        else
-            _selectedMarkerInstance = new GameObject("SelectedMarker");
+        if (_piecePrefab == null) throw new NullReferenceException(nameof(_piecePrefab));
+        
+        if (_selectedMarkerPrefab != null) _selectedMarkerInstance = Instantiate(_selectedMarkerPrefab, transform);
+        else _selectedMarkerInstance = new GameObject("SelectedMarker");
+        
         _selectedMarkerInstance.SetActive(false);
     }
 
@@ -25,12 +27,9 @@ public class PieceRenderer : MonoBehaviour
     {
         if (_pieceObjects.ContainsKey(piece)) return;
         var go = Instantiate(_piecePrefab, worldPosition, Quaternion.identity, transform);
-        if (go != null)
-            _pieceObjects[piece] = go;
-        else
-        {
-            Destroy(go);
-        }
+        
+        if (go != null) _pieceObjects[piece] = go;
+        else Destroy(go);
     }
 
     public void HidePiece(IPiece piece)
@@ -43,7 +42,6 @@ public class PieceRenderer : MonoBehaviour
                 DeselectPiece();
         }
     }
-
     public void UpdatePiecePosition(IPiece piece, Vector3 newPosition)
     {
         if (_pieceObjects.TryGetValue(piece, out var go))
@@ -61,7 +59,6 @@ public class PieceRenderer : MonoBehaviour
             _selectedMarkerInstance.SetActive(true);
         }
     }
-
     public void DeselectPiece()
     {
         _selectedPiece = null;

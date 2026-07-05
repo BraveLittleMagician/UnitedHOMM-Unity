@@ -5,19 +5,20 @@ using UnityEngine;
 
 public class GameView : MonoBehaviour, IGameView
 {
-    [SerializeField] private GridRenderer? _gridRenderer;
-    [SerializeField] private PieceRenderer? _pieceRenderer;
-    [SerializeField] private InputHandler? _inputHandler;
+    [SerializeField] private GridRenderer _gridRenderer = null!;
+    [SerializeField] private PieceRenderer _pieceRenderer = null!;
+    [SerializeField] private InputHandler _inputHandler = null!;
 
     private void Awake()
     {
-        if (_gridRenderer == null || _pieceRenderer == null || _inputHandler == null) throw new NullReferenceException();
+        if (_gridRenderer == null) throw new NullReferenceException(nameof(_gridRenderer));
+        if (_pieceRenderer == null) throw new NullReferenceException(nameof(_pieceRenderer));
+        if (_inputHandler == null) throw new NullReferenceException(nameof(_inputHandler));
         _inputHandler.CellClicked += OnCellClicked;
         _inputHandler.PieceClicked += OnPieceClicked;
     }
     private void OnDestroy()
     {
-        if (_inputHandler == null) return;
         _inputHandler.CellClicked -= OnCellClicked;
         _inputHandler.PieceClicked -= OnPieceClicked;
     }
@@ -27,16 +28,14 @@ public class GameView : MonoBehaviour, IGameView
 
     public void ShowPiece(IPiece piece)
     {
-        if (_gridRenderer == null || _pieceRenderer == null) return;
         var pos = _gridRenderer.GridToWorld(new Square { X = 0, Y = 0 });
         _pieceRenderer.ShowPiece(piece, pos);
     }
-    public void HidePiece(IPiece piece) => _pieceRenderer?.HidePiece(piece);
-    public void SelectPiece(IPiece piece) => _pieceRenderer?.SelectPiece(piece);
-    public void DeselectPiece() => _pieceRenderer?.DeselectPiece();
+    public void HidePiece(IPiece piece) => _pieceRenderer.HidePiece(piece);
+    public void SelectPiece(IPiece piece) => _pieceRenderer.SelectPiece(piece);
+    public void DeselectPiece() => _pieceRenderer.DeselectPiece();
     public void UpdatePiecePosition(IPiece piece, Square square)
     {
-        if (_gridRenderer == null || _pieceRenderer == null) return;
         var pos = _gridRenderer.GridToWorld(square);
         _pieceRenderer.UpdatePiecePosition(piece, pos);
     }
