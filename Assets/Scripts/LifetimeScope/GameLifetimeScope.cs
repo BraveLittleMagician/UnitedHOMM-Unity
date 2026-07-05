@@ -7,7 +7,7 @@ using VContainer.Unity;
 public class GameLifetimeScope : LifetimeScope
 {
 
-    [SerializeField] private GameView _gameView;
+    [SerializeField] private GameView? _gameView;
 
     protected override void Configure(IContainerBuilder builder)
     {
