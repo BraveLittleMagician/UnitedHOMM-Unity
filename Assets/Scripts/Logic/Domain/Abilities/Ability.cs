@@ -48,24 +48,24 @@ public abstract class Ability : IAbility
 
     private IDisposable SubscribeToDeploy()
     {
-        void Handler(PieceDeployedEvent e)
+        void Handler(PieceDeployedEventBase e)
         {
             if (e.Piece == _owner)
                 Effect.Execute(_owner, e.Room);
         }
-        _eventBus.Subscribe<PieceDeployedEvent>(Handler);
-        return new SubscriptionToken<PieceDeployedEvent>(_eventBus, Handler);
+        _eventBus.Subscribe<PieceDeployedEventBase>(Handler);
+        return new SubscriptionToken<PieceDeployedEventBase>(_eventBus, Handler);
     }
 
     private IDisposable SubscribeToInitiative()
     {
-        void Handler(PieceInitiativeEvent e)
+        void Handler(PieceInitiativeEventBase e)
         {
             if (e.Piece == _owner)
                 Effect.Execute(_owner, e.Room);
         }
-        _eventBus.Subscribe<PieceInitiativeEvent>(Handler);
-        return new SubscriptionToken<PieceInitiativeEvent>(_eventBus, Handler);
+        _eventBus.Subscribe<PieceInitiativeEventBase>(Handler);
+        return new SubscriptionToken<PieceInitiativeEventBase>(_eventBus, Handler);
     }
 
     private IDisposable SubscribeToDeath()
