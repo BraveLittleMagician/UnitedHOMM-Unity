@@ -37,8 +37,7 @@ public sealed class Flow : IFlow, IDisposable
         _abilityService.DeactivateAbilities(e.Piece);
     }
 
-    public IResult<IPiece> AddPiece<TRoom, TPos>(
-    PieceDefinition definition, TPos position) where TRoom : IRoom where TPos : struct
+    public IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position) where TRoom : IRoom where TPos : struct
     {
         var roomResult = GetRoom<TRoom>();
         if (!roomResult.IsSuccess) return Result<IPiece>.Failure(roomResult.Error!);
@@ -61,8 +60,8 @@ public sealed class Flow : IFlow, IDisposable
             }
 
             _abilityService.ActivateAbilities(piece);
-            _logger.Log($"Фигура {piece} добавлена в {room.Name} на позицию {position}");
             _eventBus.Publish(new PieceDeployedEvent(piece, room));
+            _logger.Log($"Фигура {piece} добавлена в {room.Name} на позицию {position}");
 
             return Result<IPiece>.Success(piece);
         }
@@ -84,6 +83,7 @@ public sealed class Flow : IFlow, IDisposable
 
         if (!_movementValidator.CanMove(piece, path, room, false, out var error)) return Result.Failure(error);
         if (!room.Displace(path, owner, out var displaceError)) return Result.Failure($"Перемещение не удалось: {displaceError}");
+        _eventBus.Publish(new PieceMovedEvent<TPos>(piece, path.Positions[0], path.Positions[^1], room));
         _logger.Log($"Фигура {piece} перемещена с {start} на {path.Positions[^1]} в {room.Name}");
         return Result.Success();
     }
