@@ -1,13 +1,19 @@
 #nullable enable
 
+using System;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
+
 public class GameLifetimeScope : LifetimeScope
 {
+    [SerializeField] private GameView _gameView = null!;
 
-    [SerializeField] private GameView? _gameView;
+    private void Start()
+    {
+       if (_gameView == null) throw new NullReferenceException(nameof(_gameView));
+    }
 
     protected override void Configure(IContainerBuilder builder)
     {

@@ -19,10 +19,7 @@ public class GameView : MonoBehaviour, IGameView
         var worldPos = _gridRenderer.GridToWorld(position);
         _pieceRenderer.ShowPiece(piece, worldPos);
     }
-    public void HidePiece(IPiece piece)
-    {
-        _pieceRenderer.HidePiece(piece);
-    }
+    public void HidePiece(IPiece piece) => _pieceRenderer.HidePiece(piece);
 
     public void UpdatePiecePosition(IPiece piece, Square newPosition)
     {
