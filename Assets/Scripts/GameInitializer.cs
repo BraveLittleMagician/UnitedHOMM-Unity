@@ -25,8 +25,8 @@ public class GameInitializer : IStartable
 
     public void Start()
     {
-        var axes = _boardConfig.Is3D ? MultipleAxes.Three : MultipleAxes.Two;
-        var box = new AxisAlignedBox(axes, _boardConfig.FieldSize + 2 * _boardConfig.FrameThickness, 0);
+        var axes = (MultipleAxes)_boardConfig.Axes;
+        var box = new AxisAlignedBox(axes, _boardConfig.FieldSize, 0);
         var board = new Board(_seats, box, _eventBus, _logger);
         var decks = new Decks(_seats, _eventBus, _logger);
 
@@ -34,9 +34,9 @@ public class GameInitializer : IStartable
         _house.AddRoom(decks);
 
         if (_gameView is GameView view)
-            view.BuildGrid(_boardConfig, box);
+            view.BuildGrid(box, axes);
 
         var definition = new PieceDefinition("Pawn", new IndexOfPlayer(0, 0), 10);
-        _flow.AddPiece<Board, Square>(definition, new Square { X = 2 + _boardConfig.FrameThickness, Y = 2 + _boardConfig.FrameThickness });
+        _flow.AddPiece<Board, Square>(definition, Square.Zero);
     }
 }

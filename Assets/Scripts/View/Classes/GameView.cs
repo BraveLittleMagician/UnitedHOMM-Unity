@@ -14,9 +14,9 @@ public class GameView : MonoBehaviour, IGameView
         if (_pieceRenderer == null) throw new NullReferenceException(nameof(_pieceRenderer));
     }
 
-    public void BuildGrid(BoardConfig config, AxisAlignedBox box)
+    public void BuildGrid(AxisAlignedBox box, MultipleAxes axes)
     {
-        _gridRenderer.BuildGrid(config, box);
+        _gridRenderer.BuildGrid(box, axes);
     }
 
     public void ShowPiece(IPiece piece, Square position)

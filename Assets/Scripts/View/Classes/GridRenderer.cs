@@ -10,7 +10,6 @@ public class GridRenderer : MonoBehaviour
     private readonly Dictionary<Vector3Int, GameObject> _cells = new();
 
     [SerializeField] private GameObject _cellPrefab = null!;
-    [SerializeField] private int _gridSize = 8;
     [SerializeField] private float _cellSize = 1f;
     [SerializeField] private float _cellSpacing = 0f;
 
@@ -19,45 +18,42 @@ public class GridRenderer : MonoBehaviour
         if (_cellPrefab == null) throw new NullReferenceException(nameof(_cellPrefab));
     }
 
-    public void BuildGrid(BoardConfig config, AxisAlignedBox box)
+    public void BuildGrid(AxisAlignedBox box, MultipleAxes axes)
     {
         ClearGrid();
 
-        var axes = config.Is3D ? MultipleAxes.Three : MultipleAxes.Two;
-        int fieldSize = config.FieldSize;
-        int frameThickness = config.FrameThickness;
-
         var activeAxes = axes.GetSeparatedAxes().ToList();
+        box.TryGetBounds(Axis.X, out int minX, out int maxX);
+        box.TryGetBounds(Axis.Y, out int minY, out int maxY);
+        box.TryGetBounds(Axis.Z, out int minZ, out int maxZ);
+        box.TryGetBounds(Axis.W, out int minW, out int maxW);
 
-        int minField = frameThickness;
-        int maxField = frameThickness + fieldSize - 1;
-        int totalSize = fieldSize + 2 * frameThickness;
 
-        for (int x = 0; x < totalSize; x++)
+        for (int x = minX; x < maxX; x++)
         {
-            for (int y = 0; y < (activeAxes.Contains(Axis.Y) ? totalSize : 1); y++)
+            for (int y = minY; y < maxY; y++)
             {
-                for (int z = 0; z < (activeAxes.Contains(Axis.Z) ? totalSize : 1); z++)
+                for (int z = minZ; z < maxZ; z++)
                 {
-                    if (!activeAxes.Contains(Axis.X) && x != 0) continue;
-                    if (!activeAxes.Contains(Axis.Y) && y != 0) continue;
-                    if (!activeAxes.Contains(Axis.Z) && z != 0) continue;
-
-                    var coord = new Vector3Int(x, z, y);
-                    var square = new Square(new Dictionary<Axis, int>
+                    for (int w = minW; w < maxW; w++)
                     {
-                        [Axis.X] = x,
-                        [Axis.Y] = y,
-                        [Axis.Z] = z,
-                        [Axis.W] = 0
-                    });
-                    if (!box.Contains(square)) continue;
+                        if (!activeAxes.Contains(Axis.X) && x != 0) continue;
+                        if (!activeAxes.Contains(Axis.Y) && y != 0) continue;
+                        if (!activeAxes.Contains(Axis.Z) && z != 0) continue;
+                        if (!activeAxes.Contains(Axis.W) && z != 0) continue;
 
-                    bool isField = (x >= frameThickness && x < frameThickness + fieldSize) &&
-                                   (y >= frameThickness && y < frameThickness + fieldSize) &&
-                                   (z >= frameThickness && z < frameThickness + fieldSize);
+                        var coord = new Vector3Int(x, z, y);
+                        var square = new Square(new Dictionary<Axis, int>
+                        {
+                            [Axis.X] = x,
+                            [Axis.Y] = y,
+                            [Axis.Z] = z,
+                            [Axis.W] = w
+                        });
+                        if (!box.Contains(square)) continue;
 
-                    CreateCell(coord);
+                        CreateCell(coord);
+                    }
                 }
             }
         }

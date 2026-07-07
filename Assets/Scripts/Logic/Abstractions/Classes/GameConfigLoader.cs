@@ -8,16 +8,15 @@ public sealed class GameConfigLoader : IGameConfigLoader
     public BoardConfig LoadBoardConfig()
     {
         var textAsset = Resources.Load<TextAsset>("appsettings");
-        if (textAsset == null) throw new Exception("appsettings.json not found in Resources folder!");
+        if (textAsset == null) throw new Exception("Файл appsettings.json не найден в папке Resources");
 
         var wrapper = JsonUtility.FromJson<ConfigWrapper>(textAsset.text);
-        if (wrapper?.Board == null) throw new Exception("Invalid config format: missing 'Board' section.");
+        if (wrapper?.Board == null) throw new Exception("Неверный формат конфигурации: отсутствует раздел 'Board'");
 
         return new BoardConfig
         {
-            Is3D = wrapper.Board.Is3D,
+            Axes = wrapper.Board.Axes,
             FieldSize = wrapper.Board.FieldSize,
-            FrameThickness = wrapper.Board.FrameThickness,
             NumberOfSides = wrapper.Board.NumberOfSides,
             NumberOfPlayersOnSide = wrapper.Board.NumberOfPlayersOnSide
         };
@@ -26,16 +25,15 @@ public sealed class GameConfigLoader : IGameConfigLoader
     [Serializable]
     private class ConfigWrapper
     {
-        public BoardData? Board;
+        public BoardData? Board { get; set; } = null;
     }
 
     [Serializable]
     private class BoardData
     {
-        public bool Is3D = false;
-        public int FieldSize = 8;
-        public int FrameThickness = 0;
-        public int NumberOfSides = 2;
-        public int NumberOfPlayersOnSide = 1;
+        public MultipleAxesFromTwo Axes { get; set; } = MultipleAxesFromTwo.Two;
+        public int FieldSize { get; set; } = 8;
+        public int NumberOfSides { get; set; } = 2;
+        public int NumberOfPlayersOnSide { get; set; } = 1;
     }
 }

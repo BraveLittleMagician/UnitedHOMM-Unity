@@ -1,7 +1,7 @@
 ﻿#nullable enable
 
+using System;
 using System.Collections.Generic;
-using System.Linq;
 
 public sealed class AxisAlignedBox
 {
@@ -20,15 +20,6 @@ public sealed class AxisAlignedBox
         foreach (var (axis, (min, max)) in _bounds)
             if (!square.TryGetValue(axis, out int value) || value < min || value > max) return false;
         return true;
-    }
-
-    public AxisAlignedBox Expand(int amount)
-    {
-        var newBounds = _bounds.ToDictionary(
-            kv => kv.Key,
-            kv => (kv.Value.Min - amount, kv.Value.Max + amount)
-        );
-        return new AxisAlignedBox(newBounds);
     }
 
     public bool TryGetBounds(Axis axis, out int min, out int max)
