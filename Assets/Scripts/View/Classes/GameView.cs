@@ -14,16 +14,22 @@ public class GameView : MonoBehaviour, IGameView
         if (_pieceRenderer == null) throw new NullReferenceException(nameof(_pieceRenderer));
     }
 
+    public void BuildGrid(BoardConfig config, AxisAlignedBox box)
+    {
+        _gridRenderer.BuildGrid(config, box);
+    }
+
     public void ShowPiece(IPiece piece, Square position)
     {
         var worldPos = _gridRenderer.GridToWorld(position);
         _pieceRenderer.ShowPiece(piece, worldPos);
     }
-    public void HidePiece(IPiece piece) => _pieceRenderer.HidePiece(piece);
-
     public void UpdatePiecePosition(IPiece piece, Square newPosition)
     {
         var worldPos = _gridRenderer.GridToWorld(newPosition);
         _pieceRenderer.UpdatePiecePosition(piece, worldPos);
     }
+    public void ShowPieceInDeck(IPiece piece, int position) { }
+    public void UpdatePieceInDeckPosition(IPiece piece, int toPosition) { }
+    public void HidePiece(IPiece piece) => _pieceRenderer.HidePiece(piece);
 }

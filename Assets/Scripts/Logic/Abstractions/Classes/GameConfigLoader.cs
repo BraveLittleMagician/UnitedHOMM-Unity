@@ -11,8 +11,7 @@ public sealed class GameConfigLoader : IGameConfigLoader
         if (textAsset == null) throw new Exception("appsettings.json not found in Resources folder!");
 
         var wrapper = JsonUtility.FromJson<ConfigWrapper>(textAsset.text);
-        if (wrapper?.Board == null)
-            throw new Exception("Invalid config format: missing 'Board' section.");
+        if (wrapper?.Board == null) throw new Exception("Invalid config format: missing 'Board' section.");
 
         return new BoardConfig
         {
