@@ -25,7 +25,7 @@ public sealed class GameConfigLoader : IGameConfigLoader
     [Serializable]
     private class ConfigWrapper
     {
-        public BoardData? Board { get; set; } = null;
+        public BoardData? Board;
     }
 
     [Serializable]

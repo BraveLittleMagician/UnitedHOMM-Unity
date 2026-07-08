@@ -27,7 +27,9 @@ public class GridRenderer : MonoBehaviour
         box.TryGetBounds(Axis.Y, out int minY, out int maxY);
         box.TryGetBounds(Axis.Z, out int minZ, out int maxZ);
         box.TryGetBounds(Axis.W, out int minW, out int maxW);
-
+        maxY = Math.Max(maxY, 1);
+        maxZ = Math.Max(maxZ, 1);
+        maxW = Math.Max(maxW, 1);
 
         for (int x = minX; x < maxX; x++)
         {

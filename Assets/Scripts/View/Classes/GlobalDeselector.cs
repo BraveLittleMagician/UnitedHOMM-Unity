@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+[RequireComponent(typeof(GlobalDeselector))]
+[RequireComponent(typeof(ClickEventer))]
 public class GlobalDeselector : MonoBehaviour
 {
     private static readonly HashSet<IGlobalDeselectSubscriber> _subscribers = new ();
@@ -17,7 +19,6 @@ public class GlobalDeselector : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(transform.parent.gameObject);
     }
 
     public void RegisterSubscriber(IGlobalDeselectSubscriber subscriber)

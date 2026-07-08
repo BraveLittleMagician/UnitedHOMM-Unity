@@ -453,8 +453,9 @@ GameObject:
   - component: {fileID: 526232270}
   - component: {fileID: 526232269}
   - component: {fileID: 526232268}
+  - component: {fileID: 526232272}
   m_Layer: 0
-  m_Name: ScriptsHolder
+  m_Name: HolderOfScripts
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -503,9 +504,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridRenderer
   _cellPrefab: {fileID: 2626843230373559133, guid: a910365b6eb0fc94796b889e2dc16129, type: 3}
-  _gridSize: 8
   _cellSize: 1
-  _cellSpacing: 0.1
+  _cellSpacing: 0
 --- !u!114 &526232270
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -537,6 +537,18 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects: []
   _gameView: {fileID: 526232270}
+--- !u!114 &526232272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b568dfda5db7b2d43bc57eb5c49bf114, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1 &756965393
 GameObject:
   m_ObjectHideFlags: 0
