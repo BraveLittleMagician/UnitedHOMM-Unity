@@ -9,13 +9,24 @@ public class GridRenderer : MonoBehaviour
 {
     private readonly Dictionary<Vector3Int, GameObject> _cells = new();
 
-    [SerializeField] private GameObject _cellPrefab = null!;
+    [SerializeField] private GameObject _terrainPrefab = null!;
     [SerializeField] private float _cellSize = 1f;
-    [SerializeField] private float _cellSpacing = 0f;
 
     private void Awake()
     {
-        if (_cellPrefab == null) throw new NullReferenceException(nameof(_cellPrefab));
+        if (_terrainPrefab == null) throw new NullReferenceException(nameof(_terrainPrefab));
+    }
+    private void CreateCell(Vector3Int coord)
+    {
+        var pos = GridToWorld(coord);
+        var go = Instantiate(_terrainPrefab, pos, _terrainPrefab.transform.rotation, GlobalGeneratedObjectsHolder.Instance.transform);
+        go.name = $"Cell_{coord.x}_{coord.y}_{coord.z}";
+        _cells[coord] = go;
+    }
+    private void ClearGrid()
+    {
+        foreach (var go in _cells.Values) Destroy(go);
+        _cells.Clear();
     }
 
     public void BuildGrid(AxisAlignedBox box, MultipleAxes axes)
@@ -27,6 +38,7 @@ public class GridRenderer : MonoBehaviour
         box.TryGetBounds(Axis.Y, out int minY, out int maxY);
         box.TryGetBounds(Axis.Z, out int minZ, out int maxZ);
         box.TryGetBounds(Axis.W, out int minW, out int maxW);
+        maxX = Math.Max(maxX, 1);
         maxY = Math.Max(maxY, 1);
         maxZ = Math.Max(maxZ, 1);
         maxW = Math.Max(maxW, 1);
@@ -42,7 +54,7 @@ public class GridRenderer : MonoBehaviour
                         if (!activeAxes.Contains(Axis.X) && x != 0) continue;
                         if (!activeAxes.Contains(Axis.Y) && y != 0) continue;
                         if (!activeAxes.Contains(Axis.Z) && z != 0) continue;
-                        if (!activeAxes.Contains(Axis.W) && z != 0) continue;
+                        if (!activeAxes.Contains(Axis.W) && w != 0) continue;
 
                         var coord = new Vector3Int(x, z, y);
                         var square = new Square(new Dictionary<Axis, int>
@@ -60,29 +72,13 @@ public class GridRenderer : MonoBehaviour
             }
         }
     }
-
-    private void CreateCell(Vector3Int coord)
-    {
-        var pos = GridToWorld(coord);
-        var go = Instantiate(_cellPrefab, pos, _cellPrefab.transform.rotation, GlobalGeneratedObjectsHolder.Instance.transform);
-        go.name = $"Cell_{coord.x}_{coord.y}_{coord.z}";
-        _cells[coord] = go;
-    }
-
-    private void ClearGrid()
-    {
-        foreach (var go in _cells.Values) Destroy(go);
-        _cells.Clear();
-    }
-
     public Vector3 GridToWorld(Vector3Int coord)
     {
-        float x = GlobalGeneratedObjectsHolder.Instance.transform.position.x + coord.x * (_cellSize + _cellSpacing);
-        float y = GlobalGeneratedObjectsHolder.Instance.transform.position.y + coord.y * (_cellSize + _cellSpacing);
-        float z = GlobalGeneratedObjectsHolder.Instance.transform.position.z + coord.z * (_cellSize + _cellSpacing);
+        float x = GlobalGeneratedObjectsHolder.Instance.transform.position.x + coord.x * (_cellSize);
+        float y = GlobalGeneratedObjectsHolder.Instance.transform.position.y + coord.y * (_cellSize);
+        float z = GlobalGeneratedObjectsHolder.Instance.transform.position.z + coord.z * (_cellSize);
         return new Vector3(x, y, z);
     }
-
     public Vector3 GridToWorld(Square square)
     {
         int x = square.X;
