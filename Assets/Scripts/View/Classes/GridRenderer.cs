@@ -9,17 +9,17 @@ public class GridRenderer : MonoBehaviour
 {
     private readonly Dictionary<Vector3Int, GameObject> _cells = new();
 
-    [SerializeField] private GameObject _terrainPrefab = null!;
+    [SerializeField] private GameObject _cellPrefab = null!;
     [SerializeField] private float _cellSize = 1f;
 
     private void Awake()
     {
-        if (_terrainPrefab == null) throw new NullReferenceException(nameof(_terrainPrefab));
+        if (_cellPrefab == null) throw new NullReferenceException(nameof(_cellPrefab));
     }
     private void CreateCell(Vector3Int coord)
     {
         var pos = GridToWorld(coord);
-        var go = Instantiate(_terrainPrefab, pos, _terrainPrefab.transform.rotation, GlobalGeneratedObjectsHolder.Instance.transform);
+        var go = Instantiate(_cellPrefab, pos, _cellPrefab.transform.rotation, GlobalGeneratedObjectsHolder.Instance.transform);
         go.name = $"Cell_{coord.x}_{coord.y}_{coord.z}";
         _cells[coord] = go;
     }
@@ -74,9 +74,9 @@ public class GridRenderer : MonoBehaviour
     }
     public Vector3 GridToWorld(Vector3Int coord)
     {
-        float x = GlobalGeneratedObjectsHolder.Instance.transform.position.x + coord.x * (_cellSize);
-        float y = GlobalGeneratedObjectsHolder.Instance.transform.position.y + coord.y * (_cellSize);
-        float z = GlobalGeneratedObjectsHolder.Instance.transform.position.z + coord.z * (_cellSize);
+        float x = GlobalGeneratedObjectsHolder.Instance.transform.position.x + coord.x * _cellSize;
+        float y = GlobalGeneratedObjectsHolder.Instance.transform.position.y + coord.y * _cellSize;
+        float z = GlobalGeneratedObjectsHolder.Instance.transform.position.z + coord.z * _cellSize;
         return new Vector3(x, y, z);
     }
     public Vector3 GridToWorld(Square square)

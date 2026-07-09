@@ -33,8 +33,7 @@ public class GameInitializer : IStartable
         _house.AddRoom(board);
         _house.AddRoom(decks);
 
-        if (_gameView is GameView view)
-            view.BuildGrid(box, axes);
+        if (_gameView is GameView view) view.BuildGrid(box, axes);
 
         var definition = new PieceDefinition("Pawn", new IndexOfPlayer(0, 0), 10);
         _flow.AddPiece<Board, Square>(definition, Square.Zero);

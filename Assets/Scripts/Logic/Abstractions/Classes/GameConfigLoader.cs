@@ -11,29 +11,37 @@ public sealed class GameConfigLoader : IGameConfigLoader
         if (textAsset == null) throw new Exception("Файл appsettings.json не найден в папке Resources");
 
         var wrapper = JsonUtility.FromJson<ConfigWrapper>(textAsset.text);
-        if (wrapper?.Board == null) throw new Exception("Неверный формат конфигурации: отсутствует раздел 'Board'");
+        if (wrapper == null) throw new Exception("Неверный формат конфигурации: отсутствует раздел 'Board'");
 
         return new BoardConfig
         {
-            Axes = wrapper.Board.Axes,
+            Axes = ParseAxes(wrapper.Board.Axes),
             FieldSize = wrapper.Board.FieldSize,
             NumberOfSides = wrapper.Board.NumberOfSides,
             NumberOfPlayersOnSide = wrapper.Board.NumberOfPlayersOnSide
         };
     }
 
+    private static MultipleAxesFromTwo ParseAxes(string value) => value?.ToLower() switch
+    {
+        "two" => MultipleAxesFromTwo.Two,
+        "three" => MultipleAxesFromTwo.Three,
+        "four" => MultipleAxesFromTwo.Four,
+        _ => MultipleAxesFromTwo.Two
+    };
+
     [Serializable]
     private class ConfigWrapper
     {
-        public BoardData? Board;
+        public BoardData Board = null!;
     }
 
     [Serializable]
     private class BoardData
     {
-        public MultipleAxesFromTwo Axes { get; set; } = MultipleAxesFromTwo.Two;
-        public int FieldSize { get; set; } = 8;
-        public int NumberOfSides { get; set; } = 2;
-        public int NumberOfPlayersOnSide { get; set; } = 1;
+        public string Axes = "Two";
+        public int FieldSize = 8;
+        public int NumberOfSides = 2;
+        public int NumberOfPlayersOnSide = 1;
     }
 }

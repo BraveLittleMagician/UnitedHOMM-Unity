@@ -505,7 +505,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GridRenderer
   _cellPrefab: {fileID: 2626843230373559133, guid: a910365b6eb0fc94796b889e2dc16129, type: 3}
   _cellSize: 1
-  _cellSpacing: 0
 --- !u!114 &526232270
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -883,7 +882,7 @@ Transform:
   m_GameObject: {fileID: 1823688464}
   serializedVersion: 2
   m_LocalRotation: {x: 0.5495113, y: -0, z: -0, w: 0.8354863}
-  m_LocalPosition: {x: 4, y: 20, z: 0}
+  m_LocalPosition: {x: 3, y: 10, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
