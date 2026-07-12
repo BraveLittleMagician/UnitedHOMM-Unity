@@ -8,6 +8,7 @@ using UnityEngine;
 public class GridRenderer : MonoBehaviour
 {
     private readonly Dictionary<Vector3Int, GameObject> _cells = new();
+    private IEventBus? _eventBus = null;
 
     [SerializeField] private GameObject _cellPrefab = null!;
     [SerializeField] private float _cellSize = 1f;
@@ -15,6 +16,10 @@ public class GridRenderer : MonoBehaviour
     private void Awake()
     {
         if (_cellPrefab == null) throw new NullReferenceException(nameof(_cellPrefab));
+    }
+    private void OnDestroy()
+    {
+        _eventBus?.Unsubscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
     }
     private void CreateCell(Vector3Int coord)
     {
@@ -28,7 +33,19 @@ public class GridRenderer : MonoBehaviour
         foreach (var go in _cells.Values) Destroy(go);
         _cells.Clear();
     }
+    private void OnBoardConfigChanged(BoardConfigChangedEvent e)
+    {
+        var newConfig = e.NewConfig;
+        var axes = (MultipleAxes)newConfig.Axes;
+        var box = new AxisAlignedBox(axes, newConfig.FieldSize, 0);
+        BuildGrid(box, axes);
+    }
 
+    public void Initialize(IEventBus eventBus)
+    {
+        _eventBus = eventBus;
+        _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
+    }
     public void BuildGrid(AxisAlignedBox box, MultipleAxes axes)
     {
         ClearGrid();
@@ -38,18 +55,14 @@ public class GridRenderer : MonoBehaviour
         box.TryGetBounds(Axis.Y, out int minY, out int maxY);
         box.TryGetBounds(Axis.Z, out int minZ, out int maxZ);
         box.TryGetBounds(Axis.W, out int minW, out int maxW);
-        maxX = Math.Max(maxX, 1);
-        maxY = Math.Max(maxY, 1);
-        maxZ = Math.Max(maxZ, 1);
-        maxW = Math.Max(maxW, 1);
 
-        for (int x = minX; x < maxX; x++)
+        for (int x = minX; x <= maxX; x++)
         {
-            for (int y = minY; y < maxY; y++)
+            for (int y = minY; y <= maxY; y++)
             {
-                for (int z = minZ; z < maxZ; z++)
+                for (int z = minZ; z <= maxZ; z++)
                 {
-                    for (int w = minW; w < maxW; w++)
+                    for (int w = minW; w <= maxW; w++)
                     {
                         if (!activeAxes.Contains(Axis.X) && x != 0) continue;
                         if (!activeAxes.Contains(Axis.Y) && y != 0) continue;

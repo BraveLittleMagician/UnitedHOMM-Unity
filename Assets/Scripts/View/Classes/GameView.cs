@@ -29,4 +29,5 @@ public class GameView : MonoBehaviour, IGameView
     public void ShowPieceInDeck(IPiece piece, int position) { }
     public void UpdatePieceInDeckPosition(IPiece piece, int toPosition) { }
     public void HidePiece(IPiece piece) => _pieceRenderer.HidePiece(piece);
+    public void Initialize(IEventBus eventBus) => _gridRenderer.Initialize(eventBus);
 }

@@ -145,7 +145,6 @@ public sealed class Flow : IFlow, IDisposable
         _logger.Log($"Фигура {piece} перемещена из {fromRoom.Name}:{fromPosition} в {toRoom.Name}:{toPosition}");
         return Result.Success();
     }
-    
     public void Dispose()
     {
         if (_disposed) return;

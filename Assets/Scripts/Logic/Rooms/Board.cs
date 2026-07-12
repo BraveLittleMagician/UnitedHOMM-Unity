@@ -4,14 +4,22 @@ using System;
 
 public sealed class Board : RoomT<Square>, ISquarePositionRoom
 {
-    private readonly AxisAlignedBox _allowedArea;
+    private AxisAlignedBox _allowedArea;
+    private bool _isUpdating;
 
-    public Board(Seats seats, AxisAlignedBox allowedArea, IEventBus eventBus, ILogger logger)
-        : base(seats, eventBus, logger)
-    {
-        _allowedArea = allowedArea ?? throw new ArgumentNullException(nameof(allowedArea));
+    public Board(Seats seats, AxisAlignedBox allowedArea, IEventBus eventBus, ILogger logger) : base(seats, eventBus, logger)
+    { 
+        _allowedArea = allowedArea ?? throw new ArgumentNullException(nameof(allowedArea)); 
+        eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
     }
 
+    private void OnBoardConfigChanged(BoardConfigChangedEvent e)
+    {
+        var newAxes = (MultipleAxes)e.NewConfig.Axes;
+        var newSize = e.NewConfig.FieldSize;
+        _allowedArea = new AxisAlignedBox(newAxes, newSize, 0);
+        Logger.Log($"Размер доски обновлён: {newSize} по осям {newAxes}");
+    }
     protected override bool ValidateAdd(IPiece piece, Square position, out string error)
     {
         if (!_allowedArea.Contains(position))
@@ -47,5 +55,24 @@ public sealed class Board : RoomT<Square>, ISquarePositionRoom
 
         error = "";
         return true;
+    }
+    public int GetMinimalFieldSize(MultipleAxes axes)
+    {
+        if (_pieces.Count == 0) return 0;
+
+        int maxCoord = 0;
+        foreach (var pos in _pieces.Keys)
+        {
+            if (axes.HasFlag(Axis.X)) maxCoord = Math.Max(maxCoord, pos.X);
+            if (axes.HasFlag(Axis.Y)) maxCoord = Math.Max(maxCoord, pos.Y);
+            if (axes.HasFlag(Axis.Z)) maxCoord = Math.Max(maxCoord, pos.Z);
+            if (axes.HasFlag(Axis.W)) maxCoord = Math.Max(maxCoord, pos.W);
+        }
+        return maxCoord + 1;
+    }
+    public override void Dispose()
+    {
+        EventBus.Unsubscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
+        base.Dispose();
     }
 }
