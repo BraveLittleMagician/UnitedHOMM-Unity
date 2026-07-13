@@ -1,17 +1,19 @@
 ﻿#nullable enable
 
 using System;
+using System.Collections.Generic;
 
 public sealed class Board : RoomT<Square>, ISquarePositionRoom
 {
     private AxisAlignedBox _allowedArea;
-    private bool _isUpdating;
 
     public Board(Seats seats, AxisAlignedBox allowedArea, IEventBus eventBus, ILogger logger) : base(seats, eventBus, logger)
     { 
         _allowedArea = allowedArea ?? throw new ArgumentNullException(nameof(allowedArea)); 
         eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
     }
+
+    public IReadOnlyDictionary<Axis, (int Min, int Max)> Bounds => _allowedArea.Bounds;
 
     private void OnBoardConfigChanged(BoardConfigChangedEvent e)
     {

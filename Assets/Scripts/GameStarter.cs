@@ -1,47 +1,37 @@
 ﻿#nullable enable
 
+using System;
+
 public class GameStarter : IGameStarter
 {
-    private readonly IHouse _house;
-    private readonly IEventBus _eventBus;
-    private readonly ILogger _logger;
-    private readonly IFlow _flow; 
-    private readonly IGameView _gameView;
-    private readonly Seats _seats;
-    private readonly BoardConfig _boardConfig;
-    private readonly Board _board;
-    private bool _started = false;
+    private readonly GameStarterDependencies _deps;
+    private bool _started;
 
-    public GameStarter(IHouse house, IEventBus eventBus, ILogger logger, IFlow flow, IGameView gameView, Seats seats, BoardConfig boardConfig, Board board) 
+    public GameStarter(GameStarterDependencies deps) 
     {
-        _house = house;
-        _eventBus = eventBus;
-        _logger = logger;
-        _flow = flow;
-        _gameView = gameView;
-        _seats = seats;
-        _boardConfig = boardConfig;
-        _board = board;
+        _deps = deps ?? throw new ArgumentNullException(nameof(deps));
     }
 
     public void StartGame()
     {
         if (_started) return;
         _started = true;
-        
-        _house.AddRoom(_board);
-        var decks = new Decks(_seats, _eventBus, _logger);
-        _house.AddRoom(decks);
 
-        if (_gameView is GameView view)
+        _deps.House.AddRoom(_deps.Board);
+        var decks = new Decks(_deps.Seats, _deps.EventBus, _deps.Logger);
+        _deps.House.AddRoom(decks);
+
+        if (_deps.GameView is GameView view)
         {
-            view.Initialize(_eventBus);
-            var axes = (MultipleAxes)_boardConfig.Axes;
-            var box = new AxisAlignedBox(axes, _boardConfig.FieldSize, 0);
+            view.Initialize(_deps.EventBus);
+            var axes = (MultipleAxes)_deps.BoardConfig.Axes;
+            var box = new AxisAlignedBox(axes, _deps.BoardConfig.FieldSize, 0);
             view.BuildGrid(box, axes);
         }
 
+        _deps.Camera.FitToBoard(_deps.Board.Bounds);
+
         var definition = new PieceDefinition("Pawn", new IndexOfPlayer(0, 0), 10);
-        _flow.AddPiece<Board, Square>(definition, Square.Zero);
+        _deps.Flow.AddPiece<Board, Square>(definition, Square.Zero);
     }
 }

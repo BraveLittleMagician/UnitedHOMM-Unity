@@ -7,12 +7,15 @@ using VContainer.Unity;
 
 public class GameLifetimeScope : LifetimeScope
 {
+    private ControllerOfCamera _cameraController = null!;
     [SerializeField] private GameView _gameView = null!;
     [SerializeField] private bool _autoStart = true;
 
     private void Start()
     {
        if (_gameView == null) throw new NullReferenceException(nameof(_gameView));
+       _cameraController = GetComponentInChildren<ControllerOfCamera>(true);
+       if (_cameraController == null) throw new NullReferenceException(nameof(_cameraController));
     }
 
     protected override void Configure(IContainerBuilder builder)
@@ -29,25 +32,40 @@ public class GameLifetimeScope : LifetimeScope
         builder.Register<LoggerForUnity>(Lifetime.Singleton).As<ILogger>();
         builder.Register<House>(Lifetime.Singleton).As<IHouse>();
         builder.Register<Registry>(Lifetime.Singleton).As<IRegistry>();
-        builder.Register<Board>(resolver =>
+        builder.Register(resolver =>
         {
             var eventBus = resolver.Resolve<IEventBus>();
             var logger = resolver.Resolve<ILogger>();
             return new Board(seats, box, eventBus, logger);
         }, Lifetime.Singleton);
-        builder.Register<BoardConfigUpdater>(resolver =>
+        builder.Register(resolver =>
         {
             var board = resolver.Resolve<Board>();
             var eventBus = resolver.Resolve<IEventBus>();
             var logger = resolver.Resolve<ILogger>();
             return new BoardConfigUpdater(board, eventBus, logger, boardConfig);
-        }, Lifetime.Singleton);
+        }, Lifetime.Singleton).AsSelf();
         builder.Register<CombatService>(Lifetime.Singleton).As<ICombatService>();
         builder.Register<MovementValidator>(Lifetime.Singleton).As<IMovementValidator>();
         builder.Register<AbilityService>(Lifetime.Singleton).As<IAbilityService>();
         builder.Register<Flow>(Lifetime.Singleton).As<IFlow>();
         builder.RegisterComponent(_gameView).As<IGameView>();
         builder.Register<GamePresenter>(Lifetime.Singleton);
+        builder.RegisterComponent(_cameraController).As<IControllerOfCamera>();
+        builder.Register(resolver =>
+        {
+            return new GameStarterDependencies(
+                resolver.Resolve<IControllerOfCamera>(),
+                resolver.Resolve<IHouse>(),
+                resolver.Resolve<IEventBus>(),
+                resolver.Resolve<ILogger>(),
+                resolver.Resolve<IFlow>(),
+                resolver.Resolve<IGameView>(),
+                resolver.Resolve<Seats>(),
+                resolver.Resolve<BoardConfig>(),
+                resolver.Resolve<Board>()
+            );
+        }, Lifetime.Singleton);
         builder.Register<GameStarter>(Lifetime.Singleton).As<IGameStarter>();
         if (_autoStart) builder.RegisterEntryPoint<AutoGameStarter>();
     }

@@ -15,13 +15,14 @@ public sealed class AxisAlignedBox
             _bounds[axis] = (minCoordinate, minCoordinate + size - 1);
     }
 
+    public IReadOnlyDictionary<Axis, (int Min, int Max)> Bounds => _bounds;
+
     public bool Contains(Square square)
     {
         foreach (var (axis, (min, max)) in _bounds)
             if (!square.TryGetValue(axis, out int value) || value < min || value > max) return false;
         return true;
     }
-
     public bool TryGetBounds(Axis axis, out int min, out int max)
     {
         if (_bounds.TryGetValue(axis, out var b))
