@@ -4,13 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-[RequireComponent(typeof(GlobalDeselector))]
-[RequireComponent(typeof(ClickEventer))]
 public class GlobalDeselector : MonoBehaviour
 {
-    private static readonly HashSet<IGlobalDeselectSubscriber> _subscribers = new ();
+    private static readonly HashSet<IGlobalDeselectSubscriber> _subscribers = new();
     public static GlobalDeselector Instance { get; private set; } = null!;
-
+    
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -20,7 +18,6 @@ public class GlobalDeselector : MonoBehaviour
         }
         Instance = this;
     }
-
     public void RegisterSubscriber(IGlobalDeselectSubscriber subscriber)
     {
         if (!_subscribers.Contains(subscriber))

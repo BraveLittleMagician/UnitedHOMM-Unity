@@ -13,8 +13,8 @@ public class GameLifetimeScope : LifetimeScope
 
     private void Start()
     {
-       if (_gameView == null) throw new NullReferenceException(nameof(_gameView));
        if (_cameraController == null) throw new NullReferenceException(nameof(_cameraController));
+       if (_gameView == null) throw new NullReferenceException(nameof(_gameView));
     }
 
     protected override void Configure(IContainerBuilder builder)
@@ -49,6 +49,8 @@ public class GameLifetimeScope : LifetimeScope
         builder.Register<AbilityService>(Lifetime.Singleton).As<IAbilityService>();
         builder.Register<Flow>(Lifetime.Singleton).As<IFlow>();
         builder.RegisterComponent(_gameView).As<IGameView>();
+        if (_gameView.TryGetComponent<GridRenderer>(out var gridRenderer))
+            builder.RegisterComponent(gridRenderer);
         builder.Register<GamePresenter>(Lifetime.Singleton);
         builder.RegisterComponent(_cameraController).As<IControllerOfCamera>();
         builder.Register<RoomInitializer>(Lifetime.Singleton).As<IRoomInitializer>();

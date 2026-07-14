@@ -5,7 +5,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-[RequireComponent(typeof(ButtonColors))]
 [RequireComponent(typeof(Renderer))]
 public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
 {
@@ -14,15 +13,12 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     private bool _isSelected = false;
     private Renderer _rend = null!;
     private Coroutine? _colorCoroutine;
-    private ButtonColors _colors;
 
     [field: SerializeField] public bool Interactable { get; private set; } = true;
     [SerializeField] private UnityEvent _onClick = new();
 
     private void Awake()
     {
-        _colors = GetComponent<ButtonColors>();
-        if (_colors == null) throw new NullReferenceException(nameof(_colors));
         _rend = GetComponent<Renderer>();
         if (_rend == null)
         {
@@ -41,15 +37,15 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     {
         Color target = GetCurrentStateColor();
         if (_colorCoroutine != null) StopCoroutine(_colorCoroutine);
-        _colorCoroutine = StartCoroutine(FadeToColor(target, _colors.FadeDuration));
+        _colorCoroutine = StartCoroutine(FadeToColor(target, ButtonColors.Instance.FadeDuration));
     }
     private Color GetCurrentStateColor()
     {
-        if (!Interactable) return _colors.DisabledColor;
-        if (_isPressed) return _colors.PressedColor;
-        if (_isSelected) return _colors.SelectedColor;
-        if (_isHovered) return _colors.HighlightedColor;
-        return _colors.NormalColor;
+        if (!Interactable) return ButtonColors.Instance.DisabledColor;
+        if (_isPressed) return ButtonColors.Instance.PressedColor;
+        if (_isSelected) return ButtonColors.Instance.SelectedColor;
+        if (_isHovered) return ButtonColors.Instance.HighlightedColor;
+        return ButtonColors.Instance.NormalColor;
     }
     private IEnumerator FadeToColor(Color target, float duration)
     {
@@ -85,7 +81,7 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     public void OnPointerExit()
     {
         _isHovered = false;
-        UpdateVisualState(); 
+        UpdateVisualState();
         if (GlobalDeselector.Instance != null)
             GlobalDeselector.Instance.RegisterSubscriber(this);
     }

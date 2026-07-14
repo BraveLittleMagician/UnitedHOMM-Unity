@@ -4,11 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using VContainer;
 
 public class GridRenderer : MonoBehaviour
 {
     private readonly Dictionary<Vector3Int, GameObject> _cells = new();
-    private IEventBus? _eventBus = null;
+    private IEventBus _eventBus = null!;
 
     [SerializeField] private GameObject _cellPrefab = null!;
     [SerializeField] private float _cellSize = 1f;
@@ -21,6 +22,7 @@ public class GridRenderer : MonoBehaviour
     {
         _eventBus?.Unsubscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
     }
+
     private void CreateCell(Vector3Int coord)
     {
         var pos = GridToWorld(coord);
@@ -41,7 +43,8 @@ public class GridRenderer : MonoBehaviour
         BuildGrid(box, axes);
     }
 
-    public void Initialize(IEventBus eventBus)
+    [Inject]
+    public void Construct(IEventBus eventBus)
     {
         _eventBus = eventBus;
         _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);

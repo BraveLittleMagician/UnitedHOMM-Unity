@@ -3,19 +3,25 @@
 using System;
 using VContainer.Unity;
 
-public class GamePresenter : IDisposable
+public class GamePresenter : IStartable, IDisposable
 {
     private readonly IFlow _flow;
     private readonly IGameView _view;
     private readonly IEventBus _eventBus;
     private readonly IControllerOfCamera _camera;
+    private readonly BoardConfigUpdater _configManager;
+    private BoardConfig _currentConfig;
 
-    public GamePresenter(IFlow flow, IGameView view, IEventBus eventBus, IControllerOfCamera camera)
+    public GamePresenter(IFlow flow, IGameView view, IEventBus eventBus, IControllerOfCamera camera, BoardConfigUpdater configUpdater, BoardConfig initialConfig)
     {
         _flow = flow;
         _view = view;
         _eventBus = eventBus;
         _camera = camera;
+        _configManager = configUpdater;
+        _currentConfig = initialConfig;
+
+        _view.BoardSizeInputChanged += OnBoardSizeInputChanged;
 
         _eventBus.Subscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Subscribe<PieceDeployedEvent<int>>(OnPieceDeployed);
@@ -25,11 +31,18 @@ public class GamePresenter : IDisposable
         _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
     }
 
+    private void OnBoardSizeInputChanged(int newSize)
+    {
+        if (newSize <= 0) return;
+        var newConfig = _currentConfig with { FieldSize = newSize };
+        _configManager.UpdateConfig(newConfig);
+    }
     private void OnBoardConfigChanged(BoardConfigChangedEvent e)
     {
-        var newConfig = e.NewConfig;
-        var axes = (MultipleAxes)newConfig.Axes;
-        var box = new AxisAlignedBox(axes, newConfig.FieldSize, 0);
+        _currentConfig = e.NewConfig;
+        _view.SetBoardSize(e.NewConfig.FieldSize);
+        var axes = (MultipleAxes)_currentConfig.Axes;
+        var box = new AxisAlignedBox(axes, _currentConfig.FieldSize, 0);
         _camera.FitToBoard(box.Bounds);
     }
     private void OnPieceDeployed(PieceDeployedEvent<Square> e) => _view.ShowPiece(e.Piece, e.Position);
@@ -37,9 +50,14 @@ public class GamePresenter : IDisposable
     private void OnPieceMoved(PieceMovedEvent<Square> e) => _view.UpdatePiecePosition(e.Piece, e.ToPosition);
     private void OnPieceMoved(PieceMovedEvent<int> e) => _view.UpdatePieceInDeckPosition(e.Piece, e.ToPosition);
     private void OnPieceDied(PieceDiedEvent e) => _view.HidePiece(e.Piece);
-
+    
+    public void Start()
+    {
+        _view.SetBoardSize(_currentConfig.FieldSize);
+    }
     public void Dispose()
     {
+        _view.BoardSizeInputChanged -= OnBoardSizeInputChanged;
         _eventBus.Unsubscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Unsubscribe<PieceDeployedEvent<int>>(OnPieceDeployed);
         _eventBus.Unsubscribe<PieceMovedEvent<Square>>(OnPieceMoved);

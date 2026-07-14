@@ -119,6 +119,57 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &32106665
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 32106666}
+  - component: {fileID: 32106667}
+  m_Layer: 0
+  m_Name: ButtonColors
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &32106666
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 32106665}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 713696319}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &32106667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 32106665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 995f6dfce4b8bf34aa594def049699f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonColors
+  <Transition>k__BackingField: 1
+  <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
+  <HighlightedColor>k__BackingField: {r: 1, g: 0.5254902, b: 0.5254902, a: 1}
+  <PressedColor>k__BackingField: {r: 0.7843137, g: 0.7843137, b: 0.7843137, a: 1}
+  <SelectedColor>k__BackingField: {r: 0.2705882, g: 0.8117647, b: 1, a: 1}
+  <DisabledColor>k__BackingField: {r: 0.282353, g: 0.282353, b: 0.282353, a: 0.4980392}
+  <FadeDuration>k__BackingField: 0.1
 --- !u!1 &157207112
 GameObject:
   m_ObjectHideFlags: 0
@@ -490,7 +541,7 @@ MonoBehaviour:
   m_enableExtraPadding: 1
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
+  m_EmojiFallbackSupport: 0
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -744,12 +795,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 526232267}
-  - component: {fileID: 526232272}
   - component: {fileID: 526232271}
   - component: {fileID: 526232270}
   - component: {fileID: 526232269}
   - component: {fileID: 526232268}
-  - component: {fileID: 526232273}
   m_Layer: 0
   m_Name: HolderOfScripts
   m_TagString: Untagged
@@ -770,6 +819,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 713696319}
   - {fileID: 756965394}
   - {fileID: 1823688467}
   m_Father: {fileID: 0}
@@ -799,7 +849,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0acc50fe8fb19e54d9ecb3aeee6ce287, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridRenderer
-  _cellPrefab: {fileID: 2626843230373559133, guid: a910365b6eb0fc94796b889e2dc16129, type: 3}
+  _cellPrefab: {fileID: 8975001908766267932, guid: a910365b6eb0fc94796b889e2dc16129, type: 3}
   _cellSize: 1
 --- !u!114 &526232270
 MonoBehaviour:
@@ -815,6 +865,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameView
   _gridRenderer: {fileID: 526232269}
   _pieceRenderer: {fileID: 526232268}
+  _boardSizeInput: {fileID: 1575039699}
 --- !u!114 &526232271
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -831,34 +882,42 @@ MonoBehaviour:
     TypeName: 
   autoRun: 1
   autoInjectGameObjects: []
+  _globalDeselector: {fileID: 0}
   _cameraController: {fileID: 1823688470}
   _gameView: {fileID: 526232270}
   _autoStart: 1
---- !u!114 &526232272
-MonoBehaviour:
+--- !u!1 &713696318
+GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 526232266}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b568dfda5db7b2d43bc57eb5c49bf114, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
---- !u!114 &526232273
-MonoBehaviour:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 713696319}
+  m_Layer: 0
+  m_Name: GlobalScripts
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &713696319
+Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 526232266}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cedb16d14f310846957901e530149c4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BoardResizer
-  _newSize: 10
+  m_GameObject: {fileID: 713696318}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 32106666}
+  m_Father: {fileID: 526232267}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &756965393
 GameObject:
   m_ObjectHideFlags: 0
@@ -1224,7 +1283,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
   m_UseReflectionProbes: 0
-  m_AdditionalShaderChannelsFlag: 1
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0
@@ -1369,8 +1428,8 @@ GameObject:
   - component: {fileID: 1575039697}
   - component: {fileID: 1575039696}
   - component: {fileID: 1575039695}
-  - component: {fileID: 1575039699}
   - component: {fileID: 1575039698}
+  - component: {fileID: 1575039699}
   m_Layer: 5
   m_Name: InputField (TMP)
   m_TagString: Untagged
@@ -1446,14 +1505,14 @@ MonoBehaviour:
   m_VerticalScrollbarEventHandler: {fileID: 0}
   m_LayoutGroup: {fileID: 0}
   m_ScrollSensitivity: 1
-  m_ContentType: 0
+  m_ContentType: 2
   m_InputType: 0
   m_AsteriskChar: 42
-  m_KeyboardType: 0
+  m_KeyboardType: 2
   m_LineType: 0
   m_HideMobileInput: 0
   m_HideSoftKeyboard: 0
-  m_CharacterValidation: 0
+  m_CharacterValidation: 2
   m_RegexValue: 
   m_GlobalPointSize: 14
   m_CharacterLimit: 0
@@ -1558,16 +1617,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1575039693}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 995f6dfce4b8bf34aa594def049699f7, type: 3}
+  m_Script: {fileID: 11500000, guid: 7f3bf86f77ea6cc498b9251491b60bf6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonColors
-  <Transition>k__BackingField: 1
-  <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
-  <HighlightedColor>k__BackingField: {r: 1, g: 0.5254902, b: 0.5254902, a: 1}
-  <PressedColor>k__BackingField: {r: 0.7843137, g: 0.7843137, b: 0.7843137, a: 1}
-  <SelectedColor>k__BackingField: {r: 0.2705882, g: 0.8117647, b: 1, a: 1}
-  <DisabledColor>k__BackingField: {r: 0.282353, g: 0.282353, b: 0.282353, a: 0.4980392}
-  <FadeDuration>k__BackingField: 0.1
+  m_EditorClassIdentifier: Assembly-CSharp::BoardSizeInput
 --- !u!1 &1823688464
 GameObject:
   m_ObjectHideFlags: 0

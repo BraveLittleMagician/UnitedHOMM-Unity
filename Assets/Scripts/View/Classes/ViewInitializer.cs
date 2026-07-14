@@ -21,7 +21,6 @@ public sealed class ViewInitializer : IViewInitializer
     {
         if (_gameView is GameView view)
         {
-            view.Initialize(_eventBus);
             var axes = (MultipleAxes)_boardConfig.Axes;
             var box = new AxisAlignedBox(axes, _boardConfig.FieldSize, 0);
             view.BuildGrid(box, axes);
