@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 2339024143238558096}
   - component: {fileID: 6372478497720242301}
   - component: {fileID: 4901075704262041603}
-  - component: {fileID: 8163470024346975230}
   - component: {fileID: 6090989607725333108}
+  - component: {fileID: 8163470024346975230}
+  - component: {fileID: 8090185741706871304}
   m_Layer: 0
   m_Name: QuadCell
   m_TagString: Untagged
@@ -30,7 +31,7 @@ Transform:
   m_GameObject: {fileID: 2626843230373559133}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 228.96558, y: 250.65967, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -115,29 +116,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &8163470024346975230
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2626843230373559133}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b47d14e9bf6d09243a9063f90db7a195, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonBehavior
-  <Interactable>k__BackingField: 1
-  <Transition>k__BackingField: 1
-  <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
-  <HighlightedColor>k__BackingField: {r: 1, g: 0.5254902, b: 0.5254902, a: 1}
-  <PressedColor>k__BackingField: {r: 0.7843137, g: 0.7843137, b: 0.7843137, a: 1}
-  <SelectedColor>k__BackingField: {r: 0.2705882, g: 0.8117647, b: 1, a: 1}
-  <DisabledColor>k__BackingField: {r: 0.282353, g: 0.282353, b: 0.282353, a: 0.4980392}
-  <FadeDuration>k__BackingField: 0.1
-  _onClick:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &6090989607725333108
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -231,3 +209,38 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &8163470024346975230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2626843230373559133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b47d14e9bf6d09243a9063f90db7a195, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonBehavior
+  <Interactable>k__BackingField: 1
+  _onClick:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &8090185741706871304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2626843230373559133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 995f6dfce4b8bf34aa594def049699f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonColors
+  <Transition>k__BackingField: 1
+  <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
+  <HighlightedColor>k__BackingField: {r: 1, g: 0.5254902, b: 0.5254902, a: 1}
+  <PressedColor>k__BackingField: {r: 0.7843137, g: 0.7843137, b: 0.7843137, a: 1}
+  <SelectedColor>k__BackingField: {r: 0.2705882, g: 0.8117647, b: 1, a: 1}
+  <DisabledColor>k__BackingField: {r: 0.282353, g: 0.282353, b: 0.282353, a: 0.4980392}
+  <FadeDuration>k__BackingField: 0.1

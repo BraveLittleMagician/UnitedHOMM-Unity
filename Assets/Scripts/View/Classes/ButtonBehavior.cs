@@ -5,6 +5,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
+[RequireComponent(typeof(ButtonColors))]
 [RequireComponent(typeof(Renderer))]
 public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
 {
@@ -13,29 +14,15 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     private bool _isSelected = false;
     private Renderer _rend = null!;
     private Coroutine? _colorCoroutine;
-    
-    [field: SerializeField] public bool Interactable { get; private set; } = true;
-    [field: SerializeField] public TransitionType Transition { get; set; } = TransitionType.ColorTint;
-    [field: SerializeField] public Color NormalColor { get; set; } = new Color(1f, 1f, 1f, 1f);
-    [field: SerializeField] public Color HighlightedColor { get; set; } = new Color(1f, 0.5254902f, 0.5254902f, 1f);
-    [field: SerializeField] public Color PressedColor { get; set; } = new Color(0.7843137f, 0.7843137f, 0.7843137f, 1f);
-    [field: SerializeField] public Color SelectedColor { get; set; } = new Color(0.2705882f, 0.8117647f, 1f, 1f);
-    [field: SerializeField] public Color DisabledColor { get; set; } = new Color(0.282353f, 0.282353f, 0.282353f, 0.4980392f);
-    [field: SerializeField] public float FadeDuration { get; set; } = 0.1f;
-    [SerializeField] private UnityEvent _onClick = new();
+    private ButtonColors _colors;
 
-    public void Interact(bool val)
-    {
-        Interactable = val;
-        if (!Interactable)
-        {
-            _isHovered = false;
-            _isPressed = false;
-        }
-    }
+    [field: SerializeField] public bool Interactable { get; private set; } = true;
+    [SerializeField] private UnityEvent _onClick = new();
 
     private void Awake()
     {
+        _colors = GetComponent<ButtonColors>();
+        if (_colors == null) throw new NullReferenceException(nameof(_colors));
         _rend = GetComponent<Renderer>();
         if (_rend == null)
         {
@@ -54,15 +41,15 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     {
         Color target = GetCurrentStateColor();
         if (_colorCoroutine != null) StopCoroutine(_colorCoroutine);
-        _colorCoroutine = StartCoroutine(FadeToColor(target, FadeDuration));
+        _colorCoroutine = StartCoroutine(FadeToColor(target, _colors.FadeDuration));
     }
     private Color GetCurrentStateColor()
     {
-        if (!Interactable) return DisabledColor;
-        if (_isPressed) return PressedColor;
-        if (_isSelected) return SelectedColor;
-        if (_isHovered) return HighlightedColor;
-        return NormalColor;
+        if (!Interactable) return _colors.DisabledColor;
+        if (_isPressed) return _colors.PressedColor;
+        if (_isSelected) return _colors.SelectedColor;
+        if (_isHovered) return _colors.HighlightedColor;
+        return _colors.NormalColor;
     }
     private IEnumerator FadeToColor(Color target, float duration)
     {
@@ -80,6 +67,15 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
         _colorCoroutine = null;
     }
 
+    public void Interact(bool val)
+    {
+        Interactable = val;
+        if (!Interactable)
+        {
+            _isHovered = false;
+            _isPressed = false;
+        }
+    }
     public void OnPointerEnter()
     {
         if (!Interactable) return;
@@ -110,7 +106,6 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
         Select();
         _onClick.Invoke();
     }
-
     public void Select()
     {
         _isSelected = true;
@@ -121,13 +116,5 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
         GlobalDeselector.Instance.UnregisterSubscriber(this);
         _isSelected = false;
         UpdateVisualState();
-    }
-
-    public enum TransitionType
-    {
-        None,
-        ColorTint,
-        SpriteSwap,
-        Animation
     }
 }
