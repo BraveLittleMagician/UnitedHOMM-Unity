@@ -11,7 +11,7 @@ public class PieceRenderer : MonoBehaviour
 
     private void Awake()
     {
-        if (_piecePrefab == null) throw new NullReferenceException(nameof(_piecePrefab));
+        if (_piecePrefab == null) throw new ArgumentNullException(nameof(_piecePrefab));
     }
 
     public void ShowPiece(IPiece piece, Vector3 worldPosition)

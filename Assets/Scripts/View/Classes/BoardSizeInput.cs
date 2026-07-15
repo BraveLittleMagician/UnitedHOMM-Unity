@@ -13,7 +13,7 @@ public class BoardSizeInput : MonoBehaviour
     private void Awake()
     {
         _inputField = GetComponent<TMP_InputField>();
-        if (_inputField == null) throw new NullReferenceException(nameof(_inputField));
+        if (_inputField == null) throw new ArgumentNullException(nameof(_inputField));
         _inputField.onEndEdit.AddListener(OnEndEdit);
     }
     private void OnDestroy()

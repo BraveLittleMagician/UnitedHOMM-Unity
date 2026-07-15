@@ -11,8 +11,8 @@ public class GameView : MonoBehaviour, IGameView
 
     private void Awake()
     {
-        if (_gridRenderer == null) throw new NullReferenceException(nameof(_gridRenderer));
-        if (_pieceRenderer == null) throw new NullReferenceException(nameof(_pieceRenderer));
+        if (_gridRenderer == null) throw new ArgumentNullException(nameof(_gridRenderer));
+        if (_pieceRenderer == null) throw new ArgumentNullException(nameof(_pieceRenderer));
         _boardSizeInput.OnValueChanged += OnBoardSizeInputChanged;
     }
 

@@ -10,6 +10,7 @@ public class GridRenderer : MonoBehaviour
 {
     private readonly Dictionary<Vector3Int, GameObject> _cells = new();
     private IEventBus _eventBus = null!;
+    private IGlobalGeneratedObjectsHolder _holder = null!;
     private BoxAndAxes? _pendingBuild = null;
 
     [SerializeField] private GameObject _cellPrefab = null!;
@@ -17,7 +18,7 @@ public class GridRenderer : MonoBehaviour
 
     private void Awake()
     {
-        if (_cellPrefab == null) throw new NullReferenceException(nameof(_cellPrefab));
+        if (_cellPrefab == null) throw new ArgumentNullException(nameof(_cellPrefab));
     }
     private void OnDestroy()
     {
@@ -27,7 +28,7 @@ public class GridRenderer : MonoBehaviour
     private void CreateCell(Vector3Int coord)
     {
         var pos = GridToWorld(coord);
-        var go = Instantiate(_cellPrefab, pos, _cellPrefab.transform.rotation, GlobalGeneratedObjectsHolder.Instance.transform);
+        var go = Instantiate(_cellPrefab, pos, _cellPrefab.transform.rotation, _holder.Transform);
         go.name = $"Cell_{coord.x}_{coord.y}_{coord.z}";
         _cells[coord] = go;
     }
@@ -45,8 +46,9 @@ public class GridRenderer : MonoBehaviour
     }
 
     [Inject]
-    public void Construct(IEventBus eventBus)
+    public void Construct(IEventBus eventBus, IGlobalGeneratedObjectsHolder holder)
     {
+        _holder = holder ?? throw new ArgumentNullException(nameof(holder));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus)); ;
         _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
         
@@ -106,9 +108,10 @@ public class GridRenderer : MonoBehaviour
     }
     public Vector3 GridToWorld(Vector3Int coord)
     {
-        float x = GlobalGeneratedObjectsHolder.Instance.transform.position.x + coord.x * _cellSize;
-        float y = GlobalGeneratedObjectsHolder.Instance.transform.position.y + coord.y * _cellSize;
-        float z = GlobalGeneratedObjectsHolder.Instance.transform.position.z + coord.z * _cellSize;
+        var origin = _holder.Transform.position;
+        float x = origin.x + coord.x * _cellSize;
+        float y = origin.y + coord.y * _cellSize;
+        float z = origin.z + coord.z * _cellSize;
         return new Vector3(x, y, z);
     }
     public Vector3 GridToWorld(Square square)

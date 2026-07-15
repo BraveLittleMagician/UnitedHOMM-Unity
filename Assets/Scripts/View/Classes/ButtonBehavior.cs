@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using VContainer;
 
 [RequireComponent(typeof(Renderer))]
 public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
@@ -13,6 +14,8 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     private bool _isSelected = false;
     private Renderer _rend = null!;
     private Coroutine? _colorCoroutine;
+    private IButtonColors _colors = null!;
+    private IGlobalDeselector _deselector = null!;
 
     [field: SerializeField] public bool Interactable { get; private set; } = true;
     [SerializeField] private UnityEvent _onClick = new();
@@ -23,7 +26,7 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
         if (_rend == null)
         {
             enabled = false;
-            throw new NullReferenceException(nameof(_rend));
+            throw new ArgumentNullException(nameof(_rend));
         }
         _rend.material.color = GetCurrentStateColor();
     }
@@ -37,15 +40,15 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     {
         Color target = GetCurrentStateColor();
         if (_colorCoroutine != null) StopCoroutine(_colorCoroutine);
-        _colorCoroutine = StartCoroutine(FadeToColor(target, ButtonColors.Instance.FadeDuration));
+        _colorCoroutine = StartCoroutine(FadeToColor(target, _colors.FadeDuration));
     }
     private Color GetCurrentStateColor()
     {
-        if (!Interactable) return ButtonColors.Instance.DisabledColor;
-        if (_isPressed) return ButtonColors.Instance.PressedColor;
-        if (_isSelected) return ButtonColors.Instance.SelectedColor;
-        if (_isHovered) return ButtonColors.Instance.HighlightedColor;
-        return ButtonColors.Instance.NormalColor;
+        if (!Interactable) return _colors.DisabledColor;
+        if (_isPressed) return _colors.PressedColor;
+        if (_isSelected) return _colors.SelectedColor;
+        if (_isHovered) return _colors.HighlightedColor;
+        return _colors.NormalColor;
     }
     private IEnumerator FadeToColor(Color target, float duration)
     {
@@ -61,6 +64,13 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
         }
         _rend.material.color = target;
         _colorCoroutine = null;
+    }
+
+    [Inject]
+    public void Construct(IButtonColors colors, IGlobalDeselector deselector)
+    {
+        _colors = colors ?? throw new ArgumentNullException(nameof(colors));
+        _deselector = deselector ?? throw new ArgumentNullException(nameof(deselector));
     }
 
     public void Interact(bool val)
@@ -82,8 +92,7 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     {
         _isHovered = false;
         UpdateVisualState();
-        if (GlobalDeselector.Instance != null)
-            GlobalDeselector.Instance.RegisterSubscriber(this);
+        _deselector.RegisterSubscriber(this);
     }
     public void OnPointerDown()
     {
@@ -109,7 +118,7 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     }
     public void Deselect()
     {
-        GlobalDeselector.Instance.UnregisterSubscriber(this);
+        _deselector.UnregisterSubscriber(this);
         _isSelected = false;
         UpdateVisualState();
     }

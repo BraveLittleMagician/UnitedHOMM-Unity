@@ -15,7 +15,7 @@ public class ControllerOfCamera : MonoBehaviour, IControllerOfCamera
     private void Awake()
     {
         _camera = GetComponent<Camera>();
-        if (_camera == null) throw new NullReferenceException(nameof(_camera));
+        if (_camera == null) throw new ArgumentNullException(nameof(_camera));
     }
 
     private static Vector3 ComputeCenter(IReadOnlyDictionary<Axis, (int Min, int Max)> bounds)
