@@ -8,6 +8,7 @@ using UnityEngine;
 public class BoardSizeInput : MonoBehaviour
 {
     private TMP_InputField _inputField = null!;
+    private int _lastValidSize = 8;
 
     private void Awake()
     {
@@ -22,12 +23,16 @@ public class BoardSizeInput : MonoBehaviour
     private void OnEndEdit(string value)
     {
         if (int.TryParse(value, out int newSize) && newSize >= 2)
+        {
+            _lastValidSize = newSize;
             OnValueChanged?.Invoke(newSize);
-        else SetValue(int.Parse(_inputField.text));
+        }
+        else SetValue(_lastValidSize);
     }
 
     public void SetValue(int size)
     {
+        _lastValidSize = size;
         _inputField.text = size.ToString();
     }
 
