@@ -882,7 +882,6 @@ MonoBehaviour:
     TypeName: 
   autoRun: 1
   autoInjectGameObjects: []
-  _globalDeselector: {fileID: 0}
   _cameraController: {fileID: 1823688470}
   _gameView: {fileID: 526232270}
   _autoStart: 1

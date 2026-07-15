@@ -10,6 +10,7 @@ public class GridRenderer : MonoBehaviour
 {
     private readonly Dictionary<Vector3Int, GameObject> _cells = new();
     private IEventBus _eventBus = null!;
+    private BoxAndAxes? _pendingBuild = null;
 
     [SerializeField] private GameObject _cellPrefab = null!;
     [SerializeField] private float _cellSize = 1f;
@@ -40,16 +41,31 @@ public class GridRenderer : MonoBehaviour
         var newConfig = e.NewConfig;
         var axes = (MultipleAxes)newConfig.Axes;
         var box = new AxisAlignedBox(axes, newConfig.FieldSize, 0);
-        BuildGrid(box, axes);
+        BuildGridInternal(box, axes);
     }
 
     [Inject]
     public void Construct(IEventBus eventBus)
     {
-        _eventBus = eventBus;
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus)); ;
         _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
+        
+        if (_pendingBuild != null)
+        {
+            BuildGridInternal(_pendingBuild.Box, _pendingBuild.Axes);
+            _pendingBuild = null;
+        }
     }
     public void BuildGrid(AxisAlignedBox box, MultipleAxes axes)
+    {
+        if (_eventBus == null)
+        {
+            _pendingBuild = new(box, axes);
+            return;
+        }
+        BuildGridInternal(box, axes);
+    }
+    private void BuildGridInternal(AxisAlignedBox box, MultipleAxes axes)
     {
         ClearGrid();
 
@@ -102,4 +118,6 @@ public class GridRenderer : MonoBehaviour
         int z = square.Z;
         return GridToWorld(new Vector3Int(x, y, z));
     }
+
+    private record BoxAndAxes(AxisAlignedBox Box, MultipleAxes Axes);
 }
