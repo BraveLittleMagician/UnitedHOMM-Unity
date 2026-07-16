@@ -5,12 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using VContainer;
+using VContainer.Unity;
 
 public class GridRenderer : MonoBehaviour
 {
     private readonly Dictionary<Vector3Int, GameObject> _cells = new();
     private IEventBus _eventBus = null!;
     private IGlobalGeneratedObjectsHolder _holder = null!;
+    private IObjectResolver _resolver = null!;
     private BoxAndAxes? _pendingBuild = null;
 
     [SerializeField] private GameObject _cellPrefab = null!;
@@ -30,6 +32,7 @@ public class GridRenderer : MonoBehaviour
         var pos = GridToWorld(coord);
         var go = Instantiate(_cellPrefab, pos, _cellPrefab.transform.rotation, _holder.Transform);
         go.name = $"Cell_{coord.x}_{coord.y}_{coord.z}";
+        _resolver.InjectGameObject(go);
         _cells[coord] = go;
     }
     private void ClearGrid()
@@ -46,10 +49,11 @@ public class GridRenderer : MonoBehaviour
     }
 
     [Inject]
-    public void Construct(IEventBus eventBus, IGlobalGeneratedObjectsHolder holder)
+    public void Construct(IEventBus eventBus, IGlobalGeneratedObjectsHolder holder, IObjectResolver resolver)
     {
         _holder = holder ?? throw new ArgumentNullException(nameof(holder));
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus)); ;
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
         _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
         
         if (_pendingBuild != null)

@@ -2,6 +2,7 @@
 
 using System;
 using VContainer.Unity;
+using UnityEngine;
 
 public class GamePresenter : IStartable, IDisposable
 {
@@ -9,7 +10,7 @@ public class GamePresenter : IStartable, IDisposable
     private readonly IGameView _view;
     private readonly IEventBus _eventBus;
     private readonly IControllerOfCamera _camera;
-    private readonly BoardConfigUpdater _configManager;
+    private readonly BoardConfigUpdater _configUpdater;
     private BoardConfig _currentConfig;
 
     public GamePresenter(IFlow flow, IGameView view, IEventBus eventBus, IControllerOfCamera camera, BoardConfigUpdater configUpdater, BoardConfig initialConfig)
@@ -18,7 +19,7 @@ public class GamePresenter : IStartable, IDisposable
         _view = view;
         _eventBus = eventBus;
         _camera = camera;
-        _configManager = configUpdater;
+        _configUpdater = configUpdater;
         _currentConfig = initialConfig;
 
         _view.BoardSizeInputChanged += OnBoardSizeInputChanged;
@@ -35,7 +36,7 @@ public class GamePresenter : IStartable, IDisposable
     {
         if (newSize <= 0) return;
         var newConfig = _currentConfig with { FieldSize = newSize };
-        _configManager.UpdateConfig(newConfig);
+        _configUpdater.UpdateConfig(newConfig);
     }
     private void OnBoardConfigChanged(BoardConfigChangedEvent e)
     {

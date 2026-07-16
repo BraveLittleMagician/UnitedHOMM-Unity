@@ -16,6 +16,7 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     private Coroutine? _colorCoroutine;
     private IButtonColors _colors = null!;
     private IGlobalDeselector _deselector = null!;
+    private bool _initialized = false;
 
     [field: SerializeField] public bool Interactable { get; private set; } = true;
     [SerializeField] private UnityEvent _onClick = new();
@@ -28,7 +29,6 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
             enabled = false;
             throw new ArgumentNullException(nameof(_rend));
         }
-        _rend.material.color = GetCurrentStateColor();
     }
     private void OnDestroy()
     {
@@ -38,6 +38,7 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
 
     private void UpdateVisualState()
     {
+        if (!_initialized) return;
         Color target = GetCurrentStateColor();
         if (_colorCoroutine != null) StopCoroutine(_colorCoroutine);
         _colorCoroutine = StartCoroutine(FadeToColor(target, _colors.FadeDuration));
@@ -71,6 +72,8 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     {
         _colors = colors ?? throw new ArgumentNullException(nameof(colors));
         _deselector = deselector ?? throw new ArgumentNullException(nameof(deselector));
+        _initialized = true;
+        UpdateVisualState();
     }
 
     public void Interact(bool val)
@@ -84,7 +87,7 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     }
     public void OnPointerEnter()
     {
-        if (!Interactable) return;
+        if (!_initialized || !Interactable) return;
         _isHovered = true;
         UpdateVisualState();
     }

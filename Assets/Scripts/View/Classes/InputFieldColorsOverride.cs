@@ -17,11 +17,7 @@ public class InputFieldColorsOverride : MonoBehaviour
         _inputField = GetComponent<TMP_InputField>();
         if (_inputField == null) throw new ArgumentNullException(nameof(_inputField));
     }
-    private void Start()
-    {
-        if (_colors == null) throw new ArgumentNullException(nameof(_colors));
-        ApplyColors();
-    }
+
     private void ApplyColors()
     {
         _inputField.transition = ToSelectable(_colors.Transition);
@@ -36,7 +32,11 @@ public class InputFieldColorsOverride : MonoBehaviour
     }
 
     [Inject]
-    public void Construct(IButtonColors colors) => _colors = colors;
+    public void Construct(IButtonColors colors)
+    {
+        _colors = colors ?? throw new ArgumentNullException(nameof(colors));
+        ApplyColors();
+    }
 
     private static Selectable.Transition ToSelectable(TransitionType transition) => transition switch
     {

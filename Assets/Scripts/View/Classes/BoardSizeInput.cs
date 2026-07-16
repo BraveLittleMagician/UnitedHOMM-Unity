@@ -19,6 +19,7 @@ public class BoardSizeInput : MonoBehaviour
     private void OnDestroy()
     {
         _inputField.onEndEdit.RemoveListener(OnEndEdit);
+        OnValueChanged = null;
     }
     private void OnEndEdit(string value)
     {

@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 public sealed class Board : RoomT<Square>, ISquarePositionRoom
 {
@@ -61,14 +63,14 @@ public sealed class Board : RoomT<Square>, ISquarePositionRoom
     public int GetMinimalFieldSize(MultipleAxes axes)
     {
         if (_pieces.Count == 0) return 0;
-
+        var activeAxes = axes.GetSeparatedAxes().ToList();
         int maxCoord = 0;
         foreach (var pos in _pieces.Keys)
         {
-            if (axes.HasFlag(Axis.X)) maxCoord = Math.Max(maxCoord, pos.X);
-            if (axes.HasFlag(Axis.Y)) maxCoord = Math.Max(maxCoord, pos.Y);
-            if (axes.HasFlag(Axis.Z)) maxCoord = Math.Max(maxCoord, pos.Z);
-            if (axes.HasFlag(Axis.W)) maxCoord = Math.Max(maxCoord, pos.W);
+            if (activeAxes.Contains(Axis.X)) maxCoord = Math.Max(maxCoord, pos.X);
+            if (activeAxes.Contains(Axis.Y)) maxCoord = Math.Max(maxCoord, pos.Y);
+            if (activeAxes.Contains(Axis.Z)) maxCoord = Math.Max(maxCoord, pos.Z);
+            if (activeAxes.Contains(Axis.W)) maxCoord = Math.Max(maxCoord, pos.W);
         }
         return maxCoord + 1;
     }

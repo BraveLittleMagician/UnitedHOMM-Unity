@@ -15,6 +15,10 @@ public class GameView : MonoBehaviour, IGameView
         if (_pieceRenderer == null) throw new ArgumentNullException(nameof(_pieceRenderer));
         _boardSizeInput.OnValueChanged += OnBoardSizeInputChanged;
     }
+    private void OnDestroy()
+    {
+        _boardSizeInput.OnValueChanged -= OnBoardSizeInputChanged;
+    }
 
     private void OnBoardSizeInputChanged(int newSize)
     {
@@ -35,7 +39,10 @@ public class GameView : MonoBehaviour, IGameView
     public void ShowPieceInDeck(IPiece piece, int position) { }
     public void UpdatePieceInDeckPosition(IPiece piece, int toPosition) { }
     public void HidePiece(IPiece piece) => _pieceRenderer.HidePiece(piece);
-    public void SetBoardSize(int size) => _boardSizeInput.SetValue(size);
+    public void SetBoardSize(int size)
+    {
+        _boardSizeInput.SetValue(size);
+    }
 
     public event Action<int>? BoardSizeInputChanged;
 }

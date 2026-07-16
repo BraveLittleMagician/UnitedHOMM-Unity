@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using UnityEngine;
 
 public sealed class BoardConfigUpdater
 {
@@ -39,7 +40,6 @@ public sealed class BoardConfigUpdater
 
         var oldConfig = _currentConfig;
         _currentConfig = finalConfig;
-
         _eventBus.Publish(new BoardConfigChangedEvent(oldConfig, finalConfig));
         _logger.Log($"Конфигурация доски обновлена: FieldSize = {finalConfig.FieldSize}, Axes = {finalConfig.Axes}");
     }

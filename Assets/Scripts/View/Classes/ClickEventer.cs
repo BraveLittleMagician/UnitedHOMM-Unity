@@ -27,7 +27,10 @@ public class ClickEventer : MonoBehaviour
             _click.Disable();
         }
     }
-    private void OnClickEvent(InputAction.CallbackContext ctx) => _deselector?.TriggerGlobalClick();
+    private void OnClickEvent(InputAction.CallbackContext ctx)
+    {
+        _deselector?.TriggerGlobalClick();
+    }
 
     [Inject]
     public void Construct(IGlobalDeselector deselector)
