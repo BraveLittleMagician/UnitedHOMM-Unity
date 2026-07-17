@@ -13,12 +13,12 @@ public class PieceRenderer : MonoBehaviour
     {
         if (_piecePrefab == null) throw new ArgumentNullException(nameof(_piecePrefab));
     }
-
+    private float Offset => _piecePrefab.transform.lossyScale.y;
+    
     public void ShowPiece(IPiece piece, Vector3 worldPosition)
     {
         if (_pieceObjects.ContainsKey(piece)) return;
-
-        var go = Instantiate(_piecePrefab, worldPosition, Quaternion.identity, transform);
+        var go = Instantiate(_piecePrefab, new Vector3(worldPosition.x, worldPosition.y + Offset, worldPosition.z), Quaternion.identity, transform);
         _pieceObjects[piece] = go;
     }
 
@@ -34,6 +34,6 @@ public class PieceRenderer : MonoBehaviour
     public void UpdatePiecePosition(IPiece piece, Vector3 newPosition)
     {
         if (_pieceObjects.TryGetValue(piece, out var go))
-            go.transform.position = newPosition;
+            go.transform.position = new Vector3(newPosition.x, newPosition.y + Offset, newPosition.z);
     }
 }
