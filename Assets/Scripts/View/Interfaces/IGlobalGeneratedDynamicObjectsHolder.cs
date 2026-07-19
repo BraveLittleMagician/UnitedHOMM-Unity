@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public interface IGlobalGeneratedObjectsHolder
+public interface IGlobalGeneratedDynamicObjectsHolder
 {
     Transform Transform { get; }
 }

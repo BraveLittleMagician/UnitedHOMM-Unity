@@ -46,11 +46,11 @@ public class GamePresenter : IStartable, IDisposable
         var box = new AxisAlignedBox(axes, _currentConfig.FieldSize, 0);
         _camera.FitToBoard(box.Bounds);
     }
-    private void OnPieceDeployed(PieceDeployedEvent<Square> e) => _view.ShowPiece(e.Piece, e.Position);
-    private void OnPieceDeployed(PieceDeployedEvent<int> e) => _view.ShowPieceInDeck(e.Piece, e.Position);
+    private void OnPieceDeployed(PieceDeployedEvent<Square> e) => _view.CreatePiece(e.Piece, e.Position);
+    private void OnPieceDeployed(PieceDeployedEvent<int> e) => _view.CreatePieceInDeck(e.Piece, e.Position);
     private void OnPieceMoved(PieceMovedEvent<Square> e) => _view.UpdatePiecePosition(e.Piece, e.ToPosition);
     private void OnPieceMoved(PieceMovedEvent<int> e) => _view.UpdatePieceInDeckPosition(e.Piece, e.ToPosition);
-    private void OnPieceDied(PieceDiedEvent e) => _view.HidePiece(e.Piece);
+    private void OnPieceDied(PieceDiedEvent e) => _view.DestroyPiece(e.Piece);
     
     public void Start()
     {

@@ -9,21 +9,25 @@ public class GameLifetimeScope : LifetimeScope
 {
     [SerializeField] private GlobalDeselector _globalDeselector = null!;
     [SerializeField] private ButtonColors _buttonColors = null!;
-    [SerializeField] private GlobalGeneratedObjectsHolder _globalHolder = null!;
+    [SerializeField] private GlobalGeneratedSurroundingsHolder _globalSurroundingsHolder = null!;
+    [SerializeField] private GlobalGeneratedDynamicObjectsHolder _globalObjectsHolder = null!;
     [SerializeField] private ClickEventer _clickEventer = null!;
     [SerializeField] private ControllerOfCamera _cameraController = null!;
     [SerializeField] private GameView _gameView = null!;
     [SerializeField] private GridRenderer _gridRenderer = null!;
+    [SerializeField] private PieceRenderer _pieceRenderer = null!;
     [SerializeField] private bool _autoStart = true;
 
     private void Start()
     {
         if (_globalDeselector == null) throw new ArgumentNullException(nameof(_globalDeselector));
         if (_buttonColors == null) throw new ArgumentNullException(nameof(_buttonColors));
-        if (_globalHolder == null) throw new ArgumentNullException(nameof(_globalHolder));
+        if (_globalSurroundingsHolder == null) throw new ArgumentNullException(nameof(_globalSurroundingsHolder));
+        if (_globalObjectsHolder == null) throw new ArgumentNullException(nameof(_globalObjectsHolder));
         if (_clickEventer == null) throw new ArgumentNullException(nameof(_clickEventer));
         if (_cameraController == null) throw new ArgumentNullException(nameof(_cameraController));
         if (_gridRenderer == null) throw new ArgumentNullException(nameof(_gridRenderer));
+        if (_pieceRenderer == null) throw new ArgumentNullException(nameof(_pieceRenderer));
         if (_gameView == null) throw new ArgumentNullException(nameof(_gameView));
     }
 
@@ -62,10 +66,12 @@ public class GameLifetimeScope : LifetimeScope
         builder.Register<GamePresenter>(Lifetime.Singleton).As<IStartable>().AsSelf();
         builder.RegisterComponent(_gameView).As<IGameView>();
         builder.RegisterComponent(_gridRenderer).AsSelf();
+        builder.RegisterComponent(_pieceRenderer).AsSelf();
         builder.RegisterComponent(_cameraController).As<IControllerOfCamera>();
         builder.RegisterComponent(_globalDeselector).As<IGlobalDeselector>();
         builder.RegisterComponent(_buttonColors).As<IButtonColors>();
-        builder.RegisterComponent(_globalHolder).As<IGlobalGeneratedObjectsHolder>();
+        builder.RegisterComponent(_globalSurroundingsHolder).As<IGlobalGeneratedSurroundingsHolder>();
+        builder.RegisterComponent(_globalObjectsHolder).As<IGlobalGeneratedDynamicObjectsHolder>();
         builder.RegisterComponent(_clickEventer).AsSelf();
         builder.Register<RoomInitializer>(Lifetime.Singleton).As<IRoomInitializer>();
         builder.Register<ViewInitializer>(Lifetime.Singleton).As<IViewInitializer>();

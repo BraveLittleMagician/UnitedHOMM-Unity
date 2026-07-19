@@ -4,10 +4,10 @@ using System;
 
 public interface IGameView
 {
-    void ShowPiece(IPiece piece, Square position);
-    void HidePiece(IPiece piece);
+    void CreatePiece(IPiece piece, Square position);
+    void DestroyPiece(IPiece piece);
     void UpdatePiecePosition(IPiece piece, Square newPosition);
-    void ShowPieceInDeck(IPiece piece, int position);
+    void CreatePieceInDeck(IPiece piece, int position);
     void UpdatePieceInDeckPosition(IPiece piece, int toPosition);
     void SetBoardSize(int size);
 

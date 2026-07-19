@@ -26,19 +26,19 @@ public class GameView : MonoBehaviour, IGameView
     }
 
     public void BuildGrid(AxisAlignedBox box) => _gridRenderer.BuildGrid(box);
-    public void ShowPiece(IPiece piece, Square position)
+    public void CreatePiece(IPiece piece, Square position)
     {
         var worldPos = _gridRenderer.GridToWorld(position);
-        _pieceRenderer.ShowPiece(piece, worldPos);
+        _pieceRenderer.CreatePiece(piece, worldPos);
     }
     public void UpdatePiecePosition(IPiece piece, Square newPosition)
     {
         var worldPos = _gridRenderer.GridToWorld(newPosition);
         _pieceRenderer.UpdatePiecePosition(piece, worldPos);
     }
-    public void ShowPieceInDeck(IPiece piece, int position) { }
+    public void CreatePieceInDeck(IPiece piece, int position) { }
     public void UpdatePieceInDeckPosition(IPiece piece, int toPosition) { }
-    public void HidePiece(IPiece piece) => _pieceRenderer.HidePiece(piece);
+    public void DestroyPiece(IPiece piece) => _pieceRenderer.DestroyPiece(piece);
     public void SetBoardSize(int size)
     {
         _boardSizeInput.SetValue(size);

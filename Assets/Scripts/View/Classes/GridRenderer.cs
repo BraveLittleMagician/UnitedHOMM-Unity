@@ -10,7 +10,7 @@ using VContainer.Unity;
 public class GridRenderer : MonoBehaviour
 {
     private IEventBus _eventBus = null!;
-    private IGlobalGeneratedObjectsHolder _holder = null!;
+    private IGlobalGeneratedSurroundingsHolder _holder = null!;
     private IObjectResolver _resolver = null!;
     private AxisAlignedBox? _pendingBox = null;
     private GameObject? _gridRoot = null;
@@ -40,30 +40,6 @@ public class GridRenderer : MonoBehaviour
         var newConfig = e.NewConfig;
         var axes = (MultipleAxes)newConfig.Axes;
         var box = new AxisAlignedBox(axes, newConfig.FieldSize, 0);
-        BuildGridInternal(box);
-    }
-
-    [Inject]
-    public void Construct(IEventBus eventBus, IGlobalGeneratedObjectsHolder holder, IObjectResolver resolver)
-    {
-        _holder = holder ?? throw new ArgumentNullException(nameof(holder));
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-        _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
-
-        if (_pendingBox != null)
-        {
-            BuildGridInternal(_pendingBox);
-            _pendingBox = null;
-        }
-    }
-    public void BuildGrid(AxisAlignedBox box)
-    {
-        if (_eventBus == null)
-        {
-            _pendingBox = box;
-            return;
-        }
         BuildGridInternal(box);
     }
     private void BuildGridInternal(AxisAlignedBox box)
@@ -105,7 +81,6 @@ public class GridRenderer : MonoBehaviour
                 var cellCoords = new Dictionary<Axis, int>(currentCoords) { [Axis.X] = x };
                 var pos = GridToWorld(cellCoords);
                 var go = Instantiate(_cellPrefab, pos, _cellPrefab.transform.rotation, parent);
-                go.transform.SetParent(parent, false);
                 go.name = $"{currentAxis}={x} (cell)";
                 _resolver.InjectGameObject(go);
 
@@ -124,7 +99,6 @@ public class GridRenderer : MonoBehaviour
             }
         }
     }
-
     private Vector3 GridToWorld(Dictionary<Axis, int> coords)
     {
         var origin = _holder.Transform.position;
@@ -133,6 +107,31 @@ public class GridRenderer : MonoBehaviour
         float z = origin.z + coords[Axis.Z] * _cellSize;
         return new Vector3(x, z, y);
     }
+
+    [Inject]
+    public void Construct(IEventBus eventBus, IGlobalGeneratedSurroundingsHolder holder, IObjectResolver resolver)
+    {
+        _holder = holder ?? throw new ArgumentNullException(nameof(holder));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
+        _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
+
+        if (_pendingBox != null)
+        {
+            BuildGridInternal(_pendingBox);
+            _pendingBox = null;
+        }
+    }
+    public void BuildGrid(AxisAlignedBox box)
+    {
+        if (_eventBus == null)
+        {
+            _pendingBox = box;
+            return;
+        }
+        BuildGridInternal(box);
+    }
+
     public Vector3 GridToWorld(Square square) => GridToWorld(new Dictionary<Axis, int>
     {
         [Axis.X] = square.X,
@@ -140,6 +139,4 @@ public class GridRenderer : MonoBehaviour
         [Axis.Z] = square.Z,
         [Axis.W] = 0
     });
-
-    private record BoxAndAxes(AxisAlignedBox Box, MultipleAxes Axes);
 }
