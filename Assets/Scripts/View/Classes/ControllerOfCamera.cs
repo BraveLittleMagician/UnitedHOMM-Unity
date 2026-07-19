@@ -7,8 +7,8 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class ControllerOfCamera : MonoBehaviour, IControllerOfCamera
 {
-    [SerializeField]
-    private float _paddingFactor = 1.25f;
+    [SerializeField] private float _paddingFactor2D = 0.75f;
+    [SerializeField]  private float _paddingFactor3D = 1.5f;
     private const float _minDistance = 1f;
     private Camera _camera = null!;
 
@@ -32,10 +32,10 @@ public class ControllerOfCamera : MonoBehaviour, IControllerOfCamera
             maxExtent = Mathf.Max(maxExtent, (Max - Min) / 2f);
         return maxExtent;
     }
-    private float ComputeDistance(float halfSize, float fovDegrees)
+    private float ComputeDistance(float halfSize, float fovDegrees, float paddingFactor)
     {
         float fovRad = fovDegrees * Mathf.Deg2Rad / 2f;
-        return halfSize / Mathf.Tan(fovRad) * _paddingFactor;
+        return halfSize / Mathf.Tan(fovRad) * paddingFactor;
     }
 
     public void FitToBoard(IReadOnlyDictionary<Axis, (int Min, int Max)> bounds)
@@ -44,7 +44,9 @@ public class ControllerOfCamera : MonoBehaviour, IControllerOfCamera
 
         Vector3 center = ComputeCenter(bounds);
         float halfSize = ComputeHalfSize(bounds);
-        float distance = Mathf.Max(ComputeDistance(halfSize, _camera.fieldOfView), _minDistance);
+        bool is3D = bounds.TryGetValue(Axis.Z, out var z) && (z.Max - z.Min) > 0;
+        float effectivePadding = is3D ? _paddingFactor3D : _paddingFactor2D;
+        float distance = Mathf.Max(ComputeDistance(halfSize, _camera.fieldOfView, effectivePadding), _minDistance);
 
         transform.position = center + new Vector3(0f, distance, -distance);
         transform.LookAt(center);
