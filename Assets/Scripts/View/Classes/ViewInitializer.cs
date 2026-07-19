@@ -23,7 +23,7 @@ public sealed class ViewInitializer : IViewInitializer
         {
             var axes = (MultipleAxes)_boardConfig.Axes;
             var box = new AxisAlignedBox(axes, _boardConfig.FieldSize, 0);
-            view.BuildGrid(box, axes);
+            view.BuildGrid(box);
         }
 
         _camera.FitToBoard(_board.Bounds);

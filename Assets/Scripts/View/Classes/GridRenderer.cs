@@ -12,7 +12,7 @@ public class GridRenderer : MonoBehaviour
     private IEventBus _eventBus = null!;
     private IGlobalGeneratedObjectsHolder _holder = null!;
     private IObjectResolver _resolver = null!;
-    private BoxAndAxes? _pendingBuild = null;
+    private AxisAlignedBox? _pendingBox = null;
     private GameObject? _gridRoot = null;
 
     [SerializeField] private GameObject _cellPrefab = null!;
@@ -40,7 +40,7 @@ public class GridRenderer : MonoBehaviour
         var newConfig = e.NewConfig;
         var axes = (MultipleAxes)newConfig.Axes;
         var box = new AxisAlignedBox(axes, newConfig.FieldSize, 0);
-        BuildGridInternal(box, axes);
+        BuildGridInternal(box);
     }
 
     [Inject]
@@ -50,27 +50,26 @@ public class GridRenderer : MonoBehaviour
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
         _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
-        
-        if (_pendingBuild != null)
+
+        if (_pendingBox != null)
         {
-            BuildGridInternal(_pendingBuild.Box, _pendingBuild.Axes);
-            _pendingBuild = null;
+            BuildGridInternal(_pendingBox);
+            _pendingBox = null;
         }
     }
-    public void BuildGrid(AxisAlignedBox box, MultipleAxes axes)
+    public void BuildGrid(AxisAlignedBox box)
     {
         if (_eventBus == null)
         {
-            _pendingBuild = new(box, axes);
+            _pendingBox = box;
             return;
         }
-        BuildGridInternal(box, axes);
+        BuildGridInternal(box);
     }
-    private void BuildGridInternal(AxisAlignedBox box, MultipleAxes axes)
+    private void BuildGridInternal(AxisAlignedBox box)
     {
         ClearGrid();
 
-        var activeAxes = axes.GetSeparatedAxes().ToList();
         var orderedAxes = new Axis[] { Axis.W, Axis.Z, Axis.Y, Axis.X }.ToArray();
 
         box.TryGetBounds(Axis.X, out int minX, out int maxX);

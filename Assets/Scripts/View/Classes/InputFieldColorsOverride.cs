@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
+using VContainer.Unity;
 
 [RequireComponent(typeof(TMP_InputField))]
 public class InputFieldColorsOverride : MonoBehaviour
@@ -17,7 +18,14 @@ public class InputFieldColorsOverride : MonoBehaviour
         _inputField = GetComponent<TMP_InputField>();
         if (_inputField == null) throw new ArgumentNullException(nameof(_inputField));
     }
-
+    private void Start()
+    {
+        var resolver = GameLifetimeScope.Resolver;
+        if (resolver != null)
+            resolver.InjectGameObject(gameObject);
+        else
+            throw new ArgumentNullException(nameof(resolver));
+    }
     private void ApplyColors()
     {
         _inputField.transition = ToSelectable(_colors.Transition);

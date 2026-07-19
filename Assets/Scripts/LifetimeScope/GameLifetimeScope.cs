@@ -34,6 +34,7 @@ public class GameLifetimeScope : LifetimeScope
         var seats = new Seats(boardConfig.NumberOfSides, boardConfig.NumberOfPlayersOnSide);
         var axes = (MultipleAxes)boardConfig.Axes;
         var box = new AxisAlignedBox(axes, boardConfig.FieldSize, 0);
+        builder.RegisterBuildCallback(resolver => { Resolver = resolver; });
         builder.RegisterInstance(boardConfig);
         builder.RegisterInstance(seats);
         builder.RegisterInstance(configLoader).As<IGameConfigLoader>();
@@ -72,6 +73,8 @@ public class GameLifetimeScope : LifetimeScope
         builder.Register<GameStarter>(Lifetime.Singleton).As<IGameStarter>();
         if (_autoStart) builder.RegisterEntryPoint<AutoGameStarter>();
     }
+
+    public static IObjectResolver? Resolver { get; private set; }
 
     private class AutoGameStarter : IStartable
     {

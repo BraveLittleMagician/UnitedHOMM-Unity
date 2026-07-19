@@ -25,7 +25,7 @@ public class GameView : MonoBehaviour, IGameView
         BoardSizeInputChanged?.Invoke(newSize);
     }
 
-    public void BuildGrid(AxisAlignedBox box, MultipleAxes axes) => _gridRenderer.BuildGrid(box, axes);
+    public void BuildGrid(AxisAlignedBox box) => _gridRenderer.BuildGrid(box);
     public void ShowPiece(IPiece piece, Square position)
     {
         var worldPos = _gridRenderer.GridToWorld(position);
