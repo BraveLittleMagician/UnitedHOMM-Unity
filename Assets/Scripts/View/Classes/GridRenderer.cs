@@ -83,9 +83,9 @@ public class GridRenderer : MonoBehaviour
                 Vector3 posMax = GridToWorldLocal(maxX, maxY, z);
                 Vector3 center = (posMin + posMax) / 2f;
                 layer.transform.localPosition = center;
-
+                int layerIndex = (w - minW) * (maxZ - minZ + 1) + (z - minZ);
                 var sizeSetter = layer.GetComponent<ILayerSizeSetter>();
-                sizeSetter?.SetSize(fieldSizeX, fieldSizeY, _cellSize);
+                sizeSetter?.SetSize(fieldSizeX, fieldSizeY, _cellSize, layerIndex);
             }
         }
     }
