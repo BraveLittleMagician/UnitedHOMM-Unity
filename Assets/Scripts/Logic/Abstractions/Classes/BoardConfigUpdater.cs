@@ -24,13 +24,7 @@ public sealed class BoardConfigUpdater
 
         var axes = (MultipleAxes)newConfig.Axes;
         int minimalSize = _board.GetMinimalFieldSize(axes);
-        var finalConfig = newConfig;
-
-        if (newConfig.FieldSize < minimalSize)
-        {
-            finalConfig = newConfig with { FieldSize = minimalSize };
-            _logger.LogWarning($"Размер поля скорректирован с {newConfig.FieldSize} до {minimalSize} для размещения всех фигур.");
-        }
+        var finalConfig = BoardSizeCorrector.CorrectConfig(newConfig, minimalSize);
 
         if (finalConfig == _currentConfig)
         {

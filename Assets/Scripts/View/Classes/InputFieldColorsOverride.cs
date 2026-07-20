@@ -4,46 +4,41 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using VContainer;
-using VContainer.Unity;
 
 [RequireComponent(typeof(TMP_InputField))]
-public class InputFieldColorsOverride : MonoBehaviour
+public class InputFieldColorsOverride : MonoBehaviour, IButtonColorsSubscriber
 {
+    [SerializeField] private UIService _uiService = null!;
     private TMP_InputField _inputField = null!;
-    private IButtonColors _colors = null!;
+    private IButtonColorsProvider _provider = null!;
 
     private void Awake()
     {
         _inputField = GetComponent<TMP_InputField>();
         if (_inputField == null) throw new ArgumentNullException(nameof(_inputField));
+        if (_uiService == null) throw new ArgumentNullException(nameof(_uiService));
+        _uiService.RegisterSubscriber(this);
     }
-    private void Start()
+    private void OnDestroy()
     {
-        var resolver = GameLifetimeScope.Resolver;
-        if (resolver != null)
-            resolver.InjectGameObject(gameObject);
-        else
-            throw new ArgumentNullException(nameof(resolver));
+        _provider?.Unsubscribe(this);
     }
-    private void ApplyColors()
+    public void OnButtonColorsChanged(IButtonColors colors)
     {
-        _inputField.transition = ToSelectable(_colors.Transition);
+        _inputField.transition = ToSelectable(colors.Transition);
         ColorBlock b = _inputField.colors;
-        b.normalColor = _colors.NormalColor;
-        b.highlightedColor = _colors.HighlightedColor;
-        b.pressedColor = _colors.PressedColor;
-        b.selectedColor = _colors.SelectedColor;
-        b.disabledColor = _colors.DisabledColor;
-        b.fadeDuration = _colors.FadeDuration;
+        b.normalColor = colors.NormalColor;
+        b.highlightedColor = colors.HighlightedColor;
+        b.pressedColor = colors.PressedColor;
+        b.selectedColor = colors.SelectedColor;
+        b.disabledColor = colors.DisabledColor;
+        b.fadeDuration = colors.FadeDuration;
         _inputField.colors = b;
     }
-
-    [Inject]
-    public void Construct(IButtonColors colors)
+    public void SetProvider(IButtonColorsProvider provider)
     {
-        _colors = colors ?? throw new ArgumentNullException(nameof(colors));
-        ApplyColors();
+        _provider = provider;
+        _provider.Subscribe(this);
     }
 
     private static Selectable.Transition ToSelectable(TransitionType transition) => transition switch

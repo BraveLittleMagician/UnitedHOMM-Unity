@@ -12,11 +12,13 @@ public sealed class GameConfigLoader : IGameConfigLoader
 
         var wrapper = JsonUtility.FromJson<ConfigWrapper>(textAsset.text);
         if (wrapper == null) throw new Exception("Неверный формат конфигурации: отсутствует раздел 'Board'");
+        
+        int correctedSize = BoardSizeCorrector.CorrectSize(wrapper.Board.FieldSize);
 
         return new BoardConfig
         {
             Axes = ParseAxes(wrapper.Board.Axes),
-            FieldSize = wrapper.Board.FieldSize,
+            FieldSize = correctedSize,
             NumberOfSides = wrapper.Board.NumberOfSides,
             NumberOfPlayersOnSide = wrapper.Board.NumberOfPlayersOnSide
         };

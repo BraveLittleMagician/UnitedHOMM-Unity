@@ -44,7 +44,7 @@ public class ControllerOfCamera : MonoBehaviour, IControllerOfCamera
 
         Vector3 center = ComputeCenter(bounds);
         float halfSize = ComputeHalfSize(bounds);
-        bool is3D = bounds.TryGetValue(Axis.Z, out var z) && (z.Max - z.Min) > 0;
+        bool is3D = bounds.ContainsKey(Axis.Z);
         float effectivePadding = is3D ? _paddingFactor3D : _paddingFactor2D;
         float distance = Mathf.Max(ComputeDistance(halfSize, _camera.fieldOfView, effectivePadding), _minDistance);
 

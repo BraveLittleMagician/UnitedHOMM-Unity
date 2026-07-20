@@ -591,6 +591,7 @@ GameObject:
   - component: {fileID: 526232269}
   - component: {fileID: 526232268}
   - component: {fileID: 526232272}
+  - component: {fileID: 526232273}
   m_Layer: 0
   m_Name: HolderOfScripts
   m_TagString: Untagged
@@ -677,10 +678,12 @@ MonoBehaviour:
   _buttonColors: {fileID: 526232272}
   _globalSurroundingsHolder: {fileID: 1446525817}
   _globalObjectsHolder: {fileID: 1336208979}
+  _uiService: {fileID: 526232273}
   _clickEventer: {fileID: 756965397}
   _cameraController: {fileID: 1823688470}
   _gameView: {fileID: 526232270}
   _gridRenderer: {fileID: 526232269}
+  _pieceRenderer: {fileID: 526232268}
   _autoStart: 1
 --- !u!114 &526232272
 MonoBehaviour:
@@ -701,6 +704,18 @@ MonoBehaviour:
   <SelectedColor>k__BackingField: {r: 0.2705882, g: 0.8117647, b: 1, a: 1}
   <DisabledColor>k__BackingField: {r: 0.282353, g: 0.282353, b: 0.282353, a: 0.4980392}
   <FadeDuration>k__BackingField: 0.1
+--- !u!114 &526232273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9cd7e9649f32b74c9871de5b8dd3324, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIService
 --- !u!1 &756965393
 GameObject:
   m_ObjectHideFlags: 0
@@ -1223,8 +1238,8 @@ GameObject:
   - component: {fileID: 1575039697}
   - component: {fileID: 1575039696}
   - component: {fileID: 1575039695}
-  - component: {fileID: 1575039698}
   - component: {fileID: 1575039699}
+  - component: {fileID: 1575039700}
   m_Layer: 5
   m_Name: InputField (TMP)
   m_TagString: Untagged
@@ -1391,18 +1406,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1575039693}
   m_CullTransparentMesh: 1
---- !u!114 &1575039698
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1575039693}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c568d545d591f5d40917098586af00b3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
 --- !u!114 &1575039699
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1415,6 +1418,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f3bf86f77ea6cc498b9251491b60bf6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoardSizeInput
+--- !u!114 &1575039700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1575039693}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37f9e997a4c9c2549a1e61c0550d2d22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InputFieldColorsOverride
+  _uiService: {fileID: 526232273}
 --- !u!1 &1823688464
 GameObject:
   m_ObjectHideFlags: 0

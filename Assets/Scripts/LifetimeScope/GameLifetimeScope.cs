@@ -11,6 +11,7 @@ public class GameLifetimeScope : LifetimeScope
     [SerializeField] private ButtonColors _buttonColors = null!;
     [SerializeField] private GlobalGeneratedSurroundingsHolder _globalSurroundingsHolder = null!;
     [SerializeField] private GlobalGeneratedDynamicObjectsHolder _globalObjectsHolder = null!;
+    [SerializeField] private UIService _uiService = null!;
     [SerializeField] private ClickEventer _clickEventer = null!;
     [SerializeField] private ControllerOfCamera _cameraController = null!;
     [SerializeField] private GameView _gameView = null!;
@@ -24,6 +25,7 @@ public class GameLifetimeScope : LifetimeScope
         if (_buttonColors == null) throw new ArgumentNullException(nameof(_buttonColors));
         if (_globalSurroundingsHolder == null) throw new ArgumentNullException(nameof(_globalSurroundingsHolder));
         if (_globalObjectsHolder == null) throw new ArgumentNullException(nameof(_globalObjectsHolder));
+        if (_uiService == null) throw new ArgumentNullException(nameof(_uiService));
         if (_clickEventer == null) throw new ArgumentNullException(nameof(_clickEventer));
         if (_cameraController == null) throw new ArgumentNullException(nameof(_cameraController));
         if (_gridRenderer == null) throw new ArgumentNullException(nameof(_gridRenderer));
@@ -38,7 +40,6 @@ public class GameLifetimeScope : LifetimeScope
         var seats = new Seats(boardConfig.NumberOfSides, boardConfig.NumberOfPlayersOnSide);
         var axes = (MultipleAxes)boardConfig.Axes;
         var box = new AxisAlignedBox(axes, boardConfig.FieldSize, 0);
-        builder.RegisterBuildCallback(resolver => { Resolver = resolver; });
         builder.RegisterInstance(boardConfig);
         builder.RegisterInstance(seats);
         builder.RegisterInstance(configLoader).As<IGameConfigLoader>();
@@ -68,8 +69,10 @@ public class GameLifetimeScope : LifetimeScope
         builder.RegisterComponent(_gridRenderer).AsSelf();
         builder.RegisterComponent(_pieceRenderer).AsSelf();
         builder.RegisterComponent(_cameraController).As<IControllerOfCamera>();
-        builder.RegisterComponent(_globalDeselector).As<IGlobalDeselector>();
         builder.RegisterComponent(_buttonColors).As<IButtonColors>();
+        builder.RegisterComponent(_uiService).AsSelf();
+        builder.Register<ButtonColorsProvider>(Lifetime.Singleton).As<IButtonColorsProvider>().WithParameter("initialColors", _buttonColors);
+        builder.RegisterComponent(_globalDeselector).As<IGlobalDeselector>();
         builder.RegisterComponent(_globalSurroundingsHolder).As<IGlobalGeneratedSurroundingsHolder>();
         builder.RegisterComponent(_globalObjectsHolder).As<IGlobalGeneratedDynamicObjectsHolder>();
         builder.RegisterComponent(_clickEventer).AsSelf();
@@ -79,8 +82,6 @@ public class GameLifetimeScope : LifetimeScope
         builder.Register<GameStarter>(Lifetime.Singleton).As<IGameStarter>();
         if (_autoStart) builder.RegisterEntryPoint<AutoGameStarter>();
     }
-
-    public static IObjectResolver? Resolver { get; private set; }
 
     private class AutoGameStarter : IStartable
     {
