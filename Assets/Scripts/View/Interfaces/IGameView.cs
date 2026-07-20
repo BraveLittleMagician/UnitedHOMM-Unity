@@ -4,6 +4,7 @@ using System;
 
 public interface IGameView
 {
+    void BuildGrid(AxisAlignedBox box);
     void CreatePiece(IPiece piece, Square position);
     void DestroyPiece(IPiece piece);
     void UpdatePiecePosition(IPiece piece, Square newPosition);

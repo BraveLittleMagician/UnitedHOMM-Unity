@@ -38,8 +38,7 @@ public class GameLifetimeScope : LifetimeScope
         var configLoader = new GameConfigLoader();
         var boardConfig = configLoader.LoadBoardConfig();
         var seats = new Seats(boardConfig.NumberOfSides, boardConfig.NumberOfPlayersOnSide);
-        var axes = (MultipleAxes)boardConfig.Axes;
-        var box = new AxisAlignedBox(axes, boardConfig.FieldSize, 0);
+        var box = new AxisAlignedBox((MultipleAxes)boardConfig.Axes, boardConfig.FieldSize, boardConfig.WUp, boardConfig.WDown);
         builder.RegisterInstance(boardConfig);
         builder.RegisterInstance(seats);
         builder.RegisterInstance(configLoader).As<IGameConfigLoader>();

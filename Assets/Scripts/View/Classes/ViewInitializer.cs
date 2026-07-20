@@ -22,7 +22,7 @@ public sealed class ViewInitializer : IViewInitializer
         if (_gameView is GameView view)
         {
             var axes = (MultipleAxes)_boardConfig.Axes;
-            var box = new AxisAlignedBox(axes, _boardConfig.FieldSize, 0);
+            var box = new AxisAlignedBox(axes, _boardConfig.FieldSize, _boardConfig.WUp, _boardConfig.WDown);
             view.BuildGrid(box);
         }
 

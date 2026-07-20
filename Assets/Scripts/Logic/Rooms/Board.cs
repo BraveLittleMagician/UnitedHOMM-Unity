@@ -21,7 +21,7 @@ public sealed class Board : RoomT<Square>, ISquarePositionRoom
     {
         var newAxes = (MultipleAxes)e.NewConfig.Axes;
         var newSize = e.NewConfig.FieldSize;
-        _allowedArea = new AxisAlignedBox(newAxes, newSize, 0);
+        _allowedArea = new AxisAlignedBox(newAxes, newSize, e.NewConfig.WUp, e.NewConfig.WDown);
         Logger.Log($"Размер доски обновлён: {newSize} по осям {newAxes}");
     }
     protected override bool ValidateAdd(IPiece piece, Square position, out string error)

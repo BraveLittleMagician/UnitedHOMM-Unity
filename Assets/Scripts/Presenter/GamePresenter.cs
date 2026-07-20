@@ -43,7 +43,7 @@ public class GamePresenter : IStartable, IDisposable
         _currentConfig = e.NewConfig;
         _view.SetBoardSize(e.NewConfig.FieldSize);
         var axes = (MultipleAxes)_currentConfig.Axes;
-        var box = new AxisAlignedBox(axes, _currentConfig.FieldSize, 0);
+        var box = new AxisAlignedBox(axes, _currentConfig.FieldSize, e.NewConfig.WUp, e.NewConfig.WDown);
         _camera.FitToBoard(box.Bounds);
     }
     private void OnPieceDeployed(PieceDeployedEvent<Square> e) => _view.CreatePiece(e.Piece, e.Position);

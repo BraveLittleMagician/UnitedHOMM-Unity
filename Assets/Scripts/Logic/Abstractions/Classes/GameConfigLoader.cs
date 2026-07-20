@@ -19,17 +19,25 @@ public sealed class GameConfigLoader : IGameConfigLoader
         {
             Axes = ParseAxes(wrapper.Board.Axes),
             FieldSize = correctedSize,
+            WUp = ParseTrueFalse(wrapper.Board.WUp),
+            WDown = ParseTrueFalse(wrapper.Board.WDown),
             NumberOfSides = wrapper.Board.NumberOfSides,
             NumberOfPlayersOnSide = wrapper.Board.NumberOfPlayersOnSide
         };
     }
 
-    private static MultipleAxesFromTwo ParseAxes(string value) => value?.ToLower() switch
+    private static MultipleAxesFromTwo ParseAxes(int value) => value switch
     {
-        "two" => MultipleAxesFromTwo.Two,
-        "three" => MultipleAxesFromTwo.Three,
-        "four" => MultipleAxesFromTwo.Four,
+        2 => MultipleAxesFromTwo.Two,
+        3 => MultipleAxesFromTwo.Three,
+        4 => MultipleAxesFromTwo.Four,
         _ => MultipleAxesFromTwo.Two
+    };
+    private static bool ParseTrueFalse(string value) => value?.ToLower() switch
+    {
+        "f" => false,
+        "t" => true,
+        _ => false,
     };
 
     [Serializable]
@@ -41,8 +49,10 @@ public sealed class GameConfigLoader : IGameConfigLoader
     [Serializable]
     private class BoardData
     {
-        public string Axes = "Two";
+        public int Axes = 2;
         public int FieldSize = 8;
+        public string WUp = "f";
+        public string WDown = "f";
         public int NumberOfSides = 2;
         public int NumberOfPlayersOnSide = 1;
     }

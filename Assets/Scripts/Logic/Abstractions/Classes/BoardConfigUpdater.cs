@@ -1,7 +1,6 @@
 ﻿#nullable enable
 
 using System;
-using UnityEngine;
 
 public sealed class BoardConfigUpdater
 {

@@ -641,8 +641,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0acc50fe8fb19e54d9ecb3aeee6ce287, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridRenderer
-  _cellPrefab: {fileID: 8975001908766267932, guid: a910365b6eb0fc94796b889e2dc16129, type: 3}
+  _layerPrefab: {fileID: 3583780820822898658, guid: 5df20c1977fa53e4191e0f847d6af172, type: 3}
   _cellSize: 1
+  _wGroupSpacing: 1.5
 --- !u!114 &526232270
 MonoBehaviour:
   m_ObjectHideFlags: 0

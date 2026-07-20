@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-using System;
 using System.Collections.Generic;
 
 public sealed class AxisAlignedBox
@@ -8,11 +7,13 @@ public sealed class AxisAlignedBox
     private readonly Dictionary<Axis, (int Min, int Max)> _bounds;
 
     public AxisAlignedBox(IReadOnlyDictionary<Axis, (int Min, int Max)> bounds) => _bounds = new Dictionary<Axis, (int Min, int Max)>(bounds);
-    public AxisAlignedBox(MultipleAxes axes, int size, int minCoordinate = 0)
+    public AxisAlignedBox(MultipleAxes axes, int size, bool wup, bool wdown)
     {
         _bounds = new Dictionary<Axis, (int, int)>();
         foreach (var axis in axes.GetSeparatedAxes())
-            _bounds[axis] = (minCoordinate, minCoordinate + size - 1);
+            _bounds[axis] = (0, size - 1);
+        if (axes == MultipleAxes.Four)
+            _bounds[Axis.W] = (wdown ? -1 : 0, wup ? 1 : 0);
     }
 
     public IReadOnlyDictionary<Axis, (int Min, int Max)> Bounds => _bounds;

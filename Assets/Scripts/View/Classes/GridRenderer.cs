@@ -12,19 +12,21 @@ public class GridRenderer : MonoBehaviour
     private IEventBus _eventBus = null!;
     private IGlobalGeneratedSurroundingsHolder _holder = null!;
     private IObjectResolver _resolver = null!;
-    private AxisAlignedBox? _pendingBox = null;
     private GameObject? _gridRoot = null;
+    private AxisAlignedBox? _pendingBox = null;
 
-    [SerializeField] private GameObject _cellPrefab = null!;
+    [SerializeField] private GameObject _layerPrefab = null!;
     [SerializeField] private float _cellSize = 1f;
+    [SerializeField] private float _wGroupSpacing = 1.5f;
 
     private void Awake()
     {
-        if (_cellPrefab == null) throw new ArgumentNullException(nameof(_cellPrefab));
+        if (_layerPrefab == null) throw new ArgumentNullException(nameof(_layerPrefab));
     }
     private void OnDestroy()
     {
-        _eventBus?.Unsubscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
+        _eventBus?.Unsubscribe<BoardConfigChangedEvent>(OnBoardConfigChanged); 
+        ClearGrid();
     }
 
     private void ClearGrid()
@@ -39,7 +41,7 @@ public class GridRenderer : MonoBehaviour
     {
         var newConfig = e.NewConfig;
         var axes = (MultipleAxes)newConfig.Axes;
-        var box = new AxisAlignedBox(axes, newConfig.FieldSize, 0);
+        var box = new AxisAlignedBox(axes, newConfig.FieldSize, newConfig.WUp, newConfig.WDown);
         BuildGridInternal(box);
     }
     private void BuildGridInternal(AxisAlignedBox box)
@@ -53,6 +55,9 @@ public class GridRenderer : MonoBehaviour
         box.TryGetBounds(Axis.Z, out int minZ, out int maxZ);
         box.TryGetBounds(Axis.W, out int minW, out int maxW);
 
+        int fieldSizeX = maxX - minX + 1;
+        int fieldSizeY = maxY - minY + 1;
+
         _gridRoot = new GameObject("Grid");
         _gridRoot.transform.SetParent(_holder.Transform, false);
         _resolver.InjectGameObject(_gridRoot);
@@ -65,40 +70,39 @@ public class GridRenderer : MonoBehaviour
             [Axis.W] = (minW, maxW)
         };
 
-        BuildHierarchy(_gridRoot.transform, orderedAxes, 0, new Dictionary<Axis, int>(), ranges);
+        for (int w = minW; w <= maxW; w++)
+        {
+            GameObject wGroup = new GameObject($"W={w}");
+            wGroup.transform.SetParent(_gridRoot.transform, false);
+            _resolver.InjectGameObject(wGroup);
+
+            Vector3 wOffset = new ((w - minW) * (fieldSizeX * _cellSize + _wGroupSpacing), 0, 0 );
+            wGroup.transform.localPosition = wOffset;
+
+            for (int z = minZ; z <= maxZ; z++)
+            {
+                GameObject layer = Instantiate(_layerPrefab, wGroup.transform);
+                layer.name = $"W={w}_Z={z}";
+                _resolver.InjectGameObject(layer);
+
+                Vector3 posMin = GridToWorldLocal(minX, minY, z);
+                Vector3 posMax = GridToWorldLocal(maxX, maxY, z);
+                Vector3 center = (posMin + posMax) / 2f;
+                layer.transform.localPosition = center;
+
+                var sizeSetter = layer.GetComponent<ILayerSizeSetter>();
+                sizeSetter?.SetSize(fieldSizeX, fieldSizeY, _cellSize);
+            }
+        }
     }
-    private void BuildHierarchy(Transform parent, Axis[] axes, int axisIndex, Dictionary<Axis, int> currentCoords, Dictionary<Axis, (int Min, int Max)> ranges)
+    private Vector3 GridToWorldLocal(int x, int y, int z)
     {
-        if (axisIndex >= axes.Length) return;
-
-        Axis currentAxis = axes[axisIndex];
-        var (min, max) = ranges[currentAxis];
-
-        if (currentAxis == Axis.X)
-        {
-            for (int x = min; x <= max; x++)
-            {
-                var cellCoords = new Dictionary<Axis, int>(currentCoords) { [Axis.X] = x };
-                var pos = GridToWorld(cellCoords);
-                var go = Instantiate(_cellPrefab, pos, _cellPrefab.transform.rotation, parent);
-                go.name = $"{currentAxis}={x} (cell)";
-                _resolver.InjectGameObject(go);
-
-            }
-            return;
-        }
-        else
-        {
-            for (int value = min; value <= max; value++)
-            {
-                var group = new GameObject($"{currentAxis}={value}");
-                group.transform.SetParent(parent, false);
-                _resolver.InjectGameObject(group);
-                var newCoords = new Dictionary<Axis, int>(currentCoords) { [currentAxis] = value };
-                BuildHierarchy(group.transform, axes, axisIndex + 1, newCoords, ranges);
-            }
-        }
+        float wx = x * _cellSize;
+        float wy = z * _cellSize;
+        float wz = y * _cellSize;
+        return new Vector3(wx, wy, wz);
     }
+
     private Vector3 GridToWorld(Dictionary<Axis, int> coords)
     {
         var origin = _holder.Transform.position;
