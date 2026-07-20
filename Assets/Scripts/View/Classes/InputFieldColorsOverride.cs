@@ -21,7 +21,8 @@ public class InputFieldColorsOverride : MonoBehaviour, IButtonColorsSubscriber
     }
     private void OnDestroy()
     {
-        _provider?.Unsubscribe(this);
+        _provider?.Unsubscribe(this); 
+        _uiService.UnregisterSubscriber(this);
     }
     public void OnButtonColorsChanged(IButtonColors colors)
     {
