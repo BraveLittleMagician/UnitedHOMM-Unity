@@ -51,8 +51,8 @@ public sealed class GameConfigLoader : IGameConfigLoader
     {
         public int Axes = 2;
         public int FieldSize = 8;
-        public string WUp = "f";
-        public string WDown = "f";
+        public string WUp = "t";
+        public string WDown = "t";
         public int NumberOfSides = 2;
         public int NumberOfPlayersOnSide = 1;
     }

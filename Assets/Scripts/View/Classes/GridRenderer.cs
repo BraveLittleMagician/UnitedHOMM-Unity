@@ -48,8 +48,6 @@ public class GridRenderer : MonoBehaviour
     {
         ClearGrid();
 
-        var orderedAxes = new Axis[] { Axis.W, Axis.Z, Axis.Y, Axis.X }.ToArray();
-
         box.TryGetBounds(Axis.X, out int minX, out int maxX);
         box.TryGetBounds(Axis.Y, out int minY, out int maxY);
         box.TryGetBounds(Axis.Z, out int minZ, out int maxZ);
@@ -62,21 +60,17 @@ public class GridRenderer : MonoBehaviour
         _gridRoot.transform.SetParent(_holder.Transform, false);
         _resolver.InjectGameObject(_gridRoot);
 
-        var ranges = new Dictionary<Axis, (int Min, int Max)>
-        {
-            [Axis.X] = (minX, maxX),
-            [Axis.Y] = (minY, maxY),
-            [Axis.Z] = (minZ, maxZ),
-            [Axis.W] = (minW, maxW)
-        };
+        Vector3 startOffset = new(-((maxW - minW) / 2 * (fieldSizeX * _cellSize + _wGroupSpacing)), 0, 0);
 
         for (int w = minW; w <= maxW; w++)
         {
-            GameObject wGroup = new GameObject($"W={w}");
+            GameObject wGroup = new ($"W={w}");
             wGroup.transform.SetParent(_gridRoot.transform, false);
             _resolver.InjectGameObject(wGroup);
 
-            Vector3 wOffset = new ((w - minW) * (fieldSizeX * _cellSize + _wGroupSpacing), 0, 0 );
+            Vector3 offset = new ((w - minW) * (fieldSizeX * _cellSize + _wGroupSpacing), 0, 0 );
+            Vector3 wOffset = startOffset + offset;
+
             wGroup.transform.localPosition = wOffset;
 
             for (int z = minZ; z <= maxZ; z++)
