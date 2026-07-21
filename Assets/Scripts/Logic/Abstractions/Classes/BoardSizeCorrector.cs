@@ -1,5 +1,7 @@
 ﻿#nullable enable
 
+using System;
+
 public static class BoardSizeCorrector
 {
     public static int CorrectSize(int proposedSize, int? minimalSize = null)
@@ -12,6 +14,8 @@ public static class BoardSizeCorrector
             correctedSize = minimalSize.Value;
             if (correctedSize % 2 != 0) correctedSize++;
         }
+
+        correctedSize = Math.Min(4096, correctedSize);
 
         return correctedSize;
     }

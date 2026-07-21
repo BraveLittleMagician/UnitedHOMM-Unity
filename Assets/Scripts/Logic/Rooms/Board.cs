@@ -3,15 +3,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 public sealed class Board : RoomT<Square>, ISquarePositionRoom
 {
     private AxisAlignedBox _allowedArea;
 
     public Board(Seats seats, AxisAlignedBox allowedArea, IEventBus eventBus, ILogger logger) : base(seats, eventBus, logger)
-    { 
-        _allowedArea = allowedArea ?? throw new ArgumentNullException(nameof(allowedArea)); 
+    {
+        _allowedArea = allowedArea ?? throw new ArgumentNullException(nameof(allowedArea));
         eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
     }
 

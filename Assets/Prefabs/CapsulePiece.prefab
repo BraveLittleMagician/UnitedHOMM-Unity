@@ -11,9 +11,10 @@ GameObject:
   - component: {fileID: 879868906640927352}
   - component: {fileID: 8871111599785335072}
   - component: {fileID: 1728026070415371171}
-  - component: {fileID: 6903765436662468437}
+  - component: {fileID: 5278721575446444824}
   - component: {fileID: 4251582066601748772}
   - component: {fileID: 531676985047633180}
+  - component: {fileID: 462068850534744127}
   m_Layer: 0
   m_Name: CapsulePiece
   m_TagString: Untagged
@@ -93,8 +94,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &6903765436662468437
-BoxCollider:
+--- !u!136 &5278721575446444824
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -111,8 +112,10 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 2, z: 1}
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &4251582066601748772
 MonoBehaviour:
@@ -220,6 +223,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonBehavior
   <Interactable>k__BackingField: 1
-  _onClick:
-    m_PersistentCalls:
-      m_Calls: []
+--- !u!114 &462068850534744127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5858894291874319536}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ee76eb57c1db334b9eb6d8ceb8c9005, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PieceSelectionHandler

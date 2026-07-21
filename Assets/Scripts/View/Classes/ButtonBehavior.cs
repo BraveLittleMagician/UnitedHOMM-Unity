@@ -3,7 +3,6 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Events;
 using VContainer;
 
 [RequireComponent(typeof(Renderer))]
@@ -19,7 +18,6 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     private bool _initialized = false;
 
     [field: SerializeField] public bool Interactable { get; private set; } = true;
-    [SerializeField] private UnityEvent _onClick = new();
 
     private void Awake()
     {
@@ -94,8 +92,8 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     public void OnPointerExit()
     {
         _isHovered = false;
-        UpdateVisualState();
         _deselector.RegisterSubscriber(this);
+        UpdateVisualState();
     }
     public void OnPointerDown()
     {
@@ -112,17 +110,21 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     {
         if (!Interactable) return;
         Select();
-        _onClick.Invoke();
     }
     public void Select()
     {
         _isSelected = true;
         UpdateVisualState();
+        OnSelected?.Invoke();
     }
     public void Deselect()
     {
         _deselector.UnregisterSubscriber(this);
         _isSelected = false;
         UpdateVisualState();
+        OnDeselected?.Invoke();
     }
+
+    public event Action? OnSelected;
+    public event Action? OnDeselected;
 }

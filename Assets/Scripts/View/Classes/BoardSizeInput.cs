@@ -23,7 +23,7 @@ public class BoardSizeInput : MonoBehaviour
     }
     private void OnEndEdit(string value)
     {
-        if (int.TryParse(value, out int newSize) && newSize >= 2)
+        if (int.TryParse(value, out int newSize) && newSize >= 2 && newSize <= 4096)
         {
             _lastValidSize = newSize;
             OnValueChanged?.Invoke(newSize);

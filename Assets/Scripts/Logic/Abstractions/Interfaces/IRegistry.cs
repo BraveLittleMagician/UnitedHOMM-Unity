@@ -6,5 +6,6 @@ using System.Numerics;
 
 public interface IRegistry : IDisposable
 {
-    public bool TryGetRoomByIndex([NotNullWhen(true)] BigInteger index, out IRoom? room);
+    bool TryToGetPosition<TPos>(BigInteger index, out TPos position) where TPos : struct;
+    bool TryToGetRoom([NotNullWhen(true)] BigInteger index, out IRoom? room);
 }

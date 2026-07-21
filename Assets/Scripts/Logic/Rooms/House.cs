@@ -31,6 +31,7 @@ public sealed class House : IHouse
             return false;
 
         _rooms[type] = room;
+        RoomAdded?.Invoke(room);
         return true;
     }
     public bool TryToGetRoom<T>(out T room) where T : IRoom
@@ -62,4 +63,6 @@ public sealed class House : IHouse
         var index = _indexes.GetNext();
         return _pieceFactory.Create(index, definition);
     }
+    
+    public event Action<IRoom>? RoomAdded;
 }

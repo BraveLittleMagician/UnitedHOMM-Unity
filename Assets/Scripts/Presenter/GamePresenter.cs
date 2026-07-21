@@ -10,20 +10,23 @@ public class GamePresenter : IStartable, IDisposable
     private readonly IGameView _view;
     private readonly IEventBus _eventBus;
     private readonly IControllerOfCamera _camera;
+    private readonly IRegistry _registry;
     private readonly BoardConfigUpdater _configUpdater;
     private BoardConfig _currentConfig;
 
-    public GamePresenter(IFlow flow, IGameView view, IEventBus eventBus, IControllerOfCamera camera, BoardConfigUpdater configUpdater, BoardConfig initialConfig)
+    public GamePresenter(IFlow flow, IGameView view, IEventBus eventBus, IControllerOfCamera camera, IRegistry registry, BoardConfigUpdater configUpdater, BoardConfig initialConfig)
     {
         _flow = flow;
         _view = view;
         _eventBus = eventBus;
         _camera = camera;
+        _registry = registry;
         _configUpdater = configUpdater;
         _currentConfig = initialConfig;
 
         _view.BoardSizeInputChanged += OnBoardSizeInputChanged;
-
+        
+        _eventBus.Subscribe<PieceSelectedEvent>(OnPieceSelectedEvent);
         _eventBus.Subscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Subscribe<PieceDeployedEvent<int>>(OnPieceDeployed);
         _eventBus.Subscribe<PieceMovedEvent<Square>>(OnPieceMoved);
@@ -32,6 +35,42 @@ public class GamePresenter : IStartable, IDisposable
         _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
     }
 
+    private void OnPieceSelectedEvent(PieceSelectedEvent e)
+    {
+        var piece = e.Piece;
+        if (!_registry.TryToGetRoom(piece.IndexInHouse, out var room))
+        {
+            Debug.Log($"Фигура {piece} не найдена в реестре.");
+            return;
+        }
+
+        if (room is Board)
+        {
+            if (_registry.TryToGetPosition<Square>(piece.IndexInHouse, out var pos))
+            {
+                Debug.Log($"Фигура {piece} находится в комнате {room.Name} на позиции {pos}");
+            }
+            else
+            {
+                Debug.Log($"Фигура {piece} в комнате {room.Name}, но позиция не определена.");
+            }
+        }
+        else if (room is Decks)
+        {
+            if (_registry.TryToGetPosition<int>(piece.IndexInHouse, out var deckPos))
+            {
+                Debug.Log($"Фигура {piece} находится в колоде {room.Name} на позиции {deckPos}");
+            }
+            else
+            {
+                Debug.Log($"Фигура {piece} в колоде {room.Name}, но позиция не определена.");
+            }
+        }
+        else
+        {
+            Debug.Log($"Фигура {piece} в комнате {room?.Name} неизвестного типа.");
+        }
+    }
     private void OnBoardSizeInputChanged(int newSize)
     {
         if (newSize <= 0) return;
@@ -59,6 +98,7 @@ public class GamePresenter : IStartable, IDisposable
     public void Dispose()
     {
         _view.BoardSizeInputChanged -= OnBoardSizeInputChanged;
+        _eventBus.Unsubscribe<PieceSelectedEvent>(OnPieceSelectedEvent);
         _eventBus.Unsubscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Unsubscribe<PieceDeployedEvent<int>>(OnPieceDeployed);
         _eventBus.Unsubscribe<PieceMovedEvent<Square>>(OnPieceMoved);

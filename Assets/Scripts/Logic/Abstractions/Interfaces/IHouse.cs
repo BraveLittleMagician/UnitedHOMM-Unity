@@ -13,4 +13,6 @@ public interface IHouse : IDisposable
     bool AddRoom<T>(T room) where T : IRoom;
     bool TryToGetRoom<T>(out T room) where T : IRoom;
     IPiece CreatePiece(PieceDefinition definition);
+
+    event Action<IRoom>? RoomAdded;
 }

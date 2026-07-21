@@ -210,13 +210,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 157207112}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.62592345, y: -0, z: -0, w: 0.7798845}
-  m_LocalPosition: {x: 2.25, y: 8.5, z: 0}
+  m_LocalRotation: {x: 0.60876137, y: 0, z: 0, w: 0.7933534}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1285218520}
-  m_LocalEulerAnglesHint: {x: 45, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 75, y: 0, z: 0}
 --- !u!114 &157207115
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -641,7 +641,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0acc50fe8fb19e54d9ecb3aeee6ce287, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridRenderer
-  _layerPrefab: {fileID: 950297195517623786, guid: 19070e2ee42eb834a9dc419402496eaf, type: 3}
   _cellSize: 1
   _wGroupSpacing: 1.5
 --- !u!114 &526232270
@@ -685,6 +684,7 @@ MonoBehaviour:
   _gameView: {fileID: 526232270}
   _gridRenderer: {fileID: 526232269}
   _pieceRenderer: {fileID: 526232268}
+  _layerPrefab: {fileID: 950297195517623786, guid: 19070e2ee42eb834a9dc419402496eaf, type: 3}
   _autoStart: 1
 --- !u!114 &526232272
 MonoBehaviour:
@@ -1493,7 +1493,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 8000
   field of view: 60
   orthographic: 0
   orthographic size: 5

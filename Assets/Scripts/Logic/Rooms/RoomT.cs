@@ -54,7 +54,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         {
             if (pair.Value.IndexInHouse == index)
             {
-                pos = pair.Key; 
+                pos = pair.Key;
                 piece = pair.Value;
                 break;
             }
@@ -99,6 +99,24 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
 
         error = "";
         return true;
+    }
+    public override bool TryToGetPosition<TPos>(BigInteger index, out TPos pos) where TPos : struct
+    {
+        if (typeof(TPos) != typeof(TPosition))
+        {
+            pos = default;
+            return false;
+        }
+        foreach (var kvp in _pieces)
+        {
+            if (kvp.Value.IndexInHouse == index)
+            {
+                pos = (TPos)(object)kvp.Key;
+                return true;
+            }
+        }
+        pos = default;
+        return false;
     }
     public override bool TryToGetPiece<TPos>(TPos position, IndexOfPlayer player, [NotNullWhen(true)] out IPiece? piece)
     {
