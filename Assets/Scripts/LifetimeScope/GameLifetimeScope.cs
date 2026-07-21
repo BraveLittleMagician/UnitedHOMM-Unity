@@ -17,6 +17,7 @@ public class GameLifetimeScope : LifetimeScope
     [SerializeField] private GameView _gameView = null!;
     [SerializeField] private GridRenderer _gridRenderer = null!;
     [SerializeField] private PieceRenderer _pieceRenderer = null!;
+    [SerializeField] private GameObject _layerPrefab = null!;
     [SerializeField] private bool _autoStart = true;
 
     private void Start()
@@ -31,6 +32,7 @@ public class GameLifetimeScope : LifetimeScope
         if (_gridRenderer == null) throw new ArgumentNullException(nameof(_gridRenderer));
         if (_pieceRenderer == null) throw new ArgumentNullException(nameof(_pieceRenderer));
         if (_gameView == null) throw new ArgumentNullException(nameof(_gameView));
+        if (_layerPrefab == null) throw new ArgumentNullException(nameof(_layerPrefab));
     }
 
     protected override void Configure(IContainerBuilder builder)
@@ -76,6 +78,7 @@ public class GameLifetimeScope : LifetimeScope
         builder.RegisterComponent(_globalSurroundingsHolder).As<IGlobalGeneratedSurroundingsHolder>();
         builder.RegisterComponent(_globalObjectsHolder).As<IGlobalGeneratedDynamicObjectsHolder>();
         builder.RegisterComponent(_clickEventer).AsSelf();
+        builder.Register<GridBuilder>(Lifetime.Singleton).As<IGridBuilder>().WithParameter("layerPrefab", _layerPrefab);
         builder.Register<RoomInitializer>(Lifetime.Singleton).As<IRoomInitializer>();
         builder.Register<ViewInitializer>(Lifetime.Singleton).As<IViewInitializer>();
         builder.Register<PiecesSpawner>(Lifetime.Singleton).As<IPiecesSpawner>();

@@ -8,11 +8,9 @@ public class GridBuilder : IGridBuilder
 {
     private readonly IObjectResolver _resolver;
     private readonly GameObject _layerPrefab;
-    private readonly GridRenderer.Instantiater _instantiater;
 
-    public GridBuilder(GridRenderer.Instantiater instantiater, IObjectResolver resolver, GameObject layerPrefab)
+    public GridBuilder(IObjectResolver resolver, GameObject layerPrefab)
     {
-        _instantiater = instantiater;
         _resolver = resolver;
         _layerPrefab = layerPrefab;
     }
@@ -46,7 +44,7 @@ public class GridBuilder : IGridBuilder
 
             for (int z = minZ; z <= maxZ; z++)
             {
-                GameObject layer = _instantiater.Instance(_layerPrefab, wGroup.transform);
+                GameObject layer = Object.Instantiate(_layerPrefab, wGroup.transform);
                 layer.name = $"W={w}_Z={z}";
                 _resolver.InjectGameObject(layer);
 
@@ -62,11 +60,5 @@ public class GridBuilder : IGridBuilder
         return gridRoot;
     }
 
-    public Vector3 GridToWorldLocal(int x, int y, int z, float cellSize)
-    {
-        float wx = x * cellSize;
-        float wy = z * cellSize;
-        float wz = y * cellSize;
-        return new Vector3(wx, wy, wz);
-    }
+    public Vector3 GridToWorldLocal(int x, int y, int z, float cellSize) => new (x * cellSize, z * cellSize, y * cellSize);
 }
