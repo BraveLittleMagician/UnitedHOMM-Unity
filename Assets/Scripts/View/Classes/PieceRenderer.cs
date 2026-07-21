@@ -60,6 +60,7 @@ public class PieceRenderer : MonoBehaviour
             if (_pieceObjects.ContainsKey(piece)) return;
             
             var go = Instantiate(_piecePrefab, new Vector3(worldPosition.x, worldPosition.y + Offset, worldPosition.z), Quaternion.identity, _piecesRoot.transform);
+            _resolver.InjectGameObject(go);
             _pieceObjects[piece] = go;
         }
     }

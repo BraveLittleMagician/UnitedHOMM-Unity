@@ -44,6 +44,7 @@ public class GameLifetimeScope : LifetimeScope
         builder.RegisterInstance(configLoader).As<IGameConfigLoader>();
         builder.Register<EventBus>(Lifetime.Singleton).As<IEventBus>();
         builder.Register<LoggerForUnity>(Lifetime.Singleton).As<ILogger>();
+        builder.Register<GameStateManager>(Lifetime.Singleton).As<IGameStateManager>();
         builder.Register<House>(Lifetime.Singleton).As<IHouse>();
         builder.Register<Registry>(Lifetime.Singleton).As<IRegistry>();
         builder.Register(resolver =>
@@ -51,7 +52,7 @@ public class GameLifetimeScope : LifetimeScope
             var eventBus = resolver.Resolve<IEventBus>();
             var logger = resolver.Resolve<ILogger>();
             return new Board(seats, box, eventBus, logger);
-        }, Lifetime.Singleton);
+        }, Lifetime.Singleton).AsSelf();
         builder.Register(resolver =>
         {
             var board = resolver.Resolve<Board>();

@@ -26,9 +26,9 @@ public class LayerSizeSetter : MonoBehaviour, ILayerSizeSetter
         float worldWidth = width * cellSize;
         float worldHeight = height * cellSize;
 
-        Vector3 targetScale;
-        targetScale = new Vector3(worldWidth / _initialMeshSize.x, 1f, worldHeight / _initialMeshSize.z) * _initialScale.x;
+        Vector3 targetScale = new (worldWidth, worldHeight, 1);
         transform.localScale = targetScale;
+        transform.localEulerAngles = new (90, 0, 0);
         _renderer.material.SetVector("_CellSize", new Vector2(width / 2, height / 2));
         _renderer.material.SetFloat("_Reverse", layerIndex % 2 == 0 ? 0 : 1);
     }
