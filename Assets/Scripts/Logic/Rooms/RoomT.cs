@@ -100,24 +100,6 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         error = "";
         return true;
     }
-    public override bool TryToGetPosition<TPos>(BigInteger index, out TPos pos) where TPos : struct
-    {
-        if (typeof(TPos) != typeof(TPosition))
-        {
-            pos = default;
-            return false;
-        }
-        foreach (var kvp in _pieces)
-        {
-            if (kvp.Value.IndexInHouse == index)
-            {
-                pos = (TPos)(object)kvp.Key;
-                return true;
-            }
-        }
-        pos = default;
-        return false;
-    }
     public override bool TryToGetPiece<TPos>(TPos position, IndexOfPlayer player, [NotNullWhen(true)] out IPiece? piece)
     {
         if (position is TPosition typedPos && _pieces.TryGetValue(typedPos, out var p) && p != null && p.Owner.Equals(player))

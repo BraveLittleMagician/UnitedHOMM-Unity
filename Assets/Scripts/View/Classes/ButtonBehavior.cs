@@ -30,6 +30,7 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     }
     private void OnDestroy()
     {
+        _deselector?.UnregisterSubscriber(this);
         if (_colorCoroutine != null)
             StopCoroutine(_colorCoroutine);
     }
@@ -92,7 +93,7 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     public void OnPointerExit()
     {
         _isHovered = false;
-        _deselector.RegisterSubscriber(this);
+        
         UpdateVisualState();
     }
     public void OnPointerDown()
@@ -113,12 +114,15 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
     }
     public void Select()
     {
+        if (_isSelected) return;
         _isSelected = true;
+        _deselector.RegisterSubscriber(this);
         UpdateVisualState();
         OnSelected?.Invoke();
     }
     public void Deselect()
     {
+        if (!_isSelected) return;
         _deselector.UnregisterSubscriber(this);
         _isSelected = false;
         UpdateVisualState();

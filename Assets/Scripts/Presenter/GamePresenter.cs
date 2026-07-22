@@ -2,7 +2,6 @@
 
 using System;
 using VContainer.Unity;
-using UnityEngine;
 
 public class GamePresenter : IStartable, IDisposable
 {
@@ -26,7 +25,8 @@ public class GamePresenter : IStartable, IDisposable
 
         _view.BoardSizeInputChanged += OnBoardSizeInputChanged;
         
-        _eventBus.Subscribe<PieceSelectedEvent>(OnPieceSelectedEvent);
+        _eventBus.Subscribe<PieceSelectedEvent<Square>>(OnPieceSelectedEvent);
+        _eventBus.Subscribe<PieceSelectedEvent<int>>(OnPieceSelectedEvent);
         _eventBus.Subscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Subscribe<PieceDeployedEvent<int>>(OnPieceDeployed);
         _eventBus.Subscribe<PieceMovedEvent<Square>>(OnPieceMoved);
@@ -35,48 +35,15 @@ public class GamePresenter : IStartable, IDisposable
         _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
     }
 
-    private void OnPieceSelectedEvent(PieceSelectedEvent e)
-    {
-        var piece = e.Piece;
-        if (!_registry.TryToGetRoom(piece.IndexInHouse, out var room))
-        {
-            Debug.Log($"Фигура {piece} не найдена в реестре.");
-            return;
-        }
 
-        if (room is Board)
-        {
-            if (_registry.TryToGetPosition<Square>(piece.IndexInHouse, out var pos))
-            {
-                Debug.Log($"Фигура {piece} находится в комнате {room.Name} на позиции {pos}");
-            }
-            else
-            {
-                Debug.Log($"Фигура {piece} в комнате {room.Name}, но позиция не определена.");
-            }
-        }
-        else if (room is Decks)
-        {
-            if (_registry.TryToGetPosition<int>(piece.IndexInHouse, out var deckPos))
-            {
-                Debug.Log($"Фигура {piece} находится в колоде {room.Name} на позиции {deckPos}");
-            }
-            else
-            {
-                Debug.Log($"Фигура {piece} в колоде {room.Name}, но позиция не определена.");
-            }
-        }
-        else
-        {
-            Debug.Log($"Фигура {piece} в комнате {room?.Name} неизвестного типа.");
-        }
-    }
     private void OnBoardSizeInputChanged(int newSize)
     {
         if (newSize <= 0) return;
         var newConfig = _currentConfig with { FieldSize = newSize };
         _configUpdater.UpdateConfig(newConfig);
     }
+    private void OnPieceSelectedEvent(PieceSelectedEvent<Square> e) { }
+    private void OnPieceSelectedEvent(PieceSelectedEvent<int> e) { }
     private void OnBoardConfigChanged(BoardConfigChangedEvent e)
     {
         _currentConfig = e.NewConfig;
@@ -85,12 +52,12 @@ public class GamePresenter : IStartable, IDisposable
         var box = new AxisAlignedBox(axes, _currentConfig.FieldSize, e.NewConfig.WUp, e.NewConfig.WDown);
         _camera.FitToBoard(box.Bounds);
     }
-    private void OnPieceDeployed(PieceDeployedEvent<Square> e) => _view.CreatePiece(e.Piece, e.Position);
-    private void OnPieceDeployed(PieceDeployedEvent<int> e) => _view.CreatePieceInDeck(e.Piece, e.Position);
-    private void OnPieceMoved(PieceMovedEvent<Square> e) => _view.UpdatePiecePosition(e.Piece, e.ToPosition);
-    private void OnPieceMoved(PieceMovedEvent<int> e) => _view.UpdatePieceInDeckPosition(e.Piece, e.ToPosition);
-    private void OnPieceDied(PieceDiedEvent e) => _view.DestroyPiece(e.Piece);
-    
+    private void OnPieceDeployed(PieceDeployedEvent<Square> e) { }
+    private void OnPieceDeployed(PieceDeployedEvent<int> e) { }
+    private void OnPieceMoved(PieceMovedEvent<Square> e) { }
+    private void OnPieceMoved(PieceMovedEvent<int> e) { }
+    private void OnPieceDied(PieceDiedEvent e) { }
+
     public void Start()
     {
         _view.SetBoardSize(_currentConfig.FieldSize);
@@ -98,7 +65,8 @@ public class GamePresenter : IStartable, IDisposable
     public void Dispose()
     {
         _view.BoardSizeInputChanged -= OnBoardSizeInputChanged;
-        _eventBus.Unsubscribe<PieceSelectedEvent>(OnPieceSelectedEvent);
+        _eventBus.Unsubscribe<PieceSelectedEvent<Square>>(OnPieceSelectedEvent);
+        _eventBus.Unsubscribe<PieceSelectedEvent<int>>(OnPieceSelectedEvent);
         _eventBus.Unsubscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Unsubscribe<PieceDeployedEvent<int>>(OnPieceDeployed);
         _eventBus.Unsubscribe<PieceMovedEvent<Square>>(OnPieceMoved);

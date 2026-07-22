@@ -11,6 +11,7 @@ public class GridRenderer : MonoBehaviour
     private IGameStateManager _stateManager = null!;
     private IGridBuilder _gridBuilder = null!;
     private GameObject? _gridRoot = null;
+    private AxisAlignedBox? _lastBuiltBox = null;
     private AxisAlignedBox? _pendingBox = null;
 
     [SerializeField] private float _cellSize = 1f;
@@ -30,6 +31,7 @@ public class GridRenderer : MonoBehaviour
             Destroy(_gridRoot);
             _gridRoot = null;
         }
+        _lastBuiltBox = null;
     }
     private void OnBoardConfigChanged(BoardConfigChangedEvent e)
     {
@@ -49,6 +51,9 @@ public class GridRenderer : MonoBehaviour
     }
     private void BuildGridInternal(AxisAlignedBox box)
     {
+        if (_lastBuiltBox == box)
+            return;
+
         ClearGrid();
         _gridRoot = _gridBuilder.BuildGrid(box, _holder.Transform, _cellSize, _wGroupSpacing);
     }

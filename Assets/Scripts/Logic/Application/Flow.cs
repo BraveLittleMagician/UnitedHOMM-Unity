@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 public sealed class Flow : IFlow, IDisposable
 {
@@ -37,6 +38,15 @@ public sealed class Flow : IFlow, IDisposable
         _abilityService.DeactivateAbilities(e.Piece);
     }
 
+    public bool TryToGetPiece<TRoom, TPos>([NotNullWhen(true)] TPos position, IndexOfPlayer player, out IPiece? piece) where TRoom : IRoom where TPos : struct
+    {
+        if (!_house.TryToGetRoom<TRoom>(out var room))
+        {
+            piece = null;
+            return false;
+        }
+        return room.TryToGetPiece(position, player, out piece);
+    }
     public IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position) where TRoom : IRoom where TPos : struct
     {
         var roomResult = GetRoom<TRoom>();
@@ -119,17 +129,17 @@ public sealed class Flow : IFlow, IDisposable
     {
         var fromResult = GetRoom<TRoomFrom>();
         if (!fromResult.IsSuccess) return Result.Failure(fromResult.Error!);
-        
+
         var fromRoom = fromResult.Value!;
         var toResult = GetRoom<TRoomTo>();
-        
+
         if (!toResult.IsSuccess) return Result.Failure(toResult.Error!);
-        
+
         var toRoom = toResult.Value!;
 
         if (ReferenceEquals(fromRoom, toRoom)) return Result.Failure("Начальная и конечная комнаты одинаковы");
         if (!fromRoom.TryToGetPiece(fromPosition, owner, out var piece)) return Result.Failure($"Фигура игрока {owner} не найдена на позиции {fromPosition}");
-        
+
         _abilityService.DeactivateAbilities(piece);
 
         if (!toRoom.Add(piece, toPosition, true, out var error)) return Result.Failure($"Не удалось добавить фигуру в целевую комнату: {error}");
@@ -140,7 +150,7 @@ public sealed class Flow : IFlow, IDisposable
             _abilityService.ActivateAbilities(piece);
             return Result.Failure("Не удалось удалить фигуру из исходной комнаты");
         }
-        
+
         _abilityService.ActivateAbilities(piece);
         _logger.Log($"Фигура {piece} перемещена из {fromRoom.Name}:{fromPosition} в {toRoom.Name}:{toPosition}");
         return Result.Success();

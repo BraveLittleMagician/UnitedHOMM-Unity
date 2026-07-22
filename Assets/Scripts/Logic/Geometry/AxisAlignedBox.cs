@@ -1,8 +1,10 @@
 ﻿#nullable enable
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
-public sealed class AxisAlignedBox
+public sealed class AxisAlignedBox : IEquatable<AxisAlignedBox>
 {
     private readonly Dictionary<Axis, (int Min, int Max)> _bounds;
 
@@ -35,4 +37,17 @@ public sealed class AxisAlignedBox
         min = max = 0;
         return false;
     }
+
+    public override bool Equals(object? obj) => obj is AxisAlignedBox other && Equals(other);
+    public bool Equals(AxisAlignedBox? other)
+    {
+        if (other is null) return false;
+        return _bounds.SequenceEqual(other._bounds);
+    }
+
+    public override int GetHashCode() => _bounds.Aggregate(0, (acc, kv) => HashCode.Combine(acc, kv.Key, kv.Value.Min, kv.Value.Max));
+
+    public static bool operator ==(AxisAlignedBox? left, AxisAlignedBox? right) => left is null ? right is null : left.Equals(right);
+    public static bool operator !=(AxisAlignedBox? left, AxisAlignedBox? right) => !(left == right);
+
 }

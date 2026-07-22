@@ -7,7 +7,12 @@ using UnityEngine;
 public class GlobalDeselector : MonoBehaviour, IGlobalDeselector
 {
     private static readonly HashSet<IGlobalDeselectSubscriber> _subscribers = new();
-    
+
+    private void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
+
     public void RegisterSubscriber(IGlobalDeselectSubscriber subscriber)
     {
         if (!_subscribers.Contains(subscriber))

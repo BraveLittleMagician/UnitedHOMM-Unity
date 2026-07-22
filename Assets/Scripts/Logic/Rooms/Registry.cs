@@ -20,29 +20,6 @@ public sealed class Registry : IRegistry
 
         foreach (var room in house.Rooms.Values)
             SubscribeToRoom(room);
-        /*
-        {
-            void AddedHandler(IPiece piece, IRoomWithoutRemove roomWithoutRemove, bool fromAnotherRoom)
-            {
-                if (room is IRoom r)
-                    _indexToRoom[piece.IndexInHouse] = r;
-            }
-
-            void RemovedHandler(BigInteger index, IRoom room)
-            {
-                _indexToRoom.Remove(index);
-            }
-
-            room.PieceAdded += AddedHandler;
-            room.PieceRemoved += RemovedHandler;
-
-            _subscriptions.Add(new Subscription(() =>
-            {
-                room.PieceAdded -= AddedHandler;
-                room.PieceRemoved -= RemovedHandler;
-            }));
-        }
-        */
     }
 
     private void OnRoomAdded(IRoom room) => SubscribeToRoom(room);
@@ -68,15 +45,6 @@ public sealed class Registry : IRegistry
         }
     }
 
-    public bool TryToGetPosition<TPos>(BigInteger index, out TPos position) where TPos : struct
-    {
-        if (_indexToRoom.TryGetValue(index, out var room) && room is RoomT<TPos> typedRoom)
-        {
-            return typedRoom.TryToGetPosition(index, out position);
-        }
-        position = default;
-        return false;
-    }
     public bool TryToGetRoom([NotNullWhen(true)] BigInteger index, out IRoom? room)
     {
         return _indexToRoom.TryGetValue(index, out room);

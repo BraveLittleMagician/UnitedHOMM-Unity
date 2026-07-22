@@ -1,3 +1,3 @@
 ﻿#nullable enable
 
-public record PieceSelectedEvent(IPiece Piece);
+public record PieceSelectedEvent<TPos>(IPiece Piece, TPos position) where TPos : struct;
