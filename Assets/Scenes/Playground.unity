@@ -1603,6 +1603,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ControllerOfCamera
   _paddingFactor2D: 0.75
   _paddingFactor3D: 1.5
+  _orthographicZOffset: -10
 --- !u!1 &1853130928
 GameObject:
   m_ObjectHideFlags: 0

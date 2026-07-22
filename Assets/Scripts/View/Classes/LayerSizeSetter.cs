@@ -26,11 +26,12 @@ public class LayerSizeSetter : MonoBehaviour, ILayerSizeSetter
         float worldWidth = width * cellSize;
         float worldHeight = height * cellSize;
 
-        Vector3 targetScale = new (worldWidth, worldHeight, 1);
+        Vector3 targetScale = new(worldWidth, worldHeight, 1);
         transform.localScale = targetScale;
-        transform.localEulerAngles = new (90, 0, 0);
+        transform.localEulerAngles = new(90, 0, 0);
 
         _propertyBlock.SetVector("_CellSize", new Vector2(width / 2, height / 2));
         _propertyBlock.SetFloat("_Reverse", layerIndex % 2 == 0 ? 0 : 1);
+        _renderer.SetPropertyBlock(_propertyBlock);
     }
 }
