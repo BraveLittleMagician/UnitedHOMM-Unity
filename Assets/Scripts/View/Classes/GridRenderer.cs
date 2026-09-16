@@ -2,7 +2,6 @@
 
 using System;
 using UnityEngine;
-using VContainer;
 
 public class GridRenderer : MonoBehaviour
 {
@@ -16,6 +15,17 @@ public class GridRenderer : MonoBehaviour
 
     [SerializeField] private float _cellSize = 1f;
     [SerializeField] private float _wGroupSpacing = 1.5f;
+
+    public void Initialize(IEventBus eventBus, IGlobalGeneratedSurroundingsHolder holder, IGameStateManager stateManager, IGridBuilder builder)
+    {
+        _holder = holder ?? throw new ArgumentNullException(nameof(holder));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _gridBuilder = builder ?? throw new ArgumentNullException(nameof(builder));
+        _stateManager = stateManager ?? throw new ArgumentNullException(nameof(stateManager));
+
+        _stateManager.GameStarted += OnGameStarted;
+        _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
+    }
 
     private void OnDestroy()
     {
@@ -58,23 +68,6 @@ public class GridRenderer : MonoBehaviour
         _gridRoot = _gridBuilder.BuildGrid(box, _holder.Transform, _cellSize, _wGroupSpacing);
     }
 
-    [Inject]
-    public void Construct(IEventBus eventBus, IGlobalGeneratedSurroundingsHolder holder, IGameStateManager stateManager, IGridBuilder builder)
-    {
-        _holder = holder ?? throw new ArgumentNullException(nameof(holder));
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _gridBuilder = builder ?? throw new ArgumentNullException(nameof(builder));
-        _stateManager = stateManager ?? throw new ArgumentNullException(nameof(stateManager));
-
-        _stateManager.GameStarted += OnGameStarted;
-        _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
-
-        if (_pendingBox != null && _stateManager.IsGameStarted)
-        {
-            BuildGridInternal(_pendingBox);
-            _pendingBox = null;
-        }
-    }
     public void BuildGrid(AxisAlignedBox box)
     {
         if (!_stateManager.IsGameStarted)

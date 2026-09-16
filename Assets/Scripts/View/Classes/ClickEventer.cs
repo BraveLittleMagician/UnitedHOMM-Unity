@@ -3,7 +3,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using VContainer;
 
 public class ClickEventer : MonoBehaviour
 {
@@ -32,8 +31,7 @@ public class ClickEventer : MonoBehaviour
         _deselector?.TriggerGlobalClick();
     }
 
-    [Inject]
-    public void Construct(IGlobalDeselector deselector)
+    public void Initialize(IGlobalDeselector deselector)
     {
         _deselector = deselector ?? throw new ArgumentNullException(nameof(deselector));
     }

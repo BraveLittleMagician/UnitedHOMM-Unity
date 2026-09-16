@@ -3,7 +3,6 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using VContainer;
 
 [RequireComponent(typeof(Renderer))]
 public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
@@ -66,15 +65,13 @@ public class ButtonBehavior : MonoBehaviour, IGlobalDeselectSubscriber
         _colorCoroutine = null;
     }
 
-    [Inject]
-    public void Construct(IButtonColors colors, IGlobalDeselector deselector)
+    public void Initialize(IButtonColors colors, IGlobalDeselector deselector)
     {
         _colors = colors ?? throw new ArgumentNullException(nameof(colors));
         _deselector = deselector ?? throw new ArgumentNullException(nameof(deselector));
         _initialized = true;
         UpdateVisualState();
     }
-
     public void Interact(bool val)
     {
         Interactable = val;

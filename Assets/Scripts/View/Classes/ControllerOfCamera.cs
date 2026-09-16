@@ -8,7 +8,7 @@ using UnityEngine;
 public class ControllerOfCamera : MonoBehaviour, IControllerOfCamera
 {
     [SerializeField] private float _paddingFactor2D = 0.75f;
-    [SerializeField]  private float _paddingFactor3D = 1.5f;
+    [SerializeField] private float _paddingFactor3D = 1.5f;
     [SerializeField] private float _orthographicZOffset = -10f;
     private const float _minDistance = 1f;
     private Camera _camera = null!;
@@ -63,4 +63,5 @@ public class ControllerOfCamera : MonoBehaviour, IControllerOfCamera
             transform.LookAt(center);
         }
     }
+    public void Initialize() {}
 }

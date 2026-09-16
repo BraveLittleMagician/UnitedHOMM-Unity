@@ -588,7 +588,7 @@ GameObject:
   - component: {fileID: 526232267}
   - component: {fileID: 526232277}
   - component: {fileID: 526232276}
-  - component: {fileID: 526232271}
+  - component: {fileID: 526232278}
   - component: {fileID: 526232274}
   - component: {fileID: 526232275}
   - component: {fileID: 526232270}
@@ -646,32 +646,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameView
   _gridRenderer: {fileID: 526232269}
   _boardSizeInput: {fileID: 1575039699}
---- !u!114 &526232271
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 526232266}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6e86ecd95f41eb4c8165403f322b0cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameLifetimeScope
-  parentReference:
-    TypeName: 
-  autoRun: 1
-  autoInjectGameObjects: []
-  _globalDeselector: {fileID: 526232274}
-  _buttonColors: {fileID: 526232272}
-  _globalSurroundingsHolder: {fileID: 1446525817}
-  _uiService: {fileID: 526232273}
-  _clickEventer: {fileID: 526232275}
-  _cameraController: {fileID: 1823688470}
-  _gameView: {fileID: 526232270}
-  _gridRenderer: {fileID: 526232269}
-  _layerPrefab: {fileID: 950297195517623786, guid: 19070e2ee42eb834a9dc419402496eaf, type: 3}
-  _autoStart: 1
 --- !u!114 &526232272
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -774,6 +748,28 @@ MonoBehaviour:
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
   m_DragThreshold: 10
+--- !u!114 &526232278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c4da46c93f95074c98b251ce786b005, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObjectRefsValidator
+  _autoStart: 1
+  _gameView: {fileID: 526232270}
+  _gridRenderer: {fileID: 526232269}
+  _clickEventer: {fileID: 526232275}
+  _cameraController: {fileID: 1823688470}
+  _uiService: {fileID: 526232273}
+  _buttonColors: {fileID: 526232272}
+  _globalDeselector: {fileID: 526232274}
+  _globalSurroundingsHolder: {fileID: 1446525817}
+  _layerPrefab: {fileID: 950297195517623786, guid: 19070e2ee42eb834a9dc419402496eaf, type: 3}
 --- !u!1 &997618955
 GameObject:
   m_ObjectHideFlags: 0

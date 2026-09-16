@@ -1,9 +1,8 @@
 ﻿#nullable enable
 
 using System;
-using VContainer.Unity;
 
-public class GamePresenter : IStartable, IDisposable
+public class Presenter : IDisposable
 {
     private readonly IFlow _flow;
     private readonly IGameView _view;
@@ -13,7 +12,7 @@ public class GamePresenter : IStartable, IDisposable
     private readonly BoardConfigUpdater _configUpdater;
     private BoardConfig _currentConfig;
 
-    public GamePresenter(IFlow flow, IGameView view, IEventBus eventBus, IControllerOfCamera camera, IRegistry registry, BoardConfigUpdater configUpdater, BoardConfig initialConfig)
+    public Presenter(IFlow flow, IGameView view, IEventBus eventBus, IControllerOfCamera camera, IRegistry registry, BoardConfigUpdater configUpdater, BoardConfig initialConfig)
     {
         _flow = flow;
         _view = view;

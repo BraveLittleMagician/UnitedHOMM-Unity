@@ -18,8 +18,7 @@ public sealed class Registry : IRegistry
 
         house.RoomAdded += OnRoomAdded;
 
-        foreach (var room in house.Rooms.Values)
-            SubscribeToRoom(room);
+        foreach (var room in house.Rooms.Values) SubscribeToRoom(room);
     }
 
     private void OnRoomAdded(IRoom room) => SubscribeToRoom(room);

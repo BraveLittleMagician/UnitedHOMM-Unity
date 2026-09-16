@@ -3,28 +3,22 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using VContainer;
 
 public class UIService : MonoBehaviour
 {
     private IButtonColorsProvider _provider = null!;
     private readonly HashSet<IButtonColorsSubscriber> _subscribers = new();
 
-    private void Start()
-    {
-        foreach (var field in _subscribers) field.SetProvider(_provider);
-    }
     private void OnDestroy()
     {
         _subscribers.Clear();
     }
 
-    [Inject]
-    public void Construct(IButtonColorsProvider buttonColorsProvider)
+    public void Initialize(IButtonColorsProvider buttonColorsProvider)
     {
-        _provider = buttonColorsProvider ?? throw new ArgumentNullException(nameof(_provider)); ;
+        _provider = buttonColorsProvider ?? throw new ArgumentNullException(nameof(_provider));
+        foreach (var field in _subscribers) field.SetProvider(_provider);
     }
-
     public void RegisterSubscriber(IButtonColorsSubscriber subscriber)
     {
         if (!_subscribers.Contains(subscriber))

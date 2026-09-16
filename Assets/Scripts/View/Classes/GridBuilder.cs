@@ -1,17 +1,15 @@
 ﻿#nullable enable
 
 using UnityEngine;
-using VContainer;
-using VContainer.Unity;
 
 public class GridBuilder : IGridBuilder
 {
-    private readonly IObjectResolver _resolver;
+    private readonly IObjectInjector _injector;
     private readonly GameObject _layerPrefab;
 
-    public GridBuilder(IObjectResolver resolver, GameObject layerPrefab)
+    public GridBuilder(IObjectInjector injector, GameObject layerPrefab)
     {
-        _resolver = resolver;
+        _injector = injector;
         _layerPrefab = layerPrefab;
     }
 
@@ -19,7 +17,7 @@ public class GridBuilder : IGridBuilder
     {
         var gridRoot = new GameObject("Grid");
         gridRoot.transform.SetParent(parent, false);
-        _resolver.InjectGameObject(gridRoot);
+        _injector.InjectGameObject(gridRoot);
 
         box.TryGetBounds(Axis.X, out int minX, out int maxX);
         box.TryGetBounds(Axis.Y, out int minY, out int maxY);
@@ -35,7 +33,7 @@ public class GridBuilder : IGridBuilder
         {
             GameObject wGroup = new($"W={w}");
             wGroup.transform.SetParent(gridRoot.transform, false);
-            _resolver.InjectGameObject(wGroup);
+            _injector.InjectGameObject(wGroup);
 
             Vector3 offset = new((w - minW) * (fieldSizeX * cellSize + wGroupSpacing), 0, 0);
             Vector3 wOffset = startOffset + offset;
@@ -46,7 +44,7 @@ public class GridBuilder : IGridBuilder
             {
                 GameObject layer = Object.Instantiate(_layerPrefab, wGroup.transform);
                 layer.name = $"W={w}_Z={z}";
-                _resolver.InjectGameObject(layer);
+                _injector.InjectGameObject(layer);
 
                 Vector3 posMin = GridToWorldLocal(minX, minY, z, cellSize);
                 Vector3 posMax = GridToWorldLocal(maxX, maxY, z, cellSize);
@@ -59,6 +57,5 @@ public class GridBuilder : IGridBuilder
         }
         return gridRoot;
     }
-
     public Vector3 GridToWorldLocal(int x, int y, int z, float cellSize) => new (x * cellSize, z * cellSize, y * cellSize);
 }

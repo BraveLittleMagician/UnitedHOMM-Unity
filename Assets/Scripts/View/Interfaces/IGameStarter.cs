@@ -2,5 +2,5 @@
 
 public interface IGameStarter
 {
-    void StartGame();
+    void Start();
 }
