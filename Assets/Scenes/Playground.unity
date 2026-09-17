@@ -757,9 +757,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 526232266}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c4da46c93f95074c98b251ce786b005, type: 3}
+  m_Script: {fileID: 11500000, guid: 581b99dd37d0a9548a538eb25d9a7ae2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ObjectRefsValidator
+  m_EditorClassIdentifier: Assembly-CSharp::SceneRefsToGameRoot
   _autoStart: 1
   _gameView: {fileID: 526232270}
   _gridRenderer: {fileID: 526232269}

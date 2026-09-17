@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 8180223281273906603}
   - component: {fileID: 2471942106306167164}
   m_Layer: 0
-  m_Name: QuadPlane
+  m_Name: QuadLayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
