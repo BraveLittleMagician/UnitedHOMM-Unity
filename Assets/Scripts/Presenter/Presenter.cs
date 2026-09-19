@@ -59,7 +59,9 @@ public class Presenter : IDisposable
 
     public void Start()
     {
-        _view.SetBoardSize(_currentConfig.FieldSize);
+        var axes = (MultipleAxes)_currentConfig.Axes;
+        var box = new AxisAlignedBox(axes, _currentConfig.FieldSize, _currentConfig.WUp, _currentConfig.WDown);
+        _camera.FitToBoard(box.Bounds);
     }
     public void Dispose()
     {

@@ -18,10 +18,10 @@ public class GridRenderer : MonoBehaviour
 
     public void Initialize(IEventBus eventBus, IGlobalGeneratedSurroundingsHolder holder, IGameStateManager stateManager, IGridBuilder builder)
     {
-        _holder = holder ?? throw new ArgumentNullException(nameof(holder));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _gridBuilder = builder ?? throw new ArgumentNullException(nameof(builder));
+        _holder = holder ?? throw new ArgumentNullException(nameof(holder));
         _stateManager = stateManager ?? throw new ArgumentNullException(nameof(stateManager));
+        _gridBuilder = builder ?? throw new ArgumentNullException(nameof(builder));
 
         _stateManager.GameStarted += OnGameStarted;
         _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
@@ -61,8 +61,7 @@ public class GridRenderer : MonoBehaviour
     }
     private void BuildGridInternal(AxisAlignedBox box)
     {
-        if (_lastBuiltBox == box)
-            return;
+        if (_lastBuiltBox == box) return;
 
         ClearGrid();
         _gridRoot = _gridBuilder.BuildGrid(box, _holder.Transform, _cellSize, _wGroupSpacing);

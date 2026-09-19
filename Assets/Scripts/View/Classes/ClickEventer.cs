@@ -6,8 +6,7 @@ using UnityEngine.InputSystem;
 
 public class ClickEventer : MonoBehaviour
 {
-    [SerializeField]
-    private InputActionAsset _action = null!;
+    [SerializeField] private InputActionAsset _action = null!;
     private InputAction _click = null!;
     private IGlobalDeselector _deselector = null!;
 

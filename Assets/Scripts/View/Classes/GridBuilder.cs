@@ -4,12 +4,10 @@ using UnityEngine;
 
 public class GridBuilder : IGridBuilder
 {
-    private readonly IObjectInjector _injector;
     private readonly GameObject _layerPrefab;
 
-    public GridBuilder(IObjectInjector injector, GameObject layerPrefab)
+    public GridBuilder(GameObject layerPrefab)
     {
-        _injector = injector;
         _layerPrefab = layerPrefab;
     }
 
@@ -17,7 +15,6 @@ public class GridBuilder : IGridBuilder
     {
         var gridRoot = new GameObject("Grid");
         gridRoot.transform.SetParent(parent, false);
-        _injector.InjectGameObject(gridRoot);
 
         box.TryGetBounds(Axis.X, out int minX, out int maxX);
         box.TryGetBounds(Axis.Y, out int minY, out int maxY);
@@ -33,7 +30,6 @@ public class GridBuilder : IGridBuilder
         {
             GameObject wGroup = new($"W={w}");
             wGroup.transform.SetParent(gridRoot.transform, false);
-            _injector.InjectGameObject(wGroup);
 
             Vector3 offset = new((w - minW) * (fieldSizeX * cellSize + wGroupSpacing), 0, 0);
             Vector3 wOffset = startOffset + offset;
@@ -44,7 +40,6 @@ public class GridBuilder : IGridBuilder
             {
                 GameObject layer = Object.Instantiate(_layerPrefab, wGroup.transform);
                 layer.name = $"W={w}_Z={z}";
-                _injector.InjectGameObject(layer);
 
                 Vector3 posMin = GridToWorldLocal(minX, minY, z, cellSize);
                 Vector3 posMax = GridToWorldLocal(maxX, maxY, z, cellSize);
