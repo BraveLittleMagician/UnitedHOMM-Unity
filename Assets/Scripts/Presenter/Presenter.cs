@@ -7,12 +7,12 @@ public class Presenter : IDisposable
     private readonly IFlow _flow;
     private readonly IGameView _view;
     private readonly IEventBus _eventBus;
-    private readonly IControllerOfCamera _camera;
+    private readonly ICamera _camera;
     private readonly IRegistry _registry;
     private readonly BoardConfigUpdater _configUpdater;
     private BoardConfig _currentConfig;
 
-    public Presenter(IFlow flow, IGameView view, IEventBus eventBus, IControllerOfCamera camera, IRegistry registry, BoardConfigUpdater configUpdater, BoardConfig initialConfig)
+    public Presenter(IFlow flow, IGameView view, IEventBus eventBus, ICamera camera, IRegistry registry, BoardConfigUpdater configUpdater, BoardConfig initialConfig)
     {
         _flow = flow;
         _view = view;

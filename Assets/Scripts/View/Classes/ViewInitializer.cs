@@ -3,11 +3,11 @@
 public sealed class ViewInitializer : IViewInitializer
 {
     private readonly IGameView _gameView;
-    private readonly IControllerOfCamera _camera;
+    private readonly ICamera _camera;
     private readonly BoardConfig _boardConfig;
     private readonly Board _board;
 
-    public ViewInitializer(IGameView gameView, IControllerOfCamera camera, BoardConfig boardConfig, Board board)
+    public ViewInitializer(IGameView gameView, ICamera camera, BoardConfig boardConfig, Board board)
     {
         _gameView = gameView;
         _camera = camera;
