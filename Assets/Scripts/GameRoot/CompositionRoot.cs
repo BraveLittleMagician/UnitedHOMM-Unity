@@ -8,7 +8,7 @@ public sealed class CompositionRoot : MonoBehaviour
     [Header("Scene Components")]
     [SerializeField] private GlobalDeselector _globalDeselector = null!;
     [SerializeField] private GlobalGeneratedSurroundingsHolder _globalSurroundingsHolder = null!;
-    [SerializeField] private ClickEventer _clickEventer = null!;
+    [SerializeField] private MouseEventer _clickEventer = null!;
     [SerializeField] private ControllerOfCamera _cameraController = null!;
     [SerializeField] private GameView _gameView = null!;
     [SerializeField] private GridUI _gridUI = null!;
@@ -97,7 +97,6 @@ public sealed class CompositionRoot : MonoBehaviour
     private void WireMonoBehaviours()
     {
         _gridRenderer.Initialize(_eventBus, _globalSurroundingsHolder, _stateManager, _gridBuilder);
-        _clickEventer.Initialize(_globalDeselector);
         _cameraController.Initialize();
         _gridUI.Initialize(_gameView, _gameStarter, _stateManager, _house, _boardConfig, _configUpdater);
     }
