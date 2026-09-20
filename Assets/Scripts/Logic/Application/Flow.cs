@@ -59,6 +59,7 @@ public sealed class Flow : IFlow, IDisposable
     public IResult MovePiece<TRoom, TPos>(IndexOfPlayer owner, IPath<TPos> path) where TRoom : IRoom where TPos : struct
     {
         if (path == null) return Result.Failure("Путь не может быть null");
+
         var roomResult = GetRoom<TRoom>();
         if (!roomResult.IsSuccess) return Result.Failure(roomResult.Error!);
 
@@ -79,33 +80,31 @@ public sealed class Flow : IFlow, IDisposable
     }
     public IResult MeleeAttack<TRoom, TPos>(IndexOfPlayer attackerOwner, IPath<TPos> path) where TRoom : IRoom where TPos : struct
     {
-        {
-            if (path == null) return Result.Failure("Путь не может быть null");
+        if (path == null) return Result.Failure("Путь не может быть null");
 
-            var roomResult = GetRoom<TRoom>();
-            if (!roomResult.IsSuccess) return Result.Failure(roomResult.Error!);
+        var roomResult = GetRoom<TRoom>();
+        if (!roomResult.IsSuccess) return Result.Failure(roomResult.Error!);
 
-            var room = roomResult.Value!;
-            var start = path.Positions[0];
-            var targetPos = path.Positions[^1];
+        var room = roomResult.Value!;
+        var start = path.Positions[0];
+        var targetPos = path.Positions[^1];
 
-            if (!room.TryToGetPiece(start, out var attacker)) return Result.Failure($"На стартовой позиции {start} нет фигуры");
+        if (!room.TryToGetPiece(start, out var attacker)) return Result.Failure($"На стартовой позиции {start} нет фигуры");
 
-            if (!attacker.Owner.Equals(attackerOwner)) return Result.Failure($"Фигура {attacker} не принадлежит игроку {attackerOwner}");
+        if (!attacker.Owner.Equals(attackerOwner)) return Result.Failure($"Фигура {attacker} не принадлежит игроку {attackerOwner}");
 
-            if (!room.TryToGetPiece(targetPos, out var target)) return Result.Failure($"На позиции {targetPos} нет фигуры для атаки");
+        if (!room.TryToGetPiece(targetPos, out var target)) return Result.Failure($"На позиции {targetPos} нет фигуры для атаки");
 
-            if (attacker.Owner.IndexOfSide == target.Owner.IndexOfSide) return Result.Failure("Нельзя атаковать союзника");
+        if (attacker.Owner.IndexOfSide == target.Owner.IndexOfSide) return Result.Failure("Нельзя атаковать союзника");
 
-            if (!_movementValidator.CanMove(attacker, path, room, true, out var error)) return Result.Failure(error);
+        if (!_movementValidator.CanMove(attacker, path, room, true, out var error)) return Result.Failure(error);
 
-            if (attacker.MeleeAttacks.Count == 0) return Result.Failure($"У {attacker} нет ближних атак");
+        if (attacker.MeleeAttacks.Count == 0) return Result.Failure($"У {attacker} нет ближних атак");
 
-            var attackResult = _combatService.PerformMeleeAttack(attacker, target, room);
-            if (!attackResult.IsSuccess) return attackResult;
+        var attackResult = _combatService.PerformMeleeAttack(attacker, target, room);
+        if (!attackResult.IsSuccess) return attackResult;
 
-            return Result.Success();
-        }
+        return Result.Success();
     }
     public IResult ChangeRoom<TRoomFrom, TRoomTo, TPosFrom, TPosTo>(IndexOfPlayer owner, TPosFrom fromPosition, TPosTo toPosition) where TRoomFrom : IRoom where TRoomTo : IRoom where TPosFrom : struct where TPosTo : struct
     {
@@ -120,7 +119,7 @@ public sealed class Flow : IFlow, IDisposable
         var toRoom = toResult.Value!;
 
         if (ReferenceEquals(fromRoom, toRoom)) return Result.Failure("Начальная и конечная комнаты одинаковы");
-        
+
         if (!fromRoom.TryToGetPiece(fromPosition, out var piece)) return Result.Failure($"На позиции {fromPosition} нет фигуры");
 
         if (!piece.Owner.Equals(owner)) return Result.Failure($"Фигура {piece} не принадлежит игроку {owner}");

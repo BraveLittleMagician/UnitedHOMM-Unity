@@ -16,9 +16,9 @@ public class StarterOfGame : IStarterOfGame
         _piecesSpawner = testPiecesSpawner;
     }
 
-    public void StartGame()
+    public bool StartGame()
     {
-        if (_started) return;
+        if (_started) return false;
         _started = true;
 
         _stateManager.StartGame();
@@ -26,5 +26,6 @@ public class StarterOfGame : IStarterOfGame
         _roomInitializer.InitializeRooms();
         _viewInitializer.InitializeView();
         _piecesSpawner.SpawnPieces();
+        return true;
     }
 }
