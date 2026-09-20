@@ -28,13 +28,7 @@ public readonly struct Square : ISquare<Square>
     public int W { get; init; }
     public bool IsZero => (X | Y | Z | W) == 0;
     public MultipleAxes ActiveAxes => MultipleAxes.Four;
-    public IReadOnlyDictionary<Axis, int> Coordinates => new Dictionary<Axis, int>(4)
-    {
-        [Axis.X] = X,
-        [Axis.Y] = Y,
-        [Axis.Z] = Z,
-        [Axis.W] = W
-    };
+    public IReadOnlyDictionary<Axis, int> Coordinates => new SquareCoordinates(this);
     public static Square Zero { get; } = new(0);
 
     private static Square ApplyOperation(Square l, Square r, Func<int, int, int> op) => new()

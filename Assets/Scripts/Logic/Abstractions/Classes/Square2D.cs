@@ -24,11 +24,7 @@ public readonly struct Square2D : ISquare<Square2D>
     public int Y { get; init; }
     public bool IsZero => (X | Y) == 0;
     public MultipleAxes ActiveAxes => MultipleAxes.Two;
-    public IReadOnlyDictionary<Axis, int> Coordinates => new Dictionary<Axis, int>(2)
-    {
-        [Axis.X] = X,
-        [Axis.Y] = Y,
-    };
+    public IReadOnlyDictionary<Axis, int> Coordinates => new Square2DCoordinates(this);
     public static Square2D Zero { get; } = new(0);
 
     private static Square2D ApplyOperation(Square2D l, Square2D r, Func<int, int, int> op) => new()

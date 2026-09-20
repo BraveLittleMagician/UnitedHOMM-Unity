@@ -1,3 +1,3 @@
 #nullable enable
 
-public record GameStartedEvent();
+public sealed record GameStartedEvent();

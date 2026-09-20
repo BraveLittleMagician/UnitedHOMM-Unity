@@ -26,12 +26,7 @@ public readonly struct Square3D : ISquare<Square3D>
     public int Z { get; init; }
     public bool IsZero => (X | Y | Z) == 0;
     public MultipleAxes ActiveAxes => MultipleAxes.Three;
-    public IReadOnlyDictionary<Axis, int> Coordinates => new Dictionary<Axis, int>(3)
-    {
-        [Axis.X] = X,
-        [Axis.Y] = Y,
-        [Axis.Z] = Z,
-    };
+    public IReadOnlyDictionary<Axis, int> Coordinates => new Square3DCoordinates (this);
     public static Square3D Zero => new(0);
 
     private static Square3D ApplyOperation(Square3D l, Square3D r, Func<int, int, int> op) => new()

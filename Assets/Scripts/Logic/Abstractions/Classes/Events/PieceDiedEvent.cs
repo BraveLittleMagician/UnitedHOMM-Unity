@@ -1,3 +1,3 @@
 ﻿#nullable enable
 
-public record PieceDiedEvent(IPiece Piece);
+public sealed record PieceDiedEvent(IPiece Piece);

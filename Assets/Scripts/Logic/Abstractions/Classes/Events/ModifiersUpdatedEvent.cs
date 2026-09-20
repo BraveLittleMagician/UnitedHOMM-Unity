@@ -2,4 +2,4 @@
 
 using System;
 
-public record ModifiersUpdatedEvent(IPiece Piece, bool IsAttack, Type SequenceType);
+public sealed record ModifiersUpdatedEvent(IPiece Piece, bool IsAttack, Type SequenceType);

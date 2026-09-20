@@ -1,3 +1,3 @@
 ﻿#nullable enable
 
-public record DeckSizeChangedEvent(int NewSize, IndexOfPlayer Owner);
+public sealed record DeckSizeChangedEvent(int NewSize, IndexOfPlayer Owner);
