@@ -38,7 +38,7 @@ public sealed class Flow : IFlow, IDisposable
         _abilityService.DeactivateAbilities(e.Piece);
     }
 
-    public bool TryToGetPiece<TRoom, TPos>([NotNullWhen(true)] TPos position, IndexOfPlayer player, out IPiece? piece) where TRoom : IRoom where TPos : struct
+    public bool TryToGetPiece<TRoom, TPos>(TPos position, IndexOfPlayer player, [NotNullWhen(true)] out IPiece? piece) where TRoom : IRoom where TPos : struct
     {
         if (!_house.TryToGetRoom<TRoom>(out var room))
         {

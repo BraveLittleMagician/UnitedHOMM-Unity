@@ -68,17 +68,16 @@ public readonly struct Square2D : ISquare<Square2D>
         if (result != 0) return result;
         return X.CompareTo(other.X);
     }
-    public int CompareByDistanseTo(object? obj)
+    public int CompareByDistanceTo(object? obj)
     {
-        if (obj is Square3D other)
+        if (obj is Square2D other)
             return CompareByDistanseTo(other);
         return 0;
     }
     public int CompareTo(object? obj)
     {
-        if (obj is Square2D other)
-            return CompareTo(other);
-        return 0;
+        if (obj is Square2D other) return CompareTo(other);
+        throw new ArgumentException($"Объект должен иметь тип {nameof(Square2D)}", nameof(obj));
     }
     public override string ToString() => $"[{X}, {Y}]";
     public Square2D CopyWith(IReadOnlyDictionary<Axis, int> dictionary) => new (dictionary);

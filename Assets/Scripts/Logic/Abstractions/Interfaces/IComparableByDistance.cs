@@ -2,7 +2,7 @@
 
 public interface IComparableByDistance
 {
-    public int CompareByDistanseTo(object? obj);
+    public int CompareByDistanceTo(object? obj);
 }
 public interface IComparableByDistance<in T>
 {

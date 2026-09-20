@@ -53,24 +53,11 @@ public class Stayables : IEquatable<Stayables>
     }
     public override int GetHashCode()
     {
-        if (_stayables.Count > 0)
-        {
-            if (_stayables.Count == 1)
-                return HashCode.Combine(_stayables.First(), LastRelativeIndex);
-            else
-            {
-                int value = 0;
-                int i = 0;
-                foreach (var n in _stayables)
-                {
-                    if (i == 0) { i++; value = HashCode.Combine(n); continue; }
-                    value = HashCode.Combine(value, n);
-                }
-                value = HashCode.Combine(value, LastRelativeIndex);
-                return value;
-            }
-        }
-        return HashCode.Combine(LastRelativeIndex);
+        var hash = new HashCode();
+        hash.Add(LastRelativeIndex);
+        foreach (var v in _stayables.OrderBy(x => x))
+            hash.Add(v);
+        return hash.ToHashCode();
     }
 
     public static bool operator ==(Stayables? left, Stayables? right)

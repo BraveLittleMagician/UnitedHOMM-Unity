@@ -4,13 +4,16 @@ using System;
 
 public readonly struct Seats :  IEquatable<Seats>
 {
+    private readonly int _countOfSeats;
+    private readonly int _countOfPlayersOnSide;
+
     public Seats(int countOfSides, int countOfPlayersOnSide)
     {
-        CountOfSides = Math.Max(countOfSides, 2);
-        CountOfPlayersOnSide = Math.Max(countOfPlayersOnSide, 1);
+        _countOfSeats = Math.Max(countOfSides, 2);
+        _countOfPlayersOnSide = Math.Max(countOfPlayersOnSide, 1);
     }
-    public int CountOfSides { get; }
-    public int CountOfPlayersOnSide { get; }
+    public int CountOfSides => _countOfSeats < 2 ? 2 : _countOfSeats;
+    public int CountOfPlayersOnSide => _countOfPlayersOnSide < 1 ? 1 : _countOfPlayersOnSide;
     public override string ToString() => $"{CountOfSides}-{CountOfPlayersOnSide}";
 
     public bool Equals(Seats other) => CountOfSides == other.CountOfSides && CountOfPlayersOnSide == other.CountOfPlayersOnSide;

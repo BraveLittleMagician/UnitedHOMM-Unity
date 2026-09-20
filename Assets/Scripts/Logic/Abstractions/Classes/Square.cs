@@ -84,7 +84,7 @@ public readonly struct Square : ISquare<Square>
         if (result != 0) return result;
         return X.CompareTo(other.X);
     }
-    public int CompareByDistanseTo(object? obj)
+    public int CompareByDistanceTo(object? obj)
     {
         if (obj is Square other)
             return CompareByDistanseTo(other);
@@ -92,12 +92,11 @@ public readonly struct Square : ISquare<Square>
     }
     public int CompareTo(object? obj)
     {
-        if (obj is Square other)
-            return CompareTo(other);
-        return 0;
+        if (obj is Square other) return CompareTo(other);
+        throw new ArgumentException($"Объект должен иметь тип {nameof(Square)}", nameof(obj));
     }
     public override string ToString() => $"({X}, {Y}, {Z}, {W})";
-    public Square CopyWith(IReadOnlyDictionary<Axis, int> dictionary) => this;
+    public Square CopyWith(IReadOnlyDictionary<Axis, int> dictionary) => new(dictionary);
     public bool Equals(Square other) => X == other.X && Y == other.Y && Z == other.Z && W == other.W;
     public override bool Equals(object? obj) => obj is Square other && Equals(other);
     public override int GetHashCode() => HashCode.Combine(X, Y, Z, W);

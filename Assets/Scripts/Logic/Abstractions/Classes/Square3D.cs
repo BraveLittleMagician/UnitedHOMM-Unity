@@ -76,7 +76,7 @@ public readonly struct Square3D : ISquare<Square3D>
         if (result != 0) return result;
         return X.CompareTo(other.X);
     }
-    public int CompareByDistanseTo(object? obj)
+    public int CompareByDistanceTo(object? obj)
     {
         if (obj is Square3D other)
             return CompareByDistanseTo(other);
@@ -84,9 +84,8 @@ public readonly struct Square3D : ISquare<Square3D>
     }
     public int CompareTo(object? obj)
     {
-        if (obj is Square3D other)
-            return CompareTo(other);
-        return 0;
+        if (obj is Square3D other) return CompareTo(other);
+        throw new ArgumentException($"Объект должен иметь тип {nameof(Square3D)}", nameof(obj));
     }
     public override string ToString() => $"({X}, {Y}, {Z})";
     public Square3D CopyWith(IReadOnlyDictionary<Axis, int> dictionary) => new(dictionary);
