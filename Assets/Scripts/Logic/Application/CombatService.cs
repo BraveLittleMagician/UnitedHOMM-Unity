@@ -30,7 +30,7 @@ public sealed class CombatService : ICombatService
         attack.Execute(target, room);
 
         _logger.Log($"Ближняя атака: {attacker} → {target} в {room.Name}");
-        _eventBus.Publish(new PieceAttackedEvent(attacker, target, room, "Melee"));
+        _eventBus.Publish(new PieceAttackedEvent(attacker, target, room, AttackKind.Melee));
 
         return Result.Success();
     }
@@ -50,7 +50,7 @@ public sealed class CombatService : ICombatService
         attack.Execute(target, room);
 
         _logger.Log($"Дальняя атака: {attacker} → {target} в {room.Name}");
-        _eventBus.Publish(new PieceAttackedEvent(attacker, target, room, "Ranged"));
+        _eventBus.Publish(new PieceAttackedEvent(attacker, target, room, AttackKind.Ranged));
 
         return Result.Success();
     }
