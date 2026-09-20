@@ -22,7 +22,7 @@ public sealed class CompositionRoot : MonoBehaviour
     private AxisAlignedBox _box = null!;
     private IEventBus _eventBus = null!;
     private ILogger _logger = null!;
-    private IGameState _stateManager = null!;
+    private IStateOfGame _stateManager = null!;
     private IHouse _house = null!;
     private IRegistry _registry = null!;
     private Board _board = null!;
@@ -73,7 +73,7 @@ public sealed class CompositionRoot : MonoBehaviour
         _eventBus = new EventBus();
         _logger = new LoggerForUnity();
 
-        _stateManager = new GameState();
+        _stateManager = new StateOfGame();
         _house = new House(_seats, _eventBus, _logger);
         _registry = new Registry(_house);
         _board = new Board(_seats, _box, _eventBus, _logger);

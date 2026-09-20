@@ -6,10 +6,10 @@ using System.Collections.Generic;
 public sealed class ViewInitializer : IViewInitializer
 {
     private readonly IGameView _gameView;
-    private readonly ICamera _camera;
+    private readonly ICameraWork _camera;
     private readonly Board _board;
 
-    public ViewInitializer(IGameView gameView, ICamera camera, Board board)
+    public ViewInitializer(IGameView gameView, ICameraWork camera, Board board)
     {
         _gameView = gameView ?? throw new ArgumentNullException(nameof(gameView));
         _camera = camera ?? throw new ArgumentNullException(nameof(camera));

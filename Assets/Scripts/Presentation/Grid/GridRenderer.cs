@@ -7,7 +7,7 @@ using UnityEngine;
 public class GridRenderer : MonoBehaviour
 {
     private IEventBus _eventBus = null!;
-    private IGameState _stateManager = null!;
+    private IStateOfGame _stateManager = null!;
     private IGridBuilder _gridBuilder = null!;
     private GameObject? _gridRoot = null;
     private IReadOnlyDictionary<Axis, (int Min, int Max)>? _lastBuiltBox = null;
@@ -16,7 +16,7 @@ public class GridRenderer : MonoBehaviour
     [SerializeField] private float _cellSize = 1f;
     [SerializeField] private float _wGroupSpacing = 1.5f;
 
-    public void Initialize(IEventBus eventBus, IGameState stateManager, IGridBuilder builder)
+    public void Initialize(IEventBus eventBus, IStateOfGame stateManager, IGridBuilder builder)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _stateManager = stateManager ?? throw new ArgumentNullException(nameof(stateManager));

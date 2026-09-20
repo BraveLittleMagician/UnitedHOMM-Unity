@@ -2,7 +2,7 @@
 
 using System;
 
-public interface IGameState
+public interface IStateOfGame
 {
     bool IsGameStarted { get; }
     event Action? GameStarted;

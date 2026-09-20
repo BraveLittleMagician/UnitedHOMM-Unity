@@ -6,7 +6,7 @@ public class BoardUI : MonoBehaviour
 {
     private IGameView _gameView = null!;
     private IStarterOfGame _gameStarter = null!;
-    private IGameState _stateManager = null!;
+    private IStateOfGame _stateManager = null!;
     private IHouse _house = null!;
     private BoardConfig _boardConfig = null!;
     private BoardConfigUpdater _configUpdater = null!;
@@ -14,7 +14,7 @@ public class BoardUI : MonoBehaviour
     public void Initialize(
         IGameView gameView,
         IStarterOfGame gameStarter,
-        IGameState stateManager,
+        IStateOfGame stateManager,
         IHouse house,
         BoardConfig boardConfig,
         BoardConfigUpdater configUpdater)

@@ -2,13 +2,13 @@
 
 public class StarterOfGame : IStarterOfGame
 {
-    private readonly IGameState _stateManager;
+    private readonly IStateOfGame _stateManager;
     private readonly IRoomInitializer _roomInitializer;
     private readonly IViewInitializer _viewInitializer;
     private readonly IPiecesSpawner _piecesSpawner;
     private bool _started;
 
-    public StarterOfGame(IGameState stateManager, IRoomInitializer roomInitializer, IViewInitializer viewInitializer, IPiecesSpawner testPiecesSpawner) 
+    public StarterOfGame(IStateOfGame stateManager, IRoomInitializer roomInitializer, IViewInitializer viewInitializer, IPiecesSpawner testPiecesSpawner) 
     {
         _stateManager = stateManager;
         _roomInitializer = roomInitializer;

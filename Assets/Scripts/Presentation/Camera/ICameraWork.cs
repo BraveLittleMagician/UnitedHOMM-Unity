@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 
-public interface ICamera
+public interface ICameraWork
 {
     void FitToBoard(IReadOnlyDictionary<Axis, (int Min, int Max)> bounds);
 }
