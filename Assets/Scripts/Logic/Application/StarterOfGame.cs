@@ -16,7 +16,7 @@ public class StarterOfGame : IStarterOfGame
         _piecesSpawner = testPiecesSpawner;
     }
 
-    public void Start()
+    public void StartGame()
     {
         if (_started) return;
         _started = true;

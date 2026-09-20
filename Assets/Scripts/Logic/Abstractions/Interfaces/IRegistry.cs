@@ -6,5 +6,5 @@ using System.Numerics;
 
 public interface IRegistry : IDisposable
 {
-    bool TryToGetRoom([NotNullWhen(true)] BigInteger index, out IRoom? room);
+    bool TryToGetRoom(BigInteger index, [NotNullWhen(true)] out IRoom? room);
 }

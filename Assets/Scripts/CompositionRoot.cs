@@ -57,7 +57,7 @@ public sealed class CompositionRoot : MonoBehaviour
     private void Start()
     {
         _presenter.Start();
-        if (_autoStart) _gameStarter.Start();
+        if (_autoStart) _gameStarter.StartGame();
     }
     private void BuildServices()
     {

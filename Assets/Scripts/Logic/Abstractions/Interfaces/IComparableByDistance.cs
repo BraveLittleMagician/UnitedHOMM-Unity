@@ -6,5 +6,5 @@ public interface IComparableByDistance
 }
 public interface IComparableByDistance<in T>
 {
-    public int CompareByDistanseTo(T? other);
+    public int CompareByDistanceTo(T other);
 }

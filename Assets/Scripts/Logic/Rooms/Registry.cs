@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
-
+ 
 public sealed class Registry : IRegistry
 {
     private readonly Dictionary<BigInteger, IRoom> _indexToRoom = new();
@@ -44,7 +44,7 @@ public sealed class Registry : IRegistry
         }
     }
 
-    public bool TryToGetRoom([NotNullWhen(true)] BigInteger index, out IRoom? room)
+    public bool TryToGetRoom(BigInteger index, [NotNullWhen(true)] out IRoom? room)
     {
         return _indexToRoom.TryGetValue(index, out room);
     }

@@ -100,9 +100,9 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         error = "";
         return true;
     }
-    public override bool TryToGetPiece<TPos>(TPos position, IndexOfPlayer player, [NotNullWhen(true)] out IPiece? piece)
+    public override bool TryToGetPiece<TPos>(TPos position, [NotNullWhen(true)] out IPiece? piece)
     {
-        if (position is TPosition typedPos && _pieces.TryGetValue(typedPos, out var p) && p != null && p.Owner.Equals(player))
+        if (position is TPosition typedPos && _pieces.TryGetValue(typedPos, out var p) && p != null)
         {
             piece = p;
             return true;

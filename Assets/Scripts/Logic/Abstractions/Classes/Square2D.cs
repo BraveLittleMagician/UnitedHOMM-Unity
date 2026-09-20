@@ -52,7 +52,7 @@ public readonly struct Square2D : ISquare<Square2D>
         if (diffX == 0 && diffY == 0) return false;
         return diffX < 2 && diffY < 2;
     }
-    public int CompareByDistanseTo(Square2D other)
+    public int CompareByDistanceTo(Square2D other)
     {
         long thisDistance = SquaredDistanceFromCenter;
         long otherDistance = other.SquaredDistanceFromCenter;
@@ -66,9 +66,8 @@ public readonly struct Square2D : ISquare<Square2D>
     }
     public int CompareByDistanceTo(object? obj)
     {
-        if (obj is Square2D other)
-            return CompareByDistanseTo(other);
-        return 0;
+        if (obj is Square2D other) return CompareByDistanceTo(other);
+        throw new ArgumentException($"Объект должен иметь тип {nameof(Square)}", nameof(obj));
     }
     public int CompareTo(object? obj)
     {

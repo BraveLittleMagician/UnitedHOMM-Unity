@@ -45,7 +45,6 @@ public readonly struct Square3D : ISquare<Square3D>
             case Axis.Y: value = Y; changed = true; break;
             case Axis.Z: value = Z; changed = true; break;
         }
-        ;
 
         return changed;
     }
@@ -57,7 +56,7 @@ public readonly struct Square3D : ISquare<Square3D>
         if (diffX == 0 && diffY == 0 && diffZ == 0) return false;
         return diffX < 2 && diffY < 2 && diffZ < 2;
     }
-    public int CompareByDistanseTo(Square3D other)
+    public int CompareByDistanceTo(Square3D other)
     {
         long thisDistance = SquaredDistanceFromCenter;
         long otherDistance = other.SquaredDistanceFromCenter;
@@ -73,9 +72,8 @@ public readonly struct Square3D : ISquare<Square3D>
     }
     public int CompareByDistanceTo(object? obj)
     {
-        if (obj is Square3D other)
-            return CompareByDistanseTo(other);
-        return 0;
+        if (obj is Square3D other) return CompareByDistanceTo(other);
+        throw new ArgumentException($"Объект должен иметь тип {nameof(Square)}", nameof(obj));
     }
     public int CompareTo(object? obj)
     {
