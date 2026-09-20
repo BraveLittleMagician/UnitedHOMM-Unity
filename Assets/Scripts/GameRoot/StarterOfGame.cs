@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-public class StartGame : IGameStarter
+public class StarterOfGame : IGameStarter
 {
     private readonly IGameStateManager _stateManager;
     private readonly IRoomInitializer _roomInitializer;
@@ -8,7 +8,7 @@ public class StartGame : IGameStarter
     private readonly IPiecesSpawner _piecesSpawner;
     private bool _started;
 
-    public StartGame(IGameStateManager stateManager, IRoomInitializer roomInitializer, IViewInitializer viewInitializer, IPiecesSpawner testPiecesSpawner) 
+    public StarterOfGame(IGameStateManager stateManager, IRoomInitializer roomInitializer, IViewInitializer viewInitializer, IPiecesSpawner testPiecesSpawner) 
     {
         _stateManager = stateManager;
         _roomInitializer = roomInitializer;

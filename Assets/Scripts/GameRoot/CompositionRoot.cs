@@ -9,9 +9,9 @@ public sealed class CompositionRoot : MonoBehaviour
     [SerializeField] private GlobalDeselector _globalDeselector = null!;
     [SerializeField] private GlobalGeneratedSurroundingsHolder _globalSurroundingsHolder = null!;
     [SerializeField] private MouseEventer _clickEventer = null!;
-    [SerializeField] private ControllerOfCamera _cameraController = null!;
+    [SerializeField] private CameraWork _cameraWork = null!;
     [SerializeField] private GameView _gameView = null!;
-    [SerializeField] private GridUI _gridUI = null!;
+    [SerializeField] private BoardUI _boardUI = null!;
     [SerializeField] private GridRenderer _gridRenderer = null!;
     [SerializeField] private GameObject _layerPrefab = null!;
     [SerializeField] private bool _autoStart = true;
@@ -43,10 +43,10 @@ public sealed class CompositionRoot : MonoBehaviour
         if (_globalDeselector == null) throw new ArgumentNullException(nameof(_globalDeselector));
         if (_globalSurroundingsHolder == null) throw new ArgumentNullException(nameof(_globalSurroundingsHolder));
         if (_clickEventer == null) throw new ArgumentNullException(nameof(_clickEventer));
-        if (_cameraController == null) throw new ArgumentNullException(nameof(_cameraController));
+        if (_cameraWork == null) throw new ArgumentNullException(nameof(_cameraWork));
         if (_gameView == null) throw new ArgumentNullException(nameof(_gameView));
         if (_gridRenderer == null) throw new ArgumentNullException(nameof(_gridRenderer));
-        if (_gridUI == null) throw new ArgumentNullException(nameof(_gridUI));
+        if (_boardUI == null) throw new ArgumentNullException(nameof(_boardUI));
         if (_layerPrefab == null) throw new ArgumentNullException(nameof(_layerPrefab));
     }
     private void Awake()
@@ -74,7 +74,7 @@ public sealed class CompositionRoot : MonoBehaviour
         _eventBus = new EventBus();
         _logger = new LoggerForUnity();
 
-        _stateManager = new GameStateManager();
+        _stateManager = new GameState();
         _house = new House(_seats, _eventBus, _logger);
         _registry = new Registry(_house);
         _board = new Board(_seats, _box, _eventBus, _logger);
@@ -87,17 +87,17 @@ public sealed class CompositionRoot : MonoBehaviour
 
         _gridBuilder = new GridBuilder(_layerPrefab);
         _roomInitializer = new RoomInitializer(_house, _eventBus, _logger, _seats, _boardConfig, _board);
-        _viewInitializer = new ViewInitializer(_gameView, _cameraController, _boardConfig, _board);
+        _viewInitializer = new ViewInitializer(_gameView, _cameraWork, _boardConfig, _board);
         _piecesSpawner = new PiecesSpawner(_flow);
-        _gameStarter = new StartGame(_stateManager, _roomInitializer, _viewInitializer, _piecesSpawner);
+        _gameStarter = new StarterOfGame(_stateManager, _roomInitializer, _viewInitializer, _piecesSpawner);
 
-        _presenter = new Presenter(_flow, _gameView, _eventBus, _cameraController, _registry, _configUpdater, _boardConfig);
+        _presenter = new Presenter(_flow, _gameView, _eventBus, _cameraWork, _registry, _configUpdater, _boardConfig);
     }
 
     private void WireMonoBehaviours()
     {
         _gridRenderer.Initialize(_eventBus, _globalSurroundingsHolder, _stateManager, _gridBuilder);
-        _cameraController.Initialize();
-        _gridUI.Initialize(_gameView, _gameStarter, _stateManager, _house, _boardConfig, _configUpdater);
+        _cameraWork.Initialize();
+        _boardUI.Initialize(_gameView, _gameStarter, _stateManager, _house, _boardConfig, _configUpdater);
     }
 }

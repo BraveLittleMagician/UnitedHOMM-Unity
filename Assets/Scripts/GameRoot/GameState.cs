@@ -2,7 +2,7 @@
 
 using System;
 
-public class GameStateManager : IGameStateManager
+public class GameState : IGameStateManager
 {
     public bool IsGameStarted { get; private set; }
 

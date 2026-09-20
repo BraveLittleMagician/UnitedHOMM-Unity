@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Camera))]
-public class ControllerOfCamera : MonoBehaviour, ICamera
+public class CameraWork : MonoBehaviour, ICamera
 {
     [SerializeField] private float _paddingFactor2D = 0.75f;
     [SerializeField] private float _paddingFactor3D = 1.5f;

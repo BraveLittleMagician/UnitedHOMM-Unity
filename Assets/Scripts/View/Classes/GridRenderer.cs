@@ -30,7 +30,7 @@ public class GridRenderer : MonoBehaviour
     private void OnDestroy()
     {
         _eventBus?.Unsubscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
-        _stateManager.GameStarted -= OnGameStarted;
+        if (_stateManager != null) _stateManager.GameStarted -= OnGameStarted;
         ClearGrid();
     }
 

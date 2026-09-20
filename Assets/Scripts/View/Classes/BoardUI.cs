@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-public class GridUI : MonoBehaviour
+public class BoardUI : MonoBehaviour
 {
     private IGameView _gameView = null!;
     private IGameStarter _gameStarter = null!;
