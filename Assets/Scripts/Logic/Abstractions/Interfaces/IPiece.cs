@@ -11,8 +11,8 @@ public interface IPiece : IDisposable
     string Name { get; }
     int Health { get; }
     IReadOnlyList<IMovement> Movements { get; }
-    IReadOnlyList<IAttack> MeleeAttacks { get; }
-    IReadOnlyList<IAttack> RangedAttacks { get; }
+    IReadOnlyList<IMeleeAttack> MeleeAttacks { get; }
+    IReadOnlyList<IRangedAttack> RangedAttacks { get; }
     IReadOnlyList<IAbility> Abilities { get; }
 
     void AddMovement(IMovement movement);

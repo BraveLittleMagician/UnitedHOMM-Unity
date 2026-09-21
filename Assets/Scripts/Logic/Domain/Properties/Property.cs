@@ -29,7 +29,6 @@ public abstract class Property : IProperty
     public virtual void Dispose()
     {
         Changed = null;
-        GC.SuppressFinalize(this);
     }
     public override string ToString() => $"{GetType().Name}: {Value}";
 

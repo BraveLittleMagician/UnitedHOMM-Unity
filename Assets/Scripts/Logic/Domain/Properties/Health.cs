@@ -30,5 +30,4 @@ public sealed class Health : Property, INumericProperty, ISettableProperty, IRec
     public void TakeDamage(int amount) => Subtract(amount);
     public void TakeHeal(int amount) => Recover(amount);
     public void TakeReset() => Reset();
-    public void TakeSetNormal() => Reset();
 }

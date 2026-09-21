@@ -2,7 +2,7 @@
 
 public sealed class MeleeAttack : AttackBase, IMeleeAttack
 {
-    public MeleeAttack(Operation operation) : base(operation, range: 1) { }
+    public MeleeAttack(Operation operation) : base(operation) { }
 
     public override void Execute(IPiece target, IRoom context)
     {

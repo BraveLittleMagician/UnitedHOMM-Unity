@@ -8,8 +8,8 @@ public sealed class Piece : IPiece
 {
     private readonly Properties _properties;
     private readonly List<IMovement> _movements = new();
-    private readonly List<IAttack> _meleeAttacks = new();
-    private readonly List<IAttack> _rangedAttacks = new();
+    private readonly List<IMeleeAttack> _meleeAttacks = new();
+    private readonly List<IRangedAttack> _rangedAttacks = new();
     private readonly List<IAbility> _abilities = new();
     private readonly IEventBus _eventBus;
     private readonly ILogger _logger;
@@ -37,8 +37,8 @@ public sealed class Piece : IPiece
     public int Health => _properties.TryToGet<Health>(out var health) ? health.Value : 0;
     public int HealthNormal => _properties.TryToGet<Health>(out var health) ? health.NormalValue : 0;
     public IReadOnlyList<IMovement> Movements => _movements;
-    public IReadOnlyList<IAttack> MeleeAttacks => _meleeAttacks;
-    public IReadOnlyList<IAttack> RangedAttacks => _rangedAttacks;
+    public IReadOnlyList<IMeleeAttack> MeleeAttacks => _meleeAttacks;
+    public IReadOnlyList<IRangedAttack> RangedAttacks => _rangedAttacks;
     public IReadOnlyList<IAbility> Abilities => _abilities;
 
     private void OnHealthChanged(Property property, int oldValue)
@@ -56,24 +56,15 @@ public sealed class Piece : IPiece
     public void AddRangedAttack(IRangedAttack attack) => _rangedAttacks.Add(attack);
     public void AddAbility(IAbility ability) => _abilities.Add(ability);
     public void ApplyOperation(IOperation operation) => _properties.Apply(operation);
-    public void ActivateAbilities()
-    {
-        foreach (var ability in _abilities)
-            ability.Activate(this);
-    }
-    public void DeactivateAbilities()
-    {
-        foreach (var ability in _abilities)
-            ability.Deactivate();
-    }
+
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
 
+        _properties.Dispose();
+
         foreach (var mov in _movements) (mov as IDisposable)?.Dispose();
-        foreach (var atk in _meleeAttacks) (atk as IDisposable)?.Dispose();
-        foreach (var atk in _rangedAttacks) (atk as IDisposable)?.Dispose();
         foreach (var ab in _abilities) { ab.Deactivate(); ab.Dispose(); }
 
         _movements.Clear();
