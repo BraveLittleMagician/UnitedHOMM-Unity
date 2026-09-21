@@ -10,14 +10,24 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
 {
     protected readonly Dictionary<TPosition, IPiece> _pieces = new();
 
-    protected RoomT(Seats seats, IEventBus eventBus, ILogger logger) : base(seats, eventBus, logger) { }
+    protected RoomT(Seats seats, IEventBus eventBus, ILogger logger) : base(seats, eventBus, logger)
+    {
+        EventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
+    }
 
     public override int CountOfPieces => _pieces.Count;
     public override string Name => GetType().Name;
 
+
+
     protected IReadOnlyDictionary<TPosition, IPiece> Pieces => _pieces;
     protected abstract bool ValidateAdd(IPiece piece, TPosition position, out string error);
     protected abstract bool ValidateDisplace(IPath<TPosition> path, IPiece piece, out string error);
+
+    private void OnPieceDied(PieceDiedEvent e)
+    {
+        if (Remove(e.Piece.IndexInHouse)) Logger.Log($"Фигура {e.Piece} удалена из {Name} после смерти");
+    }
 
     public override bool Add<TPos>(IPiece piece, TPos pos, bool fromAnotherRoom, out string error)
     {
@@ -48,20 +58,16 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
     }
     public override bool Remove(BigInteger index)
     {
-        TPosition? pos = null;
-        IPiece? piece = null;
-        foreach (var pair in _pieces)
+        foreach (var (pos, piece) in _pieces)
         {
-            if (pair.Value.IndexInHouse == index)
+            if (piece.IndexInHouse == index)
             {
-                pos = pair.Key;
-                piece = pair.Value;
-                break;
+                _pieces.Remove(pos);
+                OnPieceRemoved(index);
+                return true;
             }
         }
 
-        if (piece != null && pos.HasValue)
-            return Remove(pos.Value, piece.Owner);
         return false;
     }
     public override bool Remove<TPos>(TPos position, IndexOfPlayer player)
@@ -91,6 +97,12 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
             return false;
         }
 
+        if (_pieces.ContainsKey(end))
+        {
+            error = $"Позиция {end} уже занята";
+            return false;
+        }
+
         if (!ValidateDisplace(typedPath, piece, out error))
             return false;
 
@@ -116,12 +128,12 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         pieces = list;
         return list.Count > 0;
     }
+    public override IEnumerable<IPiece> GetAllPieces() => _pieces.Values;
     public override void Dispose()
     {
-        foreach (var piece in _pieces.Values)
-            piece.Dispose();
+        EventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied);
+        foreach (var piece in _pieces.Values) piece.Dispose();
         _pieces.Clear();
         base.Dispose();
     }
-    public override IEnumerable<IPiece> GetAllPieces() => _pieces.Values.ToList();
 }

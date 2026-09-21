@@ -45,7 +45,6 @@ public abstract class Room : IRoom, IDisposable
         _disposed = true;
         PieceAdded = null;
         PieceRemoved = null;
-        GC.SuppressFinalize(this);
     }
     public abstract IEnumerable<IPiece> GetAllPieces();
 
