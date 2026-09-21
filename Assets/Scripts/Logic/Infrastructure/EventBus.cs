@@ -2,12 +2,17 @@
 
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class EventBus : IEventBus
 {
+    private readonly ILogger _logger;
     private readonly Dictionary<Type, List<SubscriptionEntry>> _subscriptions = new();
     private readonly Dictionary<Type, Type[]> _typeHierarchyCache = new();
+
+    public EventBus(ILogger logger)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
     
     private Type[] GetTypesToCheck(Type eventType)
     {
@@ -40,8 +45,7 @@ public class EventBus : IEventBus
 
         foreach (var type in typesToCheck)
         {
-            if (!_subscriptions.TryGetValue(type, out var list))
-                continue;
+            if (!_subscriptions.TryGetValue(type, out var list)) continue;
 
             var snapshot = list.ToArray();
             foreach (var entry in snapshot)
@@ -52,7 +56,7 @@ public class EventBus : IEventBus
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError(
+                    _logger.LogError(
                         $"[{nameof(EventBus)}] Ошибка при обработке {eventType.Name} " +
                         $"подписчиком {entry.Original.Target}: {ex}");
                 }
@@ -80,8 +84,7 @@ public class EventBus : IEventBus
         if (_subscriptions.TryGetValue(typeof(TEvent), out var list))
         {
             list.RemoveAll(entry => entry.Original.Equals(handler));
-            if (list.Count == 0)
-                _subscriptions.Remove(typeof(TEvent));
+            if (list.Count == 0) _subscriptions.Remove(typeof(TEvent));
         }
     }
     public void Clear()

@@ -42,10 +42,28 @@ public sealed class AxisAlignedBox : IEquatable<AxisAlignedBox>
     public bool Equals(AxisAlignedBox? other)
     {
         if (other is null) return false;
-        return _bounds.SequenceEqual(other._bounds);
+        if (ReferenceEquals(this, other)) return true;
+        if (_bounds.Count != other._bounds.Count) return false;
+
+        foreach (var (axis, range) in _bounds)
+        {
+            if (!other._bounds.TryGetValue(axis, out var otherRange)) return false;
+            if (otherRange.Min != range.Min || otherRange.Max != range.Max) return false;
+        }
+        return true;
     }
 
-    public override int GetHashCode() => _bounds.Aggregate(0, (acc, kv) => HashCode.Combine(acc, kv.Key, kv.Value.Min, kv.Value.Max));
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        foreach (var axis in new[] { Axis.X, Axis.Y, Axis.Z, Axis.W })
+        {
+            hash.Add(axis);
+            if (_bounds.TryGetValue(axis, out var range))
+                hash.Add(HashCode.Combine(range.Min, range.Max));
+        }
+        return hash.ToHashCode();
+    }
 
     public static bool operator ==(AxisAlignedBox? left, AxisAlignedBox? right) => left is null ? right is null : left.Equals(right);
     public static bool operator !=(AxisAlignedBox? left, AxisAlignedBox? right) => !(left == right);

@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-public class DisposableContainer : IDisposable
+public sealed class DisposableContainer : IDisposable
 {
     private readonly List<IDisposable> _items = new();
     private bool _disposed;
@@ -20,8 +20,11 @@ public class DisposableContainer : IDisposable
         if (_disposed) return;
         _disposed = true;
 
-        for (int i = _items.Count - 1; i >= 0; i--) _items[i]?.Dispose();
+        for (int i = _items.Count - 1; i >= 0; i--)
+        {
+            try { _items[i].Dispose(); }
+            catch (Exception) { }
+        }
         _items.Clear();
-        GC.SuppressFinalize(this);
     }
 }

@@ -9,7 +9,8 @@ public sealed class GameConfigLoader : IGameConfigLoader
     {
         var textAsset = Resources.Load<TextAsset>("appsettings");
         if (textAsset == null) throw new Exception("Файл appsettings.json не найден в папке Resources");
-        var wrapper = JsonUtility.FromJson<ConfigWrapper>(textAsset.text) ?? throw new Exception("Неверный формат конфигурации: отсутствует раздел 'Board'");
+        var wrapper = JsonUtility.FromJson<ConfigWrapper>(textAsset.text) ?? throw new Exception("Не удалось распарсить appsettings.json");
+        if (wrapper.Board == null) throw new Exception("В appsettings.json отсутствует раздел 'Board'");
         int correctedSize = BoardSizeCorrector.CorrectSize(wrapper.Board.FieldSize);
 
         return new BoardConfig

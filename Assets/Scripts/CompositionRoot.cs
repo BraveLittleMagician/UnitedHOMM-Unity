@@ -70,8 +70,8 @@ public sealed class CompositionRoot : MonoBehaviour
             _boardConfig.WUp,
             _boardConfig.WDown);
 
-        _eventBus = new EventBus();
         _logger = new LoggerForUnity();
+        _eventBus = new EventBus(_logger);
 
         _stateManager = new StateOfGame();
         _house = new House(_seats, _eventBus, _logger);
