@@ -21,8 +21,7 @@ public sealed class SizeAwareInt : ISequence<int, SizeAwareInt>, IDisposable
 
     public bool GuaranteesAtLeastOneStayable => true;
 
-    public ISequenceEnumerator<int> GetEnumerator(int start)
-        => new Enumerator(start, () => _count);
+    public ISequenceEnumerator<int> GetEnumerator(int start) => new Enumerator(start, () => _count);
 
     public SizeAwareInt Copy() => this;
     ISequence ICopyable<ISequence>.Copy() => this;

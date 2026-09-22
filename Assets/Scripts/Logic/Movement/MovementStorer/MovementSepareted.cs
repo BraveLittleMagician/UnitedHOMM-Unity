@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 
-public class MovementSepareted<TSequence, TRoom, TPosition> : MovementInRoom<TSequence, TRoom, TPosition> where TSequence : notnull, ISequence<TPosition, TSequence>, new() where TRoom : IRoomT<TPosition> where TPosition : struct
+public class MovementSepareted<TSequence, TRoom, TPosition> : MovementInRoom<TSequence, TRoom, TPosition> where TSequence : notnull, ISequence<TPosition, TSequence> where TRoom : IRoomT<TPosition> where TPosition : struct
 {
     private readonly TSequence _moveSequence;
     private readonly TSequence _attackSequence;
@@ -17,10 +17,7 @@ public class MovementSepareted<TSequence, TRoom, TPosition> : MovementInRoom<TSe
     protected override TSequence MovementSequence => _moveSequence;
     protected override TSequence AttackSequence => _attackSequence;
 
-    protected override void CallUpdateModified()
-    {
-        UpdateModifedSequencies();
-    }
+    protected override void CallUpdateModified() => UpdateModifedSequencies();
     public override List<TPosition> GetStayables(TPosition start, bool isAttack)
     {
         if (isAttack) return ModifiedAttackSequence.GetEnumerator(start).PositionsStayables;

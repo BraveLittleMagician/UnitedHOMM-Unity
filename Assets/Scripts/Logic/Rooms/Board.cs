@@ -37,7 +37,7 @@ public sealed class Board : RoomT<Square>, ISquarePositionRoom
     {
         if (!_allowedArea.Contains(path.Positions[0]))
         {
-            error = $"Конечная позиция {path.Positions[0]} выходит за границы доски";
+            error = $"Начальная позиция {path.Positions[0]} выходит за границы доски";
             return false;
         }
 

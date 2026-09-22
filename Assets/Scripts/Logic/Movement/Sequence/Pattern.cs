@@ -216,7 +216,7 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
         }
         return true;
     }
-    public override bool Equals(object? obj) => obj is Square other && Equals(other);
+    public override bool Equals(object? obj) => obj is Pattern<TSquare> other && Equals(other);
     public override int GetHashCode() => _cachedHash;
 
     public static bool operator ==(Pattern<TSquare> left, Pattern<TSquare> right) => left.Equals(right);

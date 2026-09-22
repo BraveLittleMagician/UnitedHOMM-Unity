@@ -15,19 +15,16 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         EventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
     }
 
+    protected IReadOnlyDictionary<TPosition, IPiece> Pieces => _pieces;
     public override int CountOfPieces => _pieces.Count;
     public override string Name => GetType().Name;
-
-
-
-    protected IReadOnlyDictionary<TPosition, IPiece> Pieces => _pieces;
-    protected abstract bool ValidateAdd(IPiece piece, TPosition position, out string error);
-    protected abstract bool ValidateDisplace(IPath<TPosition> path, IPiece piece, out string error);
 
     private void OnPieceDied(PieceDiedEvent e)
     {
         if (Remove(e.Piece.IndexInHouse)) Logger.Log($"Фигура {e.Piece} удалена из {Name} после смерти");
     }
+    protected abstract bool ValidateAdd(IPiece piece, TPosition position, out string error);
+    protected abstract bool ValidateDisplace(IPath<TPosition> path, IPiece piece, out string error);
 
     public override bool Add<TPos>(IPiece piece, TPos pos, bool fromAnotherRoom, out string error)
     {
@@ -97,10 +94,13 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
             return false;
         }
 
-        if (_pieces.ContainsKey(end))
+        for (int i = 1; i < typedPath.Positions.Count - 1; i++)
         {
-            error = $"Позиция {end} уже занята";
-            return false;
+            if (_pieces.ContainsKey(typedPath.Positions[i]))
+            {
+                error = $"Промежуточная позиция {typedPath.Positions[i]} занята";
+                return false;
+            }
         }
 
         if (!ValidateDisplace(typedPath, piece, out error))
@@ -128,7 +128,6 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         pieces = list;
         return list.Count > 0;
     }
-    public override IEnumerable<IPiece> GetAllPieces() => _pieces.Values;
     public override void Dispose()
     {
         EventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied);
@@ -136,4 +135,5 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         _pieces.Clear();
         base.Dispose();
     }
+    public override IEnumerable<IPiece> GetAllPieces() => _pieces.Values;
 }

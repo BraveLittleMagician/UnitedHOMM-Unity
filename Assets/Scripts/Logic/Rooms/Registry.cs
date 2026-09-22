@@ -33,14 +33,14 @@ public sealed class Registry : IRegistry
             room.PieceRemoved -= RemovedHandler;
         }));
 
-        void AddedHandler(IPiece piece, IRoomWithoutRemove roomWithoutRemove, bool fromAnotherRoom)
+        void AddedHandler(IPiece piece, IRoomWithoutRemove _, bool __)
         {
-            if (room is IRoom r)
-                _indexToRoom[piece.IndexInHouse] = r;
+            _indexToRoom[piece.IndexInHouse] = room;
         }
         void RemovedHandler(BigInteger index, IRoom room)
         {
-            _indexToRoom.Remove(index);
+            if (_indexToRoom.TryGetValue(index, out var currentRoom) && ReferenceEquals(currentRoom, room))
+                _indexToRoom.Remove(index);
         }
     }
 

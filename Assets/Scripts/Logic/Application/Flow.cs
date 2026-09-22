@@ -47,6 +47,7 @@ public sealed class Flow : IFlow, IDisposable
 
         if (!room.Add(piece, position, false, out var error))
         {
+            _house.RemovePiece(piece.IndexInHouse);
             piece.Dispose();
             return Result<IPiece>.Failure($"Не удалось добавить фигуру в комнату: {error}");
         }

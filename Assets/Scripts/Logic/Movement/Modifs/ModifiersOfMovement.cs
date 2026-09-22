@@ -3,7 +3,9 @@
 using System;
 using System.Collections.Generic;
 
-public class ModifiersOfMovement<TSequence, TPosition> : Modifiers where TSequence : notnull, ISequence<TPosition, TSequence>, new() where TPosition : struct
+public class ModifiersOfMovement<TSequence, TPosition> : Modifiers
+    where TSequence : notnull, ISequence<TPosition, TSequence>
+    where TPosition : struct
 {
     private readonly IEventBus _eventBus;
     private readonly IPiece _owner;
@@ -11,62 +13,62 @@ public class ModifiersOfMovement<TSequence, TPosition> : Modifiers where TSequen
 
     public ModifiersOfMovement(IEventBus eventBus, IPiece owner)
     {
-        _eventBus = eventBus;
-        _owner = owner;
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _owner = owner ?? throw new ArgumentNullException(nameof(owner));
     }
 
     public IEnumerable<ModifierOfMovement<TSequence, TPosition>> Attacks
     {
         get
         {
-            List<ModifierOfMovement<TSequence, TPosition>> list = new();
             foreach (var modifs in _modifiers.Values)
-            {
                 if (modifs.Attack != null)
-                    list.Add(modifs.Attack);
-            }
-            return list;
+                    yield return modifs.Attack;
         }
     }
+
     public IEnumerable<ModifierOfMovement<TSequence, TPosition>> Movements
     {
         get
         {
-            List<ModifierOfMovement<TSequence, TPosition>> list = new();
             foreach (var modifs in _modifiers.Values)
-            {
                 if (modifs.Movement != null)
-                    list.Add(modifs.Movement);
-            }
-            return list;
+                    yield return modifs.Movement;
         }
     }
 
     private bool AddPrivate<TModif>(TModif m, bool isAttack) where TModif : ModifierOfMovement
     {
-        if (m is ModifierOfMovement<TSequence, TPosition> modifier)
+        if (m is not ModifierOfMovement<TSequence, TPosition> modifier)
+            return false;
+
+        var type = m.GetType();
+
+        if (!_modifiers.TryGetValue(type, out var modifs))
         {
-            Type type = m.GetType();
-            if (_modifiers.TryGetValue(type, out var gotten))
-                return gotten.Add(modifier, isAttack);
-            else
-            {
-                AttackMovement modifs = new();
-                if (modifs.Add(modifier, isAttack))
-                {
-                    _modifiers[type] = modifs;
-                    return true;
-                }
-            }
+            modifs = new AttackMovement();
+            if (!modifs.Add(modifier, isAttack))
+                return false;
+
+            _modifiers[type] = modifs;
+            return true;
         }
-        return false;
+
+        return modifs.Add(modifier, isAttack);
     }
+
     private bool RemovePrivate<TModif>(bool isAttack) where TModif : ModifierOfMovement
     {
-        if (_modifiers.TryGetValue(typeof(TModif), out var gotten))
-            return gotten.Remove<TModif>(isAttack);
-        return false;
+        if (!_modifiers.TryGetValue(typeof(TModif), out var gotten)) return false;
+
+        if (!gotten.Remove(isAttack)) return false;
+
+        if (gotten.Attack == null && gotten.Movement == null)
+            _modifiers.Remove(typeof(TModif));
+
+        return true;
     }
+
     public override bool Add<TModif>(TModif m, bool isAttack)
     {
         if (AddPrivate(m, isAttack))
@@ -76,6 +78,7 @@ public class ModifiersOfMovement<TSequence, TPosition> : Modifiers where TSequen
         }
         return false;
     }
+
     public override bool Remove<TModif>(bool isAttack)
     {
         if (RemovePrivate<TModif>(isAttack))
@@ -85,10 +88,10 @@ public class ModifiersOfMovement<TSequence, TPosition> : Modifiers where TSequen
         }
         return false;
     }
+
     public override void Dispose()
     {
         _modifiers.Clear();
-        GC.SuppressFinalize(this);
     }
 
     private class AttackMovement
@@ -100,34 +103,32 @@ public class ModifiersOfMovement<TSequence, TPosition> : Modifiers where TSequen
         {
             if (isAttack)
             {
-                if (Attack == null)
-                {
-                    Attack = modifier;
-                    return true;
-                }
+                if (Attack != null) return false;
+                Attack = modifier;
+                return true;
             }
             else
             {
-                if (Movement == null)
-                {
-                    Movement = modifier;
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool Remove<TModif>(bool isAttack) where TModif : ModifierOfMovement
-        {
-            if (typeof(TModif) == typeof(ModifierOfMovement<TSequence, TPosition>))
-            {
-                if (isAttack)
-                    Attack = null;
-                else
-                    Movement = null;
+                if (Movement != null) return false;
+                Movement = modifier;
                 return true;
             }
-            return false;
+        }
+
+        public bool Remove(bool isAttack)
+        {
+            if (isAttack)
+            {
+                if (Attack == null) return false;
+                Attack = null;
+                return true;
+            }
+            else
+            {
+                if (Movement == null) return false;
+                Movement = null;
+                return true;
+            }
         }
     }
 }

@@ -9,37 +9,31 @@ public readonly struct RelativeArea<TAxes> : ISequence<Square, RelativeArea<TAxe
 {
     private readonly int _cachedHash;
 
-    private RelativeArea(IImmutableSet<int> stayables, int length, bool isCircle, GuaranteesOneStayable guaranteesAtLeastOneStayable)
+    public RelativeArea(IImmutableSet<int> stayables, int length, bool isCircle, bool guarantee)
     {
+        if (length < 0)
+            throw new ArgumentOutOfRangeException(nameof(length), "Length не может быть отрицательным");
+
+        if (guarantee)
+        {
+            length = Math.Max(length, 1);
+            stayables = stayables.Add(1).Where(i => i > 0 && i <= length).ToImmutableHashSet();
+        }
+
         Length = length;
         IsCircle = isCircle;
         Stayables = stayables;
-        GuaranteesAtLeastOneStayable = guaranteesAtLeastOneStayable.ToBool();
+        GuaranteesAtLeastOneStayable = guarantee;
+
         var hash = new HashCode();
         hash.Add(GuaranteesAtLeastOneStayable);
-        hash.Add(isCircle);
+        hash.Add(IsCircle);
         hash.Add(length);
-        if (stayables != null)
-            foreach (var item in stayables) hash.Add(item);
+        foreach (var item in stayables) hash.Add(item);
         _cachedHash = hash.ToHashCode();
     }
 
-    public RelativeArea(bool isCircle) : this(ImmutableHashSet.Create(0, 1), 1, isCircle, GuaranteesOneStayable.Yes) { }
-    public RelativeArea(IImmutableSet<int> stayables, int length, bool isCircle, bool guaranteeStayable = false) : this(stayables, length, isCircle, GuaranteesOneStayable.No) 
-    {
-        if (!guaranteeStayable) return;
-        Length = Math.Max(length, 1);
-        IsCircle = isCircle;
-        Stayables = stayables.Add(1).Where(i => i > 0 && i <= length).ToImmutableHashSet();
-        GuaranteesAtLeastOneStayable = true;
-        var hash = new HashCode();
-        hash.Add(guaranteeStayable);
-        hash.Add(isCircle);
-        hash.Add(length);
-        if (stayables != null)
-            foreach (var item in stayables) hash.Add(item);
-        _cachedHash = hash.ToHashCode();
-    }
+    public RelativeArea(bool isCircle) : this(ImmutableHashSet.Create(0, 1), 1, isCircle, guarantee: true) { }
 
     public bool GuaranteesAtLeastOneStayable { get; }
     public bool IsCircle { get; }
@@ -57,7 +51,7 @@ public readonly struct RelativeArea<TAxes> : ISequence<Square, RelativeArea<TAxe
     public RelativeArea<TAxes> WithIncreasedRadius()
     {
         int newLength = Length + 1;
-        return new RelativeArea<TAxes>(Stayables, newLength, IsCircle, GuaranteesAtLeastOneStayable.ToGuarantee());
+        return new RelativeArea<TAxes>(Stayables, newLength, IsCircle, GuaranteesAtLeastOneStayable);
     }
     public RelativeArea<TAxes> WithDecreasedRadius()
     {
@@ -66,22 +60,22 @@ public readonly struct RelativeArea<TAxes> : ISequence<Square, RelativeArea<TAxe
         if (Stayables.Contains(oldLength) && Stayables.Count == 1) return this;
         int newLength = Length - 1;
         var newStayables = Stayables.Where(r => r <= newLength).ToImmutableHashSet();
-        return new (newStayables, newLength, IsCircle, GuaranteesAtLeastOneStayable.ToGuarantee());
+        return new (newStayables, newLength, IsCircle, GuaranteesAtLeastOneStayable);
     }
     public RelativeArea<TAxes> WithAddedStayable(int radius)
     {
         if (radius < 0 || radius > Length) return this;
         if (Stayables.Contains(radius)) return this;
-        return new (Stayables.Add(radius), Length, IsCircle, GuaranteesAtLeastOneStayable.ToGuarantee());
+        return new (Stayables.Add(radius), Length, IsCircle, GuaranteesAtLeastOneStayable);
     }
     public RelativeArea<TAxes> WithRemovedStayable(int radius)
     {
         if (radius < 0 || radius > Length) return this;
         if (!Stayables.Contains(radius)) return this; 
         if (Stayables.Count == 1 && Stayables.Contains(radius)) return this;
-        return new RelativeArea<TAxes>(Stayables.Remove(radius), Length, IsCircle, GuaranteesAtLeastOneStayable.ToGuarantee());
+        return new RelativeArea<TAxes>(Stayables.Remove(radius), Length, IsCircle, GuaranteesAtLeastOneStayable);
     }
-    public RelativeArea<TAxes> WithCircle(bool isCircle) => new (Stayables, Length, isCircle, GuaranteesAtLeastOneStayable.ToGuarantee());
+    public RelativeArea<TAxes> WithCircle(bool isCircle) => new (Stayables, Length, isCircle, GuaranteesAtLeastOneStayable);
 
     public (IImmutableSet<int> stayables, int length, bool isCircle, bool guarantees) DataWithIncreasedRadius()
     {

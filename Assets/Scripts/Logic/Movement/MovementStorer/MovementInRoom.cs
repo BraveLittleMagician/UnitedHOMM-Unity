@@ -3,21 +3,23 @@
 using System;
 using System.Collections.Generic;
 
-public abstract class MovementInRoom<TSequence, TRoom, TPosition> : Movement where TSequence : notnull, ISequence<TPosition, TSequence>, new() where TRoom : IRoomT<TPosition> where TPosition : struct
+public abstract class MovementInRoom<TSequence, TRoom, TPosition> : Movement 
+    where TSequence : notnull, ISequence<TPosition, TSequence> 
+    where TRoom : IRoomT<TPosition> where TPosition : struct
 {
     private readonly IEventBus _eventBus;
     private readonly IPiece _owner;
 
     protected MovementInRoom(IEventBus eventBus, IPiece owner)
     {
-        _eventBus = eventBus;
-        _owner = owner;
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus)); ;
+        _owner = owner ?? throw new ArgumentNullException(nameof(owner)); ;
         _eventBus.Subscribe<ModifiersUpdatedEvent>(OnModifiersUpdated);
         GeneralizedModifiers = new ModifiersOfMovement<TSequence, TPosition>(_eventBus, _owner);
     }
 
-    protected TSequence ModifiedMovementSequence { get; set; } = new();
-    protected TSequence ModifiedAttackSequence { get; set; } = new();
+    protected TSequence ModifiedMovementSequence { get; set; } = default!;
+    protected TSequence ModifiedAttackSequence { get; set; } = default!;
     protected abstract TSequence MovementSequence { get; }
     protected abstract TSequence AttackSequence { get; }
 
@@ -91,6 +93,9 @@ public abstract class MovementInRoom<TSequence, TRoom, TPosition> : Movement whe
     public override void Dispose()
     {
         _eventBus.Unsubscribe<ModifiersUpdatedEvent>(OnModifiersUpdated);
-        GC.SuppressFinalize(this);
+        GeneralizedModifiers.Dispose();
+
+        if (MovementSequence is IDisposable movementDisposable) movementDisposable.Dispose();
+        if (!ReferenceEquals(MovementSequence, AttackSequence) && AttackSequence is IDisposable attackDisposable) attackDisposable.Dispose();
     }
 }
