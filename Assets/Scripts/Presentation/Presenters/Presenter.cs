@@ -29,9 +29,6 @@ public class Presenter : IDisposable
     private void OnBoardConfigChanged(BoardConfigChangedEvent e)
     {
         _currentConfig = e.NewConfig;
-        var axes = (MultipleAxes)_currentConfig.Axes;
-        var box = new AxisAlignedBox(axes, _currentConfig.FieldSize, e.NewConfig.WUp, e.NewConfig.WDown);
-        _camera.FitToBoard(box.Bounds);
     }
     private void OnPieceDeployed(PieceDeployedEvent<Square> e) { }
     private void OnPieceDeployed(PieceDeployedEvent<int> e) { }
@@ -41,9 +38,6 @@ public class Presenter : IDisposable
 
     public void Start()
     {
-        var axes = (MultipleAxes)_currentConfig.Axes;
-        var box = new AxisAlignedBox(axes, _currentConfig.FieldSize, _currentConfig.WUp, _currentConfig.WDown);
-        _camera.FitToBoard(box.Bounds);
     }
     public void Dispose()
     {

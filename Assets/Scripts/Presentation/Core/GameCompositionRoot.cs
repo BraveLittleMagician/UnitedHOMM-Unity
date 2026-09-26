@@ -2,6 +2,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public sealed class GameCompositionRoot : MonoBehaviour
 {
@@ -16,10 +17,21 @@ public sealed class GameCompositionRoot : MonoBehaviour
     [SerializeField] private DeselectOnEmptyClick _deselectOnEmptyClick = null!;
 
     [Header("Camera")]
+    [SerializeField] private Camera _camera = null!;
     [SerializeField] private CameraWork _cameraWork = null!;
+    [SerializeField] private WorldToScreenMarker _cubeCenterMarker = null!;
+    [SerializeField] private WorldToScreenMarker _rotationCenterMarker = null!;
 
     [Header("Input")]
+    [SerializeField] private InputActionAsset _inputActions = null!;
     [SerializeField] private MouseEventer _mouseEventer = null!;
+    [SerializeField] private ClickLeft _clickLeftHub = null!;
+    [SerializeField] private ClickRight _clickRightHub = null!;
+    [SerializeField] private HoldRight _holdRightHub = null!;
+    [SerializeField] private HoldMiddle _holdMiddleHub = null!;
+    [SerializeField] private Scroll _scrollHub = null!;
+    [SerializeField] private Pointer _pointerHub = null!;
+    [SerializeField] private Delta _deltaHub = null!;
 
     private IEventBus _eventBus = null!;
     private ILogger _logger = null!;
@@ -62,8 +74,18 @@ public sealed class GameCompositionRoot : MonoBehaviour
         if (_boardUI == null) throw new ArgumentNullException(nameof(_boardUI));
         if (_selectionHub == null) throw new ArgumentNullException(nameof(_selectionHub));
         if (_deselectOnEmptyClick == null) throw new ArgumentNullException(nameof(_deselectOnEmptyClick));
+        if (_camera == null) throw new ArgumentNullException(nameof(_camera));
         if (_cameraWork == null) throw new ArgumentNullException(nameof(_cameraWork));
+        if (_cubeCenterMarker == null) throw new ArgumentNullException(nameof(_cubeCenterMarker));
+        if (_rotationCenterMarker == null) throw new ArgumentNullException(nameof(_rotationCenterMarker));
         if (_mouseEventer == null) throw new ArgumentNullException(nameof(_mouseEventer));
+        if (_clickLeftHub == null) throw new ArgumentNullException(nameof(_clickLeftHub));
+        if (_clickRightHub == null) throw new ArgumentNullException(nameof(_clickRightHub));
+        if (_holdRightHub == null) throw new ArgumentNullException(nameof(_holdRightHub));
+        if (_holdMiddleHub == null) throw new ArgumentNullException(nameof(_holdMiddleHub));
+        if (_scrollHub == null) throw new ArgumentNullException(nameof(_scrollHub));
+        if (_deltaHub == null) throw new ArgumentNullException(nameof(_deltaHub));
+        if (_pointerHub == null) throw new ArgumentNullException(nameof(_pointerHub));
     }
     private void CreateSystems()
     {
@@ -98,7 +120,8 @@ public sealed class GameCompositionRoot : MonoBehaviour
     }
     private void Initialize()
     {
-        _cameraWork.Initialize();
+        _mouseEventer.Initialize(_inputActions, _clickLeftHub, _clickRightHub, _holdRightHub, _holdMiddleHub, _scrollHub, _pointerHub, _deltaHub);
+        _cameraWork.Initialize(_camera, _cubeCenterMarker, _rotationCenterMarker, _holdRightHub, _holdMiddleHub, _deltaHub, _scrollHub);
         _boardUI.Initialize(_stateOfGame);
     }
     private void Run() => throw new NotImplementedException();

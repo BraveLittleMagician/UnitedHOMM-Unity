@@ -417,6 +417,11 @@ GameObject:
   m_Component:
   - component: {fileID: 526232267}
   - component: {fileID: 526232268}
+  - component: {fileID: 526232272}
+  - component: {fileID: 526232271}
+  - component: {fileID: 526232270}
+  - component: {fileID: 526232274}
+  - component: {fileID: 526232269}
   m_Layer: 0
   m_Name: Holder
   m_TagString: Untagged
@@ -455,11 +460,94 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 581b99dd37d0a9548a538eb25d9a7ae2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameCompositionRoot
-  _view: {fileID: 0}
+  _view: {fileID: 526232272}
+  _boardUI: {fileID: 526232271}
+  _selectionHub: {fileID: 526232270}
+  _deselectOnEmptyClick: {fileID: 526232269}
+  _camera: {fileID: 1823688466}
+  _cameraWork: {fileID: 526232274}
+  _cubeCenterMarker: {fileID: 540639274}
+  _rotationCenterMarker: {fileID: 1790386481}
+  _inputActions: {fileID: 0}
   _mouseEventer: {fileID: 0}
-  _cameraWork: {fileID: 0}
-  _boardUI: {fileID: 0}
-  _globalDeselector: {fileID: 0}
+  _clickLeftHub: {fileID: 0}
+  _clickRightHub: {fileID: 0}
+  _holdRightHub: {fileID: 0}
+  _holdMiddleHub: {fileID: 0}
+  _scrollHub: {fileID: 0}
+  _pointerHub: {fileID: 0}
+  _deltaHub: {fileID: 0}
+--- !u!114 &526232269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41ce2200235a8494693b4f91e5e1235b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeselectOnEmptyClick
+  _clickableLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  _maxRayDistance: 1000
+--- !u!114 &526232270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 455d5a9ce8f170e4898d0aa8e1dcf800, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SelectionHub
+--- !u!114 &526232271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13681ddf1e483b34aba0d7b1801bf2da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoardUI
+--- !u!114 &526232272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34f4b6366882ce041843f062b925bd6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::View
+--- !u!114 &526232274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4951c993a48e9fb4080234fbda381088, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraWork
+  _distance: 15
+  _rotationSpeed: 5
+  _panSpeed: 1
+  _zoomSpeed: 5
+  _minDistance: 5
+  _maxDistance: 60
+  _snapDistance: 5
 --- !u!1 &540639270
 GameObject:
   m_ObjectHideFlags: 0
@@ -471,6 +559,7 @@ GameObject:
   - component: {fileID: 540639271}
   - component: {fileID: 540639273}
   - component: {fileID: 540639272}
+  - component: {fileID: 540639274}
   m_Layer: 5
   m_Name: CubeCenterUIMarker
   m_TagString: Untagged
@@ -535,6 +624,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 540639270}
   m_CullTransparentMesh: 1
+--- !u!114 &540639274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 540639270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c1b03c2dbf84b341a040546d8e58cea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldToScreenMarker
 --- !u!1 &1446525815
 GameObject:
   m_ObjectHideFlags: 0
@@ -577,6 +678,7 @@ GameObject:
   - component: {fileID: 1790386478}
   - component: {fileID: 1790386480}
   - component: {fileID: 1790386479}
+  - component: {fileID: 1790386481}
   m_Layer: 5
   m_Name: RotationCenterUIMarker
   m_TagString: Untagged
@@ -641,6 +743,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1790386477}
   m_CullTransparentMesh: 1
+--- !u!114 &1790386481
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1790386477}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c1b03c2dbf84b341a040546d8e58cea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldToScreenMarker
 --- !u!1 &1823688464
 GameObject:
   m_ObjectHideFlags: 0
@@ -903,9 +1017,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4951c993a48e9fb4080234fbda381088, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ControllerOfCamera
-  _paddingFactor2D: 0.75
-  _paddingFactor3D: 1.5
-  _orthographicZOffset: -10
+  _distance: 15
+  _rotationSpeed: 5
+  _panSpeed: 1
+  _zoomSpeed: 5
+  _minDistance: 5
+  _maxDistance: 60
+  _snapDistance: 5
 --- !u!1 &2013410473
 GameObject:
   m_ObjectHideFlags: 1
