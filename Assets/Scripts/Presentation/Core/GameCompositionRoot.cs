@@ -6,13 +6,20 @@ using UnityEngine;
 public sealed class GameCompositionRoot : MonoBehaviour
 {
     [Header("Scene Components")]
-    [SerializeField] private GlobalDeselector _globalDeselector = null!;
-    [SerializeField] private MouseEventer _clickEventer = null!;
-    [SerializeField] private CameraWork _cameraWork = null!;
-    [SerializeField] private View _gameView = null!;
+    [SerializeField] private View _view = null!;
+
+    [Header("UI")]
     [SerializeField] private BoardUI _boardUI = null!;
-    [SerializeField] private GameObject _layerPrefab = null!;
-    [SerializeField] private bool _autoStart = true;
+
+    [Header("Selection")]
+    [SerializeField] private SelectionHub _selectionHub = null!;
+    [SerializeField] private DeselectOnEmptyClick _deselectOnEmptyClick = null!;
+
+    [Header("Camera")]
+    [SerializeField] private CameraWork _cameraWork = null!;
+
+    [Header("Input")]
+    [SerializeField] private MouseEventer _mouseEventer = null!;
 
     private IEventBus _eventBus = null!;
     private ILogger _logger = null!;
@@ -24,24 +31,22 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private IFlow _flow = null!;
     private Seats _seats; 
     private ConfigOfBoard _configOfBoard = null!;
-    private LoaderOfConfig _configLoader = null!;
-    private AxisAlignedBox _box = null!;
-    private StateOfGame _stateManager = null!;
     private Board _board = null!;
-    private BoardConfigUpdater _configUpdater = null!;
-    private AdderOfRoomsToHouse _roomInitializer = null!;
-    private PiecesSpawner _piecesSpawner = null!;
+    private LoaderOfConfig _loaderOfConfig = null!;
+    private AxisAlignedBox _box = null!;
+    private StateOfGame _stateOfGame = null!;
+    private AdderOfRoomsToHouse _adderOfRooms = null!;
+    private SpawnerOfPieces _spawnerOfPieces = null!;
     private StarterOfGame _starterOfGame = null!;
     private Presenter _presenter = null!;
 
     private void ValidateReferences()
     {
-        if (_globalDeselector == null) throw new ArgumentNullException(nameof(_globalDeselector));
-        if (_clickEventer == null) throw new ArgumentNullException(nameof(_clickEventer));
+        if (_deselectOnEmptyClick == null) throw new ArgumentNullException(nameof(_deselectOnEmptyClick));
+        if (_mouseEventer == null) throw new ArgumentNullException(nameof(_mouseEventer));
         if (_cameraWork == null) throw new ArgumentNullException(nameof(_cameraWork));
-        if (_gameView == null) throw new ArgumentNullException(nameof(_gameView));
+        if (_view == null) throw new ArgumentNullException(nameof(_view));
         if (_boardUI == null) throw new ArgumentNullException(nameof(_boardUI));
-        if (_layerPrefab == null) throw new ArgumentNullException(nameof(_layerPrefab));
     }
     private void Awake()
     {
@@ -52,12 +57,12 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private void Start()
     {
         _presenter.Start();
-        if (_autoStart) _starterOfGame.StartGame();
+        _starterOfGame.StartGame();
     }
     private void BuildServices()
     {
-        _configLoader = new LoaderOfConfig();
-        _configOfBoard = _configLoader.LoadBoardConfig();
+        _loaderOfConfig = new LoaderOfConfig();
+        _configOfBoard = _loaderOfConfig.LoadBoardConfig();
         _seats = new Seats(_configOfBoard.NumberOfSides, _configOfBoard.NumberOfPlayersOnSide);
         _box = new AxisAlignedBox(
             (MultipleAxes)_configOfBoard.Axes,
@@ -68,21 +73,20 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _logger = new LoggerForUnity();
         _eventBus = new EventBus(_logger);
 
-        _stateManager = new StateOfGame();
+        _stateOfGame = new StateOfGame();
         _house = new House(_seats, _eventBus, _logger);
         _registry = new Registry(_house);
         _board = new Board(_seats, _box, _eventBus, _logger);
-        _configUpdater = new BoardConfigUpdater(_board, _eventBus, _logger, _configOfBoard);
 
         _combatService = new CombatService(_logger, _eventBus);
         _movementValidator = new MovementValidator(_logger);
         _abilityService = new AbilityService(_eventBus, _logger);
         _flow = new Flow(_house, _eventBus, _logger, _combatService, _movementValidator, _abilityService, _registry);
 
-        _roomInitializer = new AdderOfRoomsToHouse(_house, _eventBus, _logger, _seats, _board);
+        _adderOfRooms = new AdderOfRoomsToHouse(_house, _eventBus, _logger, _seats, _board);
 
-        _piecesSpawner = new PiecesSpawner(_flow, _logger, StartingPlacementPreset.CreateStandard());
-        _starterOfGame = new StarterOfGame(_stateManager, _roomInitializer, _piecesSpawner);
+        _spawnerOfPieces = new SpawnerOfPieces(_flow, _logger, StartingPlacementPreset.CreateStandard());
+        _starterOfGame = new StarterOfGame(_stateOfGame, _adderOfRooms, _spawnerOfPieces);
 
         _presenter = new Presenter(_eventBus, _cameraWork, _configOfBoard);
     }
@@ -90,6 +94,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private void Initialize()
     {
         _cameraWork.Initialize();
-        _boardUI.Initialize(_stateManager);
+        _boardUI.Initialize(_stateOfGame);
     }
 }

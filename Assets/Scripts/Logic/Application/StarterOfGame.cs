@@ -4,10 +4,10 @@ public class StarterOfGame
 {
     private readonly StateOfGame _stateOfGame;
     private readonly AdderOfRoomsToHouse _adderRoomsToHouse;
-    private readonly PiecesSpawner _spawnerOfPieces;
+    private readonly SpawnerOfPieces _spawnerOfPieces;
     private bool _started;
 
-    public StarterOfGame(StateOfGame stateManager, AdderOfRoomsToHouse roomInitializer, PiecesSpawner testPiecesSpawner) 
+    public StarterOfGame(StateOfGame stateManager, AdderOfRoomsToHouse roomInitializer, SpawnerOfPieces testPiecesSpawner) 
     {
         _stateOfGame = stateManager;
         _adderRoomsToHouse = roomInitializer;

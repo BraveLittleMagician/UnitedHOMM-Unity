@@ -3,16 +3,13 @@
 using System;
 using System.Collections.Generic;
 
-public sealed class PiecesSpawner
+public sealed class SpawnerOfPieces
 {
     private readonly IFlow _flow;
     private readonly ILogger _logger;
     private readonly IReadOnlyList<StartingPlacement> _placements;
 
-    public PiecesSpawner(
-        IFlow flow,
-        ILogger logger,
-        IReadOnlyList<StartingPlacement> placements)
+    public SpawnerOfPieces(IFlow flow, ILogger logger, IReadOnlyList<StartingPlacement> placements)
     {
         _flow = flow ?? throw new ArgumentNullException(nameof(flow));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
