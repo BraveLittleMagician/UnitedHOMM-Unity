@@ -7,9 +7,9 @@ public sealed class BoardConfigUpdater
     private readonly Board _board;
     private readonly IEventBus _eventBus;
     private readonly ILogger _logger;
-    private BoardConfig _currentConfig;
+    private ConfigOfBoard _currentConfig;
 
-    public BoardConfigUpdater(Board board, IEventBus eventBus, ILogger logger, BoardConfig initialConfig)
+    public BoardConfigUpdater(Board board, IEventBus eventBus, ILogger logger, ConfigOfBoard initialConfig)
     {
         _board = board ?? throw new ArgumentNullException(nameof(board));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
@@ -17,7 +17,7 @@ public sealed class BoardConfigUpdater
         _currentConfig = initialConfig ?? throw new ArgumentNullException(nameof(initialConfig));
     }
 
-    public void UpdateConfig(BoardConfig newConfig)
+    public void UpdateConfig(ConfigOfBoard newConfig)
     {
         if (newConfig == null) throw new ArgumentNullException(nameof(newConfig));
 

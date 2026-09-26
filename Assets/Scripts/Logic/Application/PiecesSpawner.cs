@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-public sealed class PiecesSpawner : IPiecesSpawner
+public sealed class PiecesSpawner
 {
     private readonly IFlow _flow;
     private readonly ILogger _logger;

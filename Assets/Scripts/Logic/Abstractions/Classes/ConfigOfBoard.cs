@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-public sealed record BoardConfig
+public sealed record ConfigOfBoard
 {
     public MultipleAxesFromTwo Axes { get; init; } = MultipleAxesFromTwo.Two;
     public int FieldSize { get; init; } = 8; 

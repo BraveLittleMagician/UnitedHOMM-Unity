@@ -3,9 +3,9 @@
 using System;
 using UnityEngine;
 
-public sealed class GameConfigLoader : IGameConfigLoader
+public sealed class LoaderOfConfig
 {
-    public BoardConfig LoadBoardConfig()
+    public ConfigOfBoard LoadBoardConfig()
     {
         var textAsset = Resources.Load<TextAsset>("appsettings");
         if (textAsset == null) throw new Exception("Файл appsettings.json не найден в папке Resources");
@@ -13,7 +13,7 @@ public sealed class GameConfigLoader : IGameConfigLoader
         if (wrapper.Board == null) throw new Exception("В appsettings.json отсутствует раздел 'Board'");
         int correctedSize = BoardSizeCorrector.CorrectSize(wrapper.Board.FieldSize);
 
-        return new BoardConfig
+        return new ConfigOfBoard
         {
             Axes = ParseAxes(wrapper.Board.Axes),
             FieldSize = correctedSize,

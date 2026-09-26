@@ -9,4 +9,5 @@ EditorBuildSettings:
     path: Assets/Scenes/Playground.unity
     guid: c7d6b698228a5154fae5f3c4fe88e865
   m_configObjects:
-    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
+    com.unity.input.settings: {fileID: 11400000, guid: 359178e5e937d564fb8e526f6348b7a7, type: 2}
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 26a82c6068b2d6e4999ee75d711d1002, type: 3}

@@ -2,13 +2,13 @@
 
 using System;
 
-public class GamePresenter : IDisposable
+public class Presenter : IDisposable
 {
     private readonly IEventBus _eventBus;
     private readonly CameraWork _camera;
-    private BoardConfig _currentConfig;
+    private ConfigOfBoard _currentConfig;
 
-    public GamePresenter(IEventBus eventBus, CameraWork camera, BoardConfig initialConfig)
+    public Presenter(IEventBus eventBus, CameraWork camera, ConfigOfBoard initialConfig)
     {
         _eventBus = eventBus;
         _camera = camera;

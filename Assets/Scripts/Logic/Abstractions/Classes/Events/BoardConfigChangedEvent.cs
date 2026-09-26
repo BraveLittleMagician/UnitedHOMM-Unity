@@ -1,3 +1,3 @@
 ﻿#nullable enable
 
-public sealed record BoardConfigChangedEvent(BoardConfig OldConfig, BoardConfig NewConfig);
+public sealed record BoardConfigChangedEvent(ConfigOfBoard OldConfig, ConfigOfBoard NewConfig);

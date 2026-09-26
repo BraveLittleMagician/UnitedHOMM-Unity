@@ -1,31 +1,26 @@
 ﻿#nullable enable
 
-public class StarterOfGame : IStarterOfGame
+public class StarterOfGame
 {
-    private readonly IStateOfGame _stateManager;
-    private readonly IRoomInitializer _roomInitializer;
-    private readonly IViewInitializer _viewInitializer;
-    private readonly IPiecesSpawner _piecesSpawner;
+    private readonly StateOfGame _stateOfGame;
+    private readonly AdderOfRoomsToHouse _adderRoomsToHouse;
+    private readonly PiecesSpawner _spawnerOfPieces;
     private bool _started;
 
-    public StarterOfGame(IStateOfGame stateManager, IRoomInitializer roomInitializer, IViewInitializer viewInitializer, IPiecesSpawner testPiecesSpawner) 
+    public StarterOfGame(StateOfGame stateManager, AdderOfRoomsToHouse roomInitializer, PiecesSpawner testPiecesSpawner) 
     {
-        _stateManager = stateManager;
-        _roomInitializer = roomInitializer;
-        _viewInitializer = viewInitializer;
-        _piecesSpawner = testPiecesSpawner;
+        _stateOfGame = stateManager;
+        _adderRoomsToHouse = roomInitializer;
+        _spawnerOfPieces = testPiecesSpawner;
     }
 
     public bool StartGame()
     {
         if (_started) return false;
         _started = true;
-
-        _stateManager.StartGame();
-
-        _roomInitializer.InitializeRooms();
-        _viewInitializer.InitializeView();
-        _piecesSpawner.SpawnPieces();
+        _stateOfGame.StartGame();
+        _adderRoomsToHouse.AddNecessaryRooms();
+        _spawnerOfPieces.SpawnPieces();
         return true;
     }
 }

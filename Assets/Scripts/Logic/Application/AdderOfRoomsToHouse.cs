@@ -2,7 +2,7 @@
 
 using System;
 
-public sealed class RoomInitializer : IRoomInitializer
+public sealed class AdderOfRoomsToHouse
 {
     private readonly IHouse _house;
     private readonly IEventBus _eventBus;
@@ -10,7 +10,7 @@ public sealed class RoomInitializer : IRoomInitializer
     private readonly Seats _seats;
     private readonly Board _board;
 
-    public RoomInitializer(IHouse house, IEventBus eventBus, ILogger logger, Seats seats, Board board)
+    public AdderOfRoomsToHouse(IHouse house, IEventBus eventBus, ILogger logger, Seats seats, Board board)
     {
         _house = house ?? throw new ArgumentNullException(nameof(house));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
@@ -19,7 +19,7 @@ public sealed class RoomInitializer : IRoomInitializer
         _seats = seats;
     }
 
-    public void InitializeRooms()
+    public void AddNecessaryRooms()
     {
         if (!_house.AddRoom(_board))
             _logger.LogWarning($"Комната {_board.Name} уже была в доме");

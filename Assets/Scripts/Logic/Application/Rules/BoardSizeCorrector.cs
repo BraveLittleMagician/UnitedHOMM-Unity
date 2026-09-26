@@ -19,7 +19,7 @@ public static class BoardSizeCorrector
 
         return correctedSize;
     }
-    public static BoardConfig CorrectConfig(BoardConfig config, int? minimalSize = null)
+    public static ConfigOfBoard CorrectConfig(ConfigOfBoard config, int? minimalSize = null)
     {
         int correctedSize = CorrectSize(config.FieldSize, minimalSize);
         return config with { FieldSize = correctedSize };

@@ -2,7 +2,7 @@
 
 using System;
 
-public class StateOfGame : IStateOfGame
+public class StateOfGame
 {
     public bool IsGameStarted { get; private set; }
 

@@ -4,16 +4,16 @@ using UnityEngine;
 
 public class BoardUI : MonoBehaviour
 {
-    private IStateOfGame _stateManager = null!;
+    private StateOfGame _stateOfGame = null!;
 
 
-    public void Initialize(IStateOfGame stateManager)
+    public void Initialize(StateOfGame stateManager)
     {
-        _stateManager = stateManager;
+        _stateOfGame = stateManager;
     }
 
     private void OnGUI()
     {
-        if (_stateManager == null) return;
+        if (_stateOfGame == null) return;
     }
 }
