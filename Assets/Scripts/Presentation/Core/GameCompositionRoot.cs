@@ -124,5 +124,5 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _cameraWork.Initialize(_camera, _cubeCenterMarker, _rotationCenterMarker, _holdRightHub, _holdMiddleHub, _deltaHub, _scrollHub);
         _boardUI.Initialize(_stateOfGame);
     }
-    private void Run() => throw new NotImplementedException();
+    private void Run() { }
 }

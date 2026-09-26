@@ -9,10 +9,7 @@ public static class Extensions
     public static IEnumerable<Axis> GetSeparatedAxes(this MultipleAxes axes)
     {
         var axis = (Axis)axes;
-        return Enum.GetValues(typeof(Axis))
-            .Cast<Axis>()
-            .Where(a => a != Axis.None && axis.HasFlag(a))
-            .OrderBy(a => a);
+        return Enum.GetValues(typeof(Axis)).Cast<Axis>().Where(a => a != Axis.None && axis.HasFlag(a)).OrderBy(a => a);
     }
     public static CountOfDimensions ToCountOfDimensions(this MultipleAxes axes) => axes switch
     {
@@ -35,8 +32,6 @@ public static class Extensions
             _ => MultipleAxes.None
         };
     }
-    public static bool ToBool(this GuaranteesOneStayable guarantees) => guarantees != GuaranteesOneStayable.No;
-    public static GuaranteesOneStayable ToGuarantee(this bool guarantees) => guarantees ? GuaranteesOneStayable.Yes : GuaranteesOneStayable.No;
     public static Dictionary<int, Stayable> ToInt(this List<Stayable> stayables)
     {
         Dictionary<int, Stayable> indices = new();

@@ -422,6 +422,14 @@ GameObject:
   - component: {fileID: 526232270}
   - component: {fileID: 526232274}
   - component: {fileID: 526232269}
+  - component: {fileID: 526232282}
+  - component: {fileID: 526232281}
+  - component: {fileID: 526232280}
+  - component: {fileID: 526232279}
+  - component: {fileID: 526232278}
+  - component: {fileID: 526232277}
+  - component: {fileID: 526232276}
+  - component: {fileID: 526232275}
   m_Layer: 0
   m_Name: Holder
   m_TagString: Untagged
@@ -468,15 +476,15 @@ MonoBehaviour:
   _cameraWork: {fileID: 526232274}
   _cubeCenterMarker: {fileID: 540639274}
   _rotationCenterMarker: {fileID: 1790386481}
-  _inputActions: {fileID: 0}
-  _mouseEventer: {fileID: 0}
-  _clickLeftHub: {fileID: 0}
-  _clickRightHub: {fileID: 0}
-  _holdRightHub: {fileID: 0}
-  _holdMiddleHub: {fileID: 0}
-  _scrollHub: {fileID: 0}
-  _pointerHub: {fileID: 0}
-  _deltaHub: {fileID: 0}
+  _inputActions: {fileID: -944628639613478452, guid: 26a82c6068b2d6e4999ee75d711d1002, type: 3}
+  _mouseEventer: {fileID: 526232282}
+  _clickLeftHub: {fileID: 526232281}
+  _clickRightHub: {fileID: 526232280}
+  _holdRightHub: {fileID: 526232279}
+  _holdMiddleHub: {fileID: 526232278}
+  _scrollHub: {fileID: 526232277}
+  _pointerHub: {fileID: 526232276}
+  _deltaHub: {fileID: 526232275}
 --- !u!114 &526232269
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -548,6 +556,102 @@ MonoBehaviour:
   _minDistance: 5
   _maxDistance: 60
   _snapDistance: 5
+--- !u!114 &526232275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37f7d55cbe94e0b4fb4dcfe9cbb0ec9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Delta
+--- !u!114 &526232276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac341d043e42b8045b914b20f84ef713, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Pointer
+--- !u!114 &526232277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f53f90827f57e9f4eb67284621d8dfba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Scroll
+--- !u!114 &526232278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ffd33d4aa7eb1b4d838c1fbad6fa57d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldMiddle
+--- !u!114 &526232279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ce2fcceae186c743a0383ddd09bda05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldRight
+--- !u!114 &526232280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6850688c5235ed48a36d56a0598ab38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClickRight
+--- !u!114 &526232281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9ea581137ad85b448d626d58de4468e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClickLeft
+--- !u!114 &526232282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee664053700e9a54783f3fd5a771b031, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MouseEventer
 --- !u!1 &540639270
 GameObject:
   m_ObjectHideFlags: 0
