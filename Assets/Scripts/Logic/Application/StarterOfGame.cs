@@ -14,7 +14,7 @@ public class StarterOfGame
         _spawnerOfPieces = testPiecesSpawner;
     }
 
-    public bool StartGame()
+    public bool Start()
     {
         if (_started) return false;
         _started = true;

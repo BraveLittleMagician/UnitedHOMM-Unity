@@ -40,26 +40,32 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private StarterOfGame _starterOfGame = null!;
     private Presenter _presenter = null!;
 
-    private void ValidateReferences()
-    {
-        if (_deselectOnEmptyClick == null) throw new ArgumentNullException(nameof(_deselectOnEmptyClick));
-        if (_mouseEventer == null) throw new ArgumentNullException(nameof(_mouseEventer));
-        if (_cameraWork == null) throw new ArgumentNullException(nameof(_cameraWork));
-        if (_view == null) throw new ArgumentNullException(nameof(_view));
-        if (_boardUI == null) throw new ArgumentNullException(nameof(_boardUI));
-    }
     private void Awake()
     {
         ValidateReferences();
-        BuildServices();
+
+        CreateSystems();
+
         Initialize();
+
+        Run();
     }
     private void Start()
     {
         _presenter.Start();
-        _starterOfGame.StartGame();
+        _starterOfGame.Start();
     }
-    private void BuildServices()
+
+    private void ValidateReferences()
+    {
+        if (_view == null) throw new ArgumentNullException(nameof(_view));
+        if (_boardUI == null) throw new ArgumentNullException(nameof(_boardUI));
+        if (_selectionHub == null) throw new ArgumentNullException(nameof(_selectionHub));
+        if (_deselectOnEmptyClick == null) throw new ArgumentNullException(nameof(_deselectOnEmptyClick));
+        if (_cameraWork == null) throw new ArgumentNullException(nameof(_cameraWork));
+        if (_mouseEventer == null) throw new ArgumentNullException(nameof(_mouseEventer));
+    }
+    private void CreateSystems()
     {
         _loaderOfConfig = new LoaderOfConfig();
         _configOfBoard = _loaderOfConfig.LoadBoardConfig();
@@ -90,10 +96,10 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
         _presenter = new Presenter(_eventBus, _cameraWork, _configOfBoard);
     }
-
     private void Initialize()
     {
         _cameraWork.Initialize();
         _boardUI.Initialize(_stateOfGame);
     }
+    private void Run() => throw new NotImplementedException();
 }
