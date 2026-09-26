@@ -8,9 +8,3 @@ public interface IHoldMiddleHub
     void TriggerHoldMiddleStarted();
     void TriggerHoldMiddleCanceled();
 }
-
-public interface IHoldMiddleSubscriber : IMouseEventSubscriber
-{
-    void TriggerHoldMiddleStarted();
-    void TriggerHoldMiddleCanceled();
-}

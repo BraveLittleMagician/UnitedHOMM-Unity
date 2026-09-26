@@ -6,8 +6,3 @@ public interface IClickLeftHub
     void UnregisterSubscriber(IClickLeftSubscriber sub);
     void TriggerClickLeft();
 }
-
-public interface IClickLeftSubscriber : IMouseEventSubscriber
-{
-    void TriggerClickLeft();
-}

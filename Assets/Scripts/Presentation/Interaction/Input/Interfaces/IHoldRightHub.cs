@@ -7,9 +7,3 @@ public interface IHoldRightHub
     void TriggerHoldRightStarted();
     void TriggerHoldRightCanceled();
 }
-
-public interface IHoldRightSubscriber : IMouseEventSubscriber
-{
-    void TriggerHoldRightStarted();
-    void TriggerHoldRightCanceled();
-}

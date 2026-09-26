@@ -8,8 +8,3 @@ public interface IPointerHub
     void UnregisterSubscriber(IPointerSubscriber sub);
     void TriggerPoint(Vector2 pos);
 }
-
-public interface IPointerSubscriber : IMouseEventSubscriber
-{
-    void Point(Vector2 pointer);
-}

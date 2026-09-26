@@ -4,22 +4,14 @@ using System;
 
 public class GamePresenter : IDisposable
 {
-    private readonly IFlow _flow;
-    private readonly IGameView _view;
     private readonly IEventBus _eventBus;
-    private readonly ICameraWork _camera;
-    private readonly IRegistry _registry;
-    private readonly BoardConfigUpdater _configUpdater;
+    private readonly CameraWork _camera;
     private BoardConfig _currentConfig;
 
-    public GamePresenter(IFlow flow, IGameView view, IEventBus eventBus, ICameraWork camera, IRegistry registry, BoardConfigUpdater configUpdater, BoardConfig initialConfig)
+    public GamePresenter(IEventBus eventBus, CameraWork camera, BoardConfig initialConfig)
     {
-        _flow = flow;
-        _view = view;
         _eventBus = eventBus;
         _camera = camera;
-        _registry = registry;
-        _configUpdater = configUpdater;
         _currentConfig = initialConfig;
 
         _eventBus.Subscribe<PieceSelectedEvent<Square>>(OnPieceSelectedEvent);

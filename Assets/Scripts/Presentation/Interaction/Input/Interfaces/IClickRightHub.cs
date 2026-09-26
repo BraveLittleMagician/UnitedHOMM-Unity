@@ -6,8 +6,3 @@ public interface IClickRightHub
     void UnregisterSubscriber(IClickRightSubscriber sub);
     void TriggerClickRight();
 }
-
-public interface IClickRightSubscriber : IMouseEventSubscriber
-{
-    void TriggerClickRight();
-}
