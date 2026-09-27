@@ -23,14 +23,6 @@ public static class SquareExtensions
         if (dw != 0 && original.TryGetValue(Axis.W, out int w)) original = original.WithValue(Axis.W, w + dw);
         return original;
     }
-    public static TSquare WithOffset<TSquare>(this TSquare original, TSquare pos) where TSquare : struct, ISquare<TSquare>
-    {
-        if (original.TryGetValue(Axis.X, out int x) && pos.TryGetValue(Axis.X, out int dx)) original = original.WithValue(Axis.X, x + dx);
-        if (original.TryGetValue(Axis.Y, out int y) && pos.TryGetValue(Axis.Y, out int dy)) original = original.WithValue(Axis.Y, y + dy);
-        if (original.TryGetValue(Axis.Z, out int z) && pos.TryGetValue(Axis.Z, out int dz)) original = original.WithValue(Axis.Z, z + dz);
-        if (original.TryGetValue(Axis.Y, out int w) && pos.TryGetValue(Axis.W, out int dw)) original = original.WithValue(Axis.W, w + dw);
-        return original;
-    }
     public static bool IsZeroLine<TSquare>(this TSquare square) where TSquare : struct, ISquare<TSquare>
     {
         foreach (var pair in square.Coordinates())
@@ -62,34 +54,22 @@ public static class SquareExtensions
     }
     public static bool IsWithinSquareRadius<TSquare>(this TSquare start, TSquare target, int radius) where TSquare : struct, ISquare<TSquare>
     {
-        if (target.TryGetValue(Axis.X, out int xTar) && start.TryGetValue(Axis.X, out int xStart)) if (Math.Abs(xTar - xStart) > radius) return false;
-        if (target.TryGetValue(Axis.Y, out int yTar) && start.TryGetValue(Axis.Y, out int yStart)) if (Math.Abs(yTar - yStart) > radius) return false;
-        if (target.TryGetValue(Axis.Z, out int zTar) && start.TryGetValue(Axis.Z, out int zStart)) if (Math.Abs(zTar - zStart) > radius) return false;
-        if (target.TryGetValue(Axis.Y, out int wTar) && start.TryGetValue(Axis.W, out int wStart)) if (Math.Abs(wTar - wStart) > radius) return false;
+        var diff = target.Subtract(start);
+        for (int i = 0; i < diff.CountOfAxes; i++)
+        {
+            var coord = diff.GetCoordinateAt(i);
+            if (Math.Abs(coord.Value) > radius) return false;
+        }
         return true;
     }
     public static bool IsWithinCircleRadius<TSquare>(this TSquare start, TSquare target, int radius) where TSquare : struct, ISquare<TSquare>
     {
+        var diff = target.Subtract(start);
         long distSq = 0;
-        if (target.TryGetValue(Axis.X, out int xTar) && start.TryGetValue(Axis.X, out int xStart))
+        for (int i = 0; i < diff.CountOfAxes; i++)
         {
-            int x = xTar - xStart;
-            distSq += x * x;
-        }
-        if (target.TryGetValue(Axis.Y, out int yTar) && start.TryGetValue(Axis.Y, out int yStart))
-        {
-            int y = yTar - yStart;
-            distSq += y * y;
-        }
-        if (target.TryGetValue(Axis.Z, out int zTar) && start.TryGetValue(Axis.Z, out int zStart))
-        {
-            int z = zTar - zStart;
-            distSq += z * z;
-        }
-        if (target.TryGetValue(Axis.Y, out int wTar) && start.TryGetValue(Axis.W, out int wStart))
-        {
-            int w = wTar - wStart;
-            distSq += w * w;
+            int v = diff.GetCoordinateAt(i).Value;
+            distSq += (long)v * v;
         }
         return distSq <= (long)radius * radius;
     }

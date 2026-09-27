@@ -183,56 +183,18 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
     private Dictionary<SegmentNode<TSquare>, SegmentNode<TSquare>> CreateAbsoluteNodes(TSquare startSquare)
     {
         var map = new Dictionary<SegmentNode<TSquare>, SegmentNode<TSquare>>(ReferenceEqualityComparer<SegmentNode<TSquare>>.Instance);
+
         foreach (var node in Nodes)
         {
-            if (startSquare is Square s)
-            {
-                var os = new TSquare().WithValuesFrom(node.Position);
-                if (os is Square offsetSquare)
-                {
-                    var absolutePos = s + offsetSquare;
-                    if (absolutePos is TSquare absoluteTPos)
-                    {
-                        var absoluteNode = new SegmentNode<TSquare>(absoluteTPos, node.Stayables);
-                        map[node] = absoluteNode;
-                    }
-                }
-            }
-            else if (startSquare is Square3D s3)
-            {
-                var os = new TSquare().WithValuesFrom(node.Position);
-                if (os is Square3D offsetSquare)
-                {
-                    var absolutePos = s3 + offsetSquare;
-                    if (absolutePos is TSquare absoluteTPos)
-                    {
-                        var absoluteNode = new SegmentNode<TSquare>(absoluteTPos, node.Stayables);
-                        map[node] = absoluteNode;
-                    }
-                }
-            }
-            else if (startSquare is Square2D s2)
-            {
-                var os = new TSquare().WithValuesFrom(node.Position);
-                if (os is Square2D offsetSquare)
-                {
-                    var absolutePos = s2 + offsetSquare;
-                    if (absolutePos is TSquare absoluteTPos)
-                    {
-                        var absoluteNode = new SegmentNode<TSquare>(absoluteTPos, node.Stayables);
-                        map[node] = absoluteNode;
-                    }
-                }
-            }
+            var absolutePos = startSquare.Add(node.Position);
+            var absoluteNode = new SegmentNode<TSquare>(absolutePos, node.Stayables);
+            map[node] = absoluteNode;
         }
+
         foreach (var (original, absolute) in map)
-        {
             foreach (var originalNeighbor in original.Neighbors)
-            {
                 if (map.TryGetValue(originalNeighbor, out var absoluteNeighbor))
                     absolute.Neighbors.Add(absoluteNeighbor);
-            }
-        }
         return map;
     }
     private Dictionary<LineKey, List<SegmentNode<TSquare>>> GetNodesFromPosition(TSquare startSquare)

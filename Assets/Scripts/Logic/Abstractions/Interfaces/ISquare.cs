@@ -13,4 +13,10 @@ public interface ISquare<TSelf> : IAdjacentable<TSelf>, IComparable<TSelf>, ICom
     public KeyValuePair<Axis, int> GetCoordinateAt(int index);
     public TSelf WithValue(Axis axis, int value);
     public LineKey GetLineKey();
+
+    TSelf Add(TSelf other);
+    TSelf Subtract(TSelf other);
+    TSelf Multiply(TSelf other);
+    TSelf Divide(TSelf other);
+    TSelf Module(TSelf other);
 }

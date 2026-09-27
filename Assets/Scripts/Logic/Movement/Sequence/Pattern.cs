@@ -154,7 +154,7 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
 
             foreach (var dir in directions)
             {
-                TSquare neighbor = current.WithOffset(dir);
+                TSquare neighbor = current.Add(dir);
 
                 if (cellSet.Contains(neighbor) && !visited.Contains(neighbor))
                 {
@@ -265,7 +265,7 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
                 var dict = new Dictionary<TSquare, Stayable> { [StartPosition] = Stayable.NotStay };
                 foreach (var (relPos, stayable) in _baseSquares)
                 {
-                    var absPos = StartPosition.WithOffset(relPos);
+                    var absPos = StartPosition.Add(relPos);
                     if (absPos.Equals(StartPosition))
                         dict[absPos] = Stayable.NotStay;
                     else

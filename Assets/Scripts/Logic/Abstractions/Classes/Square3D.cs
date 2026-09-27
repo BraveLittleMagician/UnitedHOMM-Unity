@@ -46,6 +46,12 @@ public readonly struct Square3D : ISquare<Square3D>
         _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, "Неизвестная ось")
     };
     public LineKey GetLineKey() => new(Y, Z, 0);
+    public Square3D Add(Square3D other) => ApplyOperation(this, other, (a, b) => a + b);
+    public Square3D Subtract(Square3D other) => ApplyOperation(this, other, (a, b) => a - b);
+    public Square3D Multiply(Square3D other) => ApplyOperation(this, other, (a, b) => a * b);
+    public Square3D Divide(Square3D other) => ApplyOperation(this, other, (a, b) => b != 0 ? a / b : 0);
+    public Square3D Module(Square3D other) => ApplyOperation(this, other, (a, b) => b != 0 ? a % b : 0);
+
 
     public bool IsAdjacent(Square3D other)
     {

@@ -41,7 +41,11 @@ public readonly struct Square2D : ISquare<Square2D>
         _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, "Неизвестная ось")
     };
     public LineKey GetLineKey() => new(Y, 0, 0);
-
+    public Square2D Add(Square2D other) => ApplyOperation(this, other, (a, b) => a + b);
+    public Square2D Subtract(Square2D other) => ApplyOperation(this, other, (a, b) => a - b);
+    public Square2D Multiply(Square2D other) => ApplyOperation(this, other, (a, b) => a * b);
+    public Square2D Divide(Square2D other) => ApplyOperation(this, other, (a, b) => b != 0 ? a / b : 0);
+    public Square2D Module(Square2D other) => ApplyOperation(this, other, (a, b) => b != 0 ? a % b : 0);
     public bool IsAdjacent(Square2D other)
     {
         int diffX = Math.Abs(X - other.X);

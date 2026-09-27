@@ -55,8 +55,7 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
     public RelativeArea<TSquare> WithDecreasedRadius()
     {
         if (Length <= 1) return this;
-        int oldLength = Length;
-        if (Stayables.Contains(oldLength) && Stayables.Count == 1) return this;
+        if (Stayables.Count == 1 && Stayables.Contains(Length)) return this;
         int newLength = Length - 1;
         var newStayables = Stayables.Where(r => r <= newLength).ToImmutableHashSet();
         return new (newStayables, newLength, IsCircle, GuaranteesAtLeastOneStayable);
@@ -191,7 +190,7 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
         {
             if (!StartPosition.IsWithinCircleRadius(target, _stayables.Count)) return false;
             CountOfDimensions countOfDimensions = StartPosition.ActiveAxes.ToCountOfDimensions();
-            IEnumerable<TSquare> adjacentSquares = FieldExtensions.AdjacentStayables(countOfDimensions, StartPosition, _stayables);
+            IEnumerable<TSquare> adjacentSquares = FieldExtensions.AdjacentStayablesCircle(countOfDimensions, StartPosition, _stayables);
             if (!adjacentSquares.Contains(target)) return false;
             return true;
         }

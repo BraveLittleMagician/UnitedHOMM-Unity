@@ -51,6 +51,11 @@ public readonly struct Square : ISquare<Square>
         _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, "Неизвестная ось")
     };
     public LineKey GetLineKey() => new (Y, Z, W);
+    public Square Add(Square other) => ApplyOperation(this, other, (a, b) => a + b);
+    public Square Subtract(Square other) => ApplyOperation(this, other, (a, b) => a - b);
+    public Square Multiply(Square other) => ApplyOperation(this, other, (a, b) => a * b);
+    public Square Divide(Square other) => ApplyOperation(this, other, (a, b) => b != 0 ? a / b : 0);
+    public Square Module(Square other) => ApplyOperation(this, other, (a, b) => b != 0 ? a % b : 0);
 
     public bool IsAdjacent(Square other)
     {
