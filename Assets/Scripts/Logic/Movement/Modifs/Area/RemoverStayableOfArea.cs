@@ -1,12 +1,12 @@
 ﻿#nullable enable
 
-public class RemoverStayableOfArea<TAxes> : ModificatorOfArea<TAxes> where TAxes : struct, IAxes
+public class RemoverStayableOfArea<TSquare> : ModificatorOfArea<TSquare> where TSquare : struct, ISquare<TSquare>
 {
     public int Index { get; }
     public RemoverStayableOfArea(int index) => Index = index;
-    public override RelativeArea<TAxes> Apply(RelativeArea<TAxes> sequence)
+    public override RelativeArea<TSquare> Apply(RelativeArea<TSquare> sequence)
     {
         var (stayables, length, isCircle, _) = sequence.DataWithRemovedStayable(Index);
-        return new RelativeArea<TAxes>(stayables, length, isCircle, false);
+        return new RelativeArea<TSquare>(stayables, length, isCircle, false);
     }
 }

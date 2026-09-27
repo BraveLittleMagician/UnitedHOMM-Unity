@@ -1,3 +1,3 @@
 ﻿#nullable enable
 
-public abstract class ModificatorOfArea<TAxes> : ModifierOfMovement<RelativeArea<TAxes>, Square> where TAxes : struct, IAxes { }
+public abstract class ModificatorOfArea<TSquare> : ModifierOfMovement<RelativeArea<TSquare>, TSquare> where TSquare : struct, ISquare<TSquare> { }

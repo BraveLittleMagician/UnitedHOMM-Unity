@@ -5,8 +5,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
-public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
-    where TSquare : struct, ISquare<TSquare>
+public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> where TSquare : struct, ISquare<TSquare>
 {
     private static readonly int[] _fullRange = { -1, 0, 1 };
     private static readonly int[] _zeroRange = { 0 };
@@ -228,7 +227,7 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
     public override string ToString() => $"Паттерн с {Count} клетками, из них {CountOfStayables} стоячих";
     public Pattern<TSquare> Copy() => this;
     ISequence ICopyable<ISequence>.Copy() => this;
-    public ISequenceEnumerator<Square> GetEnumerator(Square start) => new Enumerable(_squares, start);
+    public ISequenceEnumerator<TSquare> GetEnumerator(TSquare start) => new Enumerable(_squares, start);
 
     public bool Equals(Pattern<TSquare> other)
     {
@@ -250,30 +249,24 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
     public static bool operator ==(Pattern<TSquare> left, Pattern<TSquare> right) => left.Equals(right);
     public static bool operator !=(Pattern<TSquare> left, Pattern<TSquare> right) => !(left == right);
 
-    private class Enumerable : SequenceEnumerable<Square>
+    private class Enumerable : SequenceEnumerable<TSquare>
     {
         private readonly ImmutableDictionary<TSquare, Stayable> _baseSquares;
-        private readonly Square _start;
-        private Dictionary<Square, Stayable>? _allPositionsCache;
-        private List<Square>? _onlyStayablesCache;
+        private Dictionary<TSquare, Stayable>? _allPositionsCache;
+        private List<TSquare>? _onlyStayablesCache;
 
-        public Enumerable(ImmutableDictionary<TSquare, Stayable> baseSquares, Square startSquare)
-            : base(startSquare)
-        {
-            _baseSquares = baseSquares;
-            _start = startSquare;
-        }
+        public Enumerable(ImmutableDictionary<TSquare, Stayable> baseSquares, TSquare startSquare) : base(startSquare) => _baseSquares = baseSquares;
 
-        protected override Dictionary<Square, Stayable> CreateAllPossiblePositions
+        protected override Dictionary<TSquare, Stayable> CreateAllPossiblePositions
         {
             get
             {
                 if (_allPositionsCache != null) return _allPositionsCache;
-                var dict = new Dictionary<Square, Stayable> { [_start] = Stayable.NotStay };
+                var dict = new Dictionary<TSquare, Stayable> { [StartPosition] = Stayable.NotStay };
                 foreach (var (relPos, stayable) in _baseSquares)
                 {
-                    var absPos = Translate(relPos);
-                    if (absPos.Equals(_start))
+                    var absPos = StartPosition.WithOffset(relPos);
+                    if (absPos.Equals(StartPosition))
                         dict[absPos] = Stayable.NotStay;
                     else
                         dict[absPos] = stayable;
@@ -282,7 +275,7 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
                 return dict;
             }
         }
-        protected override List<Square> CreateOnlyStayablesPositions
+        protected override List<TSquare> CreateOnlyStayablesPositions
         {
             get
             {
@@ -295,28 +288,7 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
             }
         }
 
-        private Square Translate(TSquare relative)
-        {
-            int x = _start.X;
-            int y = _start.Y;
-            int z = _start.Z;
-            int w = _start.W;
-
-            foreach (var pair in relative.Coordinates())
-            {
-                switch (pair.Key)
-                {
-                    case Axis.X: x += pair.Value; break;
-                    case Axis.Y: y += pair.Value; break;
-                    case Axis.Z: z += pair.Value; break;
-                    case Axis.W: w += pair.Value; break;
-                }
-            }
-
-            return new Square { X = x, Y = y, Z = z, W = w };
-        }
-
-        protected override bool ProtectedCanMoveTo(IPath<Square> path)
+        protected override bool ProtectedCanMoveTo(IPath<TSquare> path)
         {
             var positions = path.Positions;
             if (positions.Count < 2) return false;
@@ -326,7 +298,7 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
                     return false;
             return all.TryGetValue(positions[^1], out var stayable) && stayable == Stayable.Stay;
         }
-        public override bool CanMoveTo(Square target)
+        public override bool CanMoveTo(TSquare target)
         {
             return CreateAllPossiblePositions.TryGetValue(target, out var stayable) && stayable == Stayable.Stay;
         }

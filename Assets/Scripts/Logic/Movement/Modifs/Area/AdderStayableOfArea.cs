@@ -1,8 +1,8 @@
 ﻿#nullable enable
 
-public class AdderStayableOfArea<TAxes> : ModificatorOfArea<TAxes> where TAxes : struct, IAxes
+public class AdderStayableOfArea<TSquare> : ModificatorOfArea<TSquare> where TSquare : struct, ISquare<TSquare>
 {
     public int Index { get; }
     public AdderStayableOfArea(int index) => Index = index;
-    public override RelativeArea<TAxes> Apply(RelativeArea<TAxes> sequence) => sequence.WithAddedStayable(Index);
+    public override RelativeArea<TSquare> Apply(RelativeArea<TSquare> sequence) => sequence.WithAddedStayable(Index);
 }

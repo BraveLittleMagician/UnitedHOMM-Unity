@@ -1,10 +1,10 @@
 ﻿#nullable enable
 
-public class DecreaserRadiusOfArea<TAxes> : ModificatorOfArea<TAxes> where TAxes : struct, IAxes
+public class DecreaserRadiusOfArea<TSquare> : ModificatorOfArea<TSquare> where TSquare : struct, ISquare<TSquare>
 {
-    public override RelativeArea<TAxes> Apply(RelativeArea<TAxes> sequence)
+    public override RelativeArea<TSquare> Apply(RelativeArea<TSquare> sequence)
     {
         var (stayables, length, isCircle, guarantees) = sequence.DataWithDecreasedRadius();
-        return new RelativeArea<TAxes>(stayables, length, isCircle, false);
+        return new RelativeArea<TSquare>(stayables, length, isCircle, false);
     }
 }
