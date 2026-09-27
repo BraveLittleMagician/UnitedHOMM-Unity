@@ -2,8 +2,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
-public class EventBus : IEventBus
+public sealed class EventBus : IEventBus
 {
     private readonly ILogger _logger;
     private readonly Dictionary<Type, List<SubscriptionEntry>> _subscriptions = new();
@@ -12,28 +13,6 @@ public class EventBus : IEventBus
     public EventBus(ILogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-    
-    private Type[] GetTypesToCheck(Type eventType)
-    {
-        if (_typeHierarchyCache.TryGetValue(eventType, out var cached))
-            return cached;
-
-        var types = new List<Type>();
-
-        var current = eventType;
-        while (current != null && current != typeof(object))
-        {
-            types.Add(current);
-            current = current.BaseType;
-        }
-
-        foreach (var iface in eventType.GetInterfaces())
-            types.Add(iface);
-
-        var result = types.ToArray();
-        _typeHierarchyCache[eventType] = result;
-        return result;
     }
 
     public void Publish<TEvent>(TEvent eventData) where TEvent : class
@@ -63,45 +42,125 @@ public class EventBus : IEventBus
             }
         }
     }
-    public void Subscribe<TEvent>(Action<TEvent> handler) where TEvent : class
+
+    public IDisposable Subscribe<TEvent>(Action<TEvent> handler) where TEvent : class
     {
         if (handler == null) throw new ArgumentNullException(nameof(handler));
 
-        var type = typeof(TEvent);
-        if (!_subscriptions.TryGetValue(type, out var list))
+        var eventType = typeof(TEvent);
+
+        if (!_subscriptions.TryGetValue(eventType, out var list))
         {
             list = new List<SubscriptionEntry>();
-            _subscriptions[type] = list;
+            _subscriptions[eventType] = list;
         }
 
-        void wrapper(object obj) => handler((TEvent)obj);
-        list.Add(new SubscriptionEntry(handler, wrapper));
+        if (list.Any(e => e.Original.Equals(handler)))
+        {
+            _logger.LogWarning(
+                $"[{nameof(EventBus)}] Повторная подписка на {eventType.Name} " +
+                $"от {handler.Target}. Игнорирую.");
+            
+            return new NoOpDisposable();
+        }
+
+        void Wrapper(object obj) => handler((TEvent)obj);
+
+        var entry = new SubscriptionEntry(eventType, handler, Wrapper);
+        list.Add(entry);
+
+        return new Subscription(this, entry);
     }
+
     public void Unsubscribe<TEvent>(Action<TEvent> handler) where TEvent : class
     {
         if (handler == null) return;
 
-        if (_subscriptions.TryGetValue(typeof(TEvent), out var list))
-        {
-            list.RemoveAll(entry => entry.Original.Equals(handler));
-            if (list.Count == 0) _subscriptions.Remove(typeof(TEvent));
-        }
+        var eventType = typeof(TEvent);
+        if (!_subscriptions.TryGetValue(eventType, out var list))
+            return;
+
+        list.RemoveAll(entry => entry.Original.Equals(handler));
+
+        if (list.Count == 0)
+            _subscriptions.Remove(eventType);
     }
+
     public void Clear()
     {
         _subscriptions.Clear();
-        _typeHierarchyCache.Clear();
     }
 
-    private readonly struct SubscriptionEntry
+    private void RemoveEntry(SubscriptionEntry entry)
     {
+        if (!_subscriptions.TryGetValue(entry.EventType, out var list))
+            return;
+
+        list.Remove(entry);
+
+        if (list.Count == 0)
+            _subscriptions.Remove(entry.EventType);
+    }
+
+    private Type[] GetTypesToCheck(Type eventType)
+    {
+        if (_typeHierarchyCache.TryGetValue(eventType, out var cached))
+            return cached;
+
+        var types = new List<Type>();
+
+        var current = eventType;
+        while (current != null && current != typeof(object))
+        {
+            types.Add(current);
+            current = current.BaseType;
+        }
+
+        foreach (var iface in eventType.GetInterfaces())
+            types.Add(iface);
+
+        var result = types.ToArray();
+        _typeHierarchyCache[eventType] = result;
+        return result;
+    }
+
+    private sealed class SubscriptionEntry
+    {
+        public Type EventType { get; }
         public Delegate Original { get; }
         public Action<object> Wrapper { get; }
 
-        public SubscriptionEntry(Delegate original, Action<object> wrapper)
+        public SubscriptionEntry(Type eventType, Delegate original, Action<object> wrapper)
         {
+            EventType = eventType;
             Original = original;
             Wrapper = wrapper;
         }
+    }
+
+    private sealed class Subscription : IDisposable
+    {
+        private EventBus? _bus;
+        private SubscriptionEntry? _entry;
+
+        public Subscription(EventBus bus, SubscriptionEntry entry)
+        {
+            _bus = bus;
+            _entry = entry;
+        }
+
+        public void Dispose()
+        {
+            if (_bus == null || _entry == null) return;
+
+            _bus.RemoveEntry(_entry);
+            _bus = null;
+            _entry = null;
+        }
+    }
+
+    private sealed class NoOpDisposable : IDisposable
+    {
+        public void Dispose() { }
     }
 }

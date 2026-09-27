@@ -6,33 +6,78 @@ using UnityEngine;
 
 public abstract class EventSubscriberBehaviour : MonoBehaviour
 {
-    private readonly List<Action> _unsubscribers = new();
+    private readonly List<IDisposable> _subscriptions = new();
     private bool _cleanedUp;
+
+    protected void AddSubscription(IDisposable subscription)
+    {
+        if (subscription == null)
+            throw new ArgumentNullException(nameof(subscription));
+
+        if (_cleanedUp)
+        {
+            SafeDispose(subscription, "AddSubscription после OnDestroy");
+            return;
+        }
+
+        _subscriptions.Add(subscription);
+    }
 
     protected void AddSubscription(Action unsubscribe)
     {
-        if (unsubscribe == null) throw new ArgumentNullException(nameof(unsubscribe));
-        if (_cleanedUp)
-            throw new InvalidOperationException($"Нельзя добавлять подписки после OnDestroy в {GetType().Name}.");
-        _unsubscribers.Add(unsubscribe);
+        if (unsubscribe == null)
+            throw new ArgumentNullException(nameof(unsubscribe));
+
+        AddSubscription(new ActionDisposable(unsubscribe));
     }
 
     private void OnDestroy()
     {
-        if (_cleanedUp) return;
-        _cleanedUp = true;
-
-        for (int i = _unsubscribers.Count - 1; i >= 0; i--)
-        {
-            try { _unsubscribers[i]?.Invoke(); }
-            catch (Exception ex)
-            {
-                Debug.LogError($"Ошибка при отписке в {GetType().Name}: {ex}");
-            }
-        }
-        _unsubscribers.Clear();
+        CleanupSubscriptions();
         OnCleanup();
     }
 
     protected virtual void OnCleanup() { }
+
+    private void CleanupSubscriptions()
+    {
+        if (_cleanedUp) return;
+        _cleanedUp = true;
+
+        for (int i = _subscriptions.Count - 1; i >= 0; i--)
+        {
+            var sub = _subscriptions[i];
+            SafeDispose(sub, $"CleanupSubscriptions ({GetType().Name})");
+        }
+
+        _subscriptions.Clear();
+    }
+
+    private static void SafeDispose(IDisposable disposable, string context)
+    {
+        if (disposable == null) return;
+
+        try
+        {
+            disposable.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[{nameof(EventSubscriberBehaviour)}] Ошибка Dispose в {context}: {ex}");
+        }
+    }
+
+    private sealed class ActionDisposable : IDisposable
+    {
+        private Action? _action;
+
+        public ActionDisposable(Action action) => _action = action;
+
+        public void Dispose()
+        {
+            var action = _action;
+            _action = null;
+            action?.Invoke();
+        }
+    }
 }
