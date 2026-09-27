@@ -14,7 +14,7 @@ public readonly struct Square2D : ISquare<Square2D>
     {
         0 => new(Axis.X, X),
         1 => new(Axis.Y, Y),
-        _ => throw new ArgumentOutOfRangeException(nameof(index), $"Индекс {index} вне диапазона [0..2] для {nameof(Square3D)}")
+        _ => throw new ArgumentOutOfRangeException(nameof(index), $"Индекс {index} вне диапазона [0..1] для {nameof(Square2D)}")
     };
     private long SquaredDistanceFromCenter => (long)X * X + (long)Y * Y;
     public static Square2D Zero => new();
@@ -34,19 +34,13 @@ public readonly struct Square2D : ISquare<Square2D>
             default: value = 0; return false;
         }
     }
-    public Square2D CopyWith(IReadOnlyDictionary<Axis, int> dictionary)
+    public Square2D WithValue(Axis axis, int value) => axis switch
     {
-        int x = X, y = Y;
-        foreach (var pair in dictionary)
-        {
-            switch (pair.Key)
-            {
-                case Axis.X: x = pair.Value; break;
-                case Axis.Y: y = pair.Value; break;
-            }
-        }
-        return new Square2D { X = x, Y = y };
-    }
+        Axis.X => new Square2D { X = value, Y = Y },
+        Axis.Y => new Square2D { X = X, Y = value },
+        _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, "Неизвестная ось")
+    };
+    public LineKey GetLineKey() => new(Y, 0, 0);
 
     public bool IsAdjacent(Square2D other)
     {
@@ -69,7 +63,7 @@ public readonly struct Square2D : ISquare<Square2D>
     }
     public int CompareByDistanceTo(object? obj)
     {
-        if (obj is not Square2D other) return 0;
+        if (obj is not Square2D other) throw new ArgumentException($"Объект должен иметь тип {nameof(Square2D)}", nameof(obj));
         return CompareByDistanceTo(other);
     }
     public int CompareTo(object? obj)

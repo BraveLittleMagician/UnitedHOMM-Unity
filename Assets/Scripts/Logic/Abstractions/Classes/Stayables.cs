@@ -18,15 +18,10 @@ public class Stayables : IEquatable<Stayables>
         _stayables = values.Where(v => v >= 0 && v <= length).ToHashSet();
     }
 
-    public int LastRelativeIndex { get; private set; }
+    public int LastRelativeIndex { get; }
     public int Count => _stayables.Count;
     public IReadOnlyCollection<int> All => _stayables;
 
-    public void ExpandTo(int newLastIndex)
-    {
-        if (newLastIndex > LastRelativeIndex)
-            LastRelativeIndex = newLastIndex;
-    }
     public bool AddStayable(int offset)
     {
         if (offset < 0 || offset > LastRelativeIndex) return false;

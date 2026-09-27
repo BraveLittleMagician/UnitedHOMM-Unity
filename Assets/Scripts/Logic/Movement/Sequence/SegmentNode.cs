@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 public class SegmentNode<TSquare> : IEquatable<SegmentNode<TSquare>> where TSquare : struct, ISquare<TSquare>
 {
@@ -34,11 +35,33 @@ public class SegmentNode<TSquare> : IEquatable<SegmentNode<TSquare>> where TSqua
     public override int GetHashCode() => HashCode.Combine(Position, LastRelativeIndex);
     public override string ToString()
     {
-        string stayables = Stayables.All.Aggregate("", (all, curr) => $"{all} {curr}").Trim();
-        stayables = stayables == "" ? "" : $" ({stayables})";
-        string ss = Position.Coordinates.Where(p => p.Key != Axis.X).Aggregate("", (all, curr) => $"{all}, {curr.Key}={curr.Value}");
-        string s = $"[X={Position.X}..{XMax}{ss}]";
-        return $"{s} {Neighbors.Count} N{stayables}";
+        var sb = new StringBuilder();
+
+        sb.Append("[X=").Append(Position.X).Append("..").Append(XMax);
+
+        foreach (var pair in Position.Coordinates())
+        {
+            if (pair.Key == Axis.X) continue;
+            sb.Append(", ").Append(pair.Key).Append('=').Append(pair.Value);
+        }
+
+        sb.Append(']');
+        sb.Append(' ').Append(Neighbors.Count).Append(" N");
+
+        if (Stayables.Count > 0)
+        {
+            sb.Append('(');
+            bool first = true;
+            foreach (int v in Stayables.All)
+            {
+                if (!first) sb.Append(' ');
+                first = false;
+                sb.Append(v);
+            }
+            sb.Append(')');
+        }
+
+        return sb.ToString();
     }
 
     public static bool operator ==(SegmentNode<TSquare>? left, SegmentNode<TSquare>? right)

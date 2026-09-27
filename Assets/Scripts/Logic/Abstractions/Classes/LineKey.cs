@@ -4,25 +4,7 @@ using System;
 
 public readonly struct LineKey : IEquatable<LineKey>
 {
-    public LineKey(Square2D pos)
-    {
-        pos.TryGetValue(Axis.Y, out int y); Y = y; 
-        Z = 0;
-        W = 0;
-    }
-    public LineKey(Square3D pos)
-    {
-        pos.TryGetValue(Axis.Y, out int y); Y = y;
-        pos.TryGetValue(Axis.Z, out int z); Z = z;
-        W = 0;
-    }
-    public LineKey(Square pos)
-    {
-        pos.TryGetValue(Axis.Y, out int y); Y = y;
-        pos.TryGetValue(Axis.Z, out int z); Z = z;
-        pos.TryGetValue(Axis.W, out int w); W = w;
-    }
-    private LineKey(int y, int z, int w) => (Y, Z, W) = (y, z, w);
+    public LineKey(int y, int z, int w) => (Y, Z, W) = (y, z, w);
 
     public int Y { get; }
     public int Z { get; }

@@ -38,20 +38,14 @@ public readonly struct Square3D : ISquare<Square3D>
             default: value = 0; return false;
         }
     }
-    public Square3D CopyWith(IReadOnlyDictionary<Axis, int> dictionary)
+    public Square3D WithValue(Axis axis, int value) => axis switch
     {
-        int x = X, y = Y, z = Z;
-        foreach (var pair in dictionary)
-        {
-            switch (pair.Key)
-            {
-                case Axis.X: x = pair.Value; break;
-                case Axis.Y: y = pair.Value; break;
-                case Axis.Z: z = pair.Value; break;
-            }
-        }
-        return new Square3D { X = x, Y = y, Z = z };
-    }
+        Axis.X => new Square3D { X = value, Y = Y, Z = Z },
+        Axis.Y => new Square3D { X = X, Y = value, Z = Z },
+        Axis.Z => new Square3D { X = X, Y = Y, Z = value },
+        _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, "Неизвестная ось")
+    };
+    public LineKey GetLineKey() => new(Y, Z, 0);
 
     public bool IsAdjacent(Square3D other)
     {
@@ -77,7 +71,7 @@ public readonly struct Square3D : ISquare<Square3D>
     }
     public int CompareByDistanceTo(object? obj)
     {
-        if (obj is not Square3D other) return 0;
+        if (obj is not Square3D other) throw new ArgumentException($"Объект должен иметь тип {nameof(Square3D)}", nameof(obj));
         return CompareByDistanceTo(other);
     }
     public int CompareTo(object? obj)

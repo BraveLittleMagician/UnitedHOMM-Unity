@@ -42,21 +42,15 @@ public readonly struct Square : ISquare<Square>
             default: value = 0; return false;
         }
     }
-    public Square CopyWith(IReadOnlyDictionary<Axis, int> dictionary)
+    public Square WithValue(Axis axis, int value) => axis switch
     {
-        int x = X, y = Y, z = Z, w = W;
-        foreach (var pair in dictionary)
-        {
-            switch (pair.Key)
-            {
-                case Axis.X: x = pair.Value; break;
-                case Axis.Y: y = pair.Value; break;
-                case Axis.Z: z = pair.Value; break;
-                case Axis.W: w = pair.Value; break;
-            }
-        }
-        return new Square { X = x, Y = y, Z = z, W = w };
-    }
+        Axis.X => new Square { X = value, Y = Y, Z = Z, W = W },
+        Axis.Y => new Square { X = X, Y = value, Z = Z, W = W },
+        Axis.Z => new Square { X = X, Y = Y, Z = value, W = W },
+        Axis.W => new Square { X = X, Y = Y, Z = Z, W = value },
+        _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, "Неизвестная ось")
+    };
+    public LineKey GetLineKey() => new (Y, Z, W);
 
     public bool IsAdjacent(Square other)
     {
@@ -85,7 +79,7 @@ public readonly struct Square : ISquare<Square>
     }
     public int CompareByDistanceTo(object? obj)
     {
-        if (obj is not Square other) return 0;
+        if (obj is not Square other) throw new ArgumentException($"Объект должен иметь тип {nameof(Square)}", nameof(obj));
         return CompareByDistanceTo(other);
     }
     public int CompareTo(object? obj)

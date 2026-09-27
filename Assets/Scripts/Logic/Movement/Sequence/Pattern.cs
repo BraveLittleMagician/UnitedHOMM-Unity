@@ -8,6 +8,8 @@ using System.Linq;
 public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
     where TSquare : struct, ISquare<TSquare>
 {
+    private static readonly int[] _fullRange = { -1, 0, 1 };
+    private static readonly int[] _zeroRange = { 0 };
     private readonly int _cachedHash;
     private readonly ImmutableDictionary<TSquare, Stayable> _squares;
 
@@ -20,7 +22,7 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
             builder.Add(square, Stayable.Stay);
         else
         {
-            var fallback = CreateOffset(center, 1, 0, 0, 0);
+            var fallback = center.WithOffset(1, 0, 0, 0);
             builder.Add(fallback, Stayable.Stay);
         }
         _squares = builder.ToImmutable();
@@ -66,7 +68,7 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
         _cachedHash = HashCode.Combine(hash.ToHashCode(), GuaranteesAtLeastOneStayable);
         if (GuaranteesAtLeastOneStayable && (Count == 1 || CountOfStayables < 1))
         {
-            var firstCell = CreateOffset(new TSquare(), 1, 0, 0, 0);
+            var firstCell = new TSquare().WithOffset(1, 0, 0, 0);
             _squares = _squares.SetItem(firstCell, Stayable.Stay);
             CountOfStayables = _squares.Values.Count(v => v == Stayable.Stay);
             hash = new HashCode();
@@ -84,27 +86,27 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
     public int CountOfStayables { get; }
     public ImmutableDictionary<TSquare, Stayable> Values => _squares;
 
-    private static IEnumerable<Square> GetNeighbors(TSquare pos)
+    private static readonly Dictionary<MultipleAxes, (int[] dy, int[] dz, int[] dw)> _rangeCache = new()
     {
-        var axes = pos.ActiveAxes;
-        foreach (int dx in new[] { -1, 0, 1 })
-            foreach (int dy in axes.HasFlag(MultipleAxes.Two) ? new[] { -1, 0, 1 } : new[] { 0 })
-                foreach (int dz in axes.HasFlag(MultipleAxes.Three) ? new[] { -1, 0, 1 } : new[] { 0 })
-                    foreach (int dw in axes.HasFlag(MultipleAxes.Four) ? new[] { -1, 0, 1 } : new[] { 0 })
+        [MultipleAxes.None] = (_zeroRange, _zeroRange, _zeroRange),
+        [MultipleAxes.One] = (_zeroRange, _zeroRange, _zeroRange),
+        [MultipleAxes.Two] = (_fullRange, _zeroRange, _zeroRange),
+        [MultipleAxes.Three] = (_fullRange, _fullRange, _zeroRange),
+        [MultipleAxes.Four] = (_fullRange, _fullRange, _fullRange),
+    };
+
+    private static IEnumerable<TSquare> GetNeighbors(TSquare pos)
+    {
+        var (dyRange, dzRange, dwRange) = _rangeCache[pos.ActiveAxes];
+
+        foreach (int dx in _fullRange)
+            foreach (int dy in dyRange)
+                foreach (int dz in dzRange)
+                    foreach (int dw in dwRange)
                     {
                         if (dx == 0 && dy == 0 && dz == 0 && dw == 0) continue;
-                        var square = new Square(new Dictionary<Axis, int>(4) { { Axis.X, dx }, { Axis.Y, dy }, { Axis.Z, dz }, { Axis.W, dw } });
-                        yield return square.CopyWith(pos.Coordinates);
+                        yield return pos.WithOffset(dx, dy, dz, dw);
                     }
-    }
-    private static TSquare CreateOffset(TSquare original, int dx, int dy, int dz, int dw)
-    {
-        var dict = new Dictionary<Axis, int>(original.Coordinates);
-        dict[Axis.X] += dx;
-        dict[Axis.Y] += dy;
-        dict[Axis.Z] += dz;
-        dict[Axis.W] += dw;
-        return original.CopyWith(dict);
     }
     private static HashSet<TSquare> GetConnectedToOrigin(IEnumerable<TSquare> cells)
     {
@@ -126,8 +128,7 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
 
             foreach (var dir in directions)
             {
-
-                TSquare neighbor = CreateOffset(current, dir.X, dir.Y, dir.Z, dir.W);
+                TSquare neighbor = current.WithOffset(dir);
 
                 if (cellSet.Contains(neighbor) && !visited.Contains(neighbor))
                 {
@@ -269,15 +270,23 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
 
         private Square Translate(TSquare relative)
         {
-            Dictionary<Axis, int> coordinates = new();
-            foreach (var startPair in _start.Coordinates)
+            int x = _start.X;
+            int y = _start.Y;
+            int z = _start.Z;
+            int w = _start.W;
+
+            foreach (var pair in relative.Coordinates())
             {
-                if (relative.TryGetValue(startPair.Key, out int val))
-                    coordinates[startPair.Key] = startPair.Value + val;
-                else
-                    coordinates[startPair.Key] = startPair.Value;
+                switch (pair.Key)
+                {
+                    case Axis.X: x += pair.Value; break;
+                    case Axis.Y: y += pair.Value; break;
+                    case Axis.Z: z += pair.Value; break;
+                    case Axis.W: w += pair.Value; break;
+                }
             }
-            return new Square(coordinates);
+
+            return new Square { X = x, Y = y, Z = z, W = w };
         }
 
         protected override bool ProtectedCanMoveTo(IPath<Square> path)

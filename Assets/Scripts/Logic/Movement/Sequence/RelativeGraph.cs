@@ -41,7 +41,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
 
     private void AddToIndex(SegmentNode<TSquare> node)
     {
-        var key = GetLineKey(node.Position);
+        var key = node.Position.GetLineKey();
         if (!_lineIndex.TryGetValue(key, out var list))
             _lineIndex[key] = list = new List<SegmentNode<TSquare>>();
         list.Add(node);
@@ -50,7 +50,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
     }
     private void RemoveFromIndex(SegmentNode<TSquare> node)
     {
-        var key = GetLineKey(node.Position);
+        var key = node.Position.GetLineKey();
         if (_lineIndex.TryGetValue(key, out var list) && list.Remove(node))
         {
             Count--;
@@ -75,7 +75,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
 
         var candidates = new HashSet<SegmentNode<TSquare>>();
 
-        var sameKey = GetLineKey(node.Position);
+        var sameKey = node.Position.GetLineKey();
         if (_lineIndex.TryGetValue(sameKey, out var sameLineNodes))
             candidates.UnionWith(sameLineNodes);
 
@@ -96,7 +96,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
     }
     private bool Contains(SegmentNode<TSquare> node)
     {
-        var key = GetLineKey(node.Position);
+        var key = node.Position.GetLineKey();
         return _lineIndex.TryGetValue(key, out var list) && list.Contains(node);
     }
     private bool Add(TSquare square, Stayables stayables)
@@ -124,8 +124,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
         bool containsZeroInMerged = (minX <= 0 && maxX >= 0) &&
             (newNode.Position.IsZeroLine() || overlapping.Any(n => n.Position.IsZeroLine()));
 
-        var dict = new Dictionary<Axis, int>(square.Coordinates) { [Axis.X] = minX };
-        var merged = new SegmentNode<TSquare>(square.CopyWith(dict), new Stayables(maxX - minX, mergedIndices.OrderBy(i => i).ToList()));
+        var merged = new SegmentNode<TSquare>(square.WithValue(Axis.X, minX), new Stayables(maxX - minX, mergedIndices.OrderBy(i => i).ToList()));
         if (containsZeroInMerged) OriginNode = merged;
         AddToIndex(merged);
         ReconnectNode(merged);
@@ -180,13 +179,13 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
 
         return copy;
     }
-    private Dictionary<SegmentNode<TSquare>, SegmentNode<Square>> CreateAbsoluteNodes(Square startSquare)
+    private Dictionary<SegmentNode<TSquare>, SegmentNode<TSquare>> CreateAbsoluteNodes(TSquare startSquare)
     {
-        var map = new Dictionary<SegmentNode<TSquare>, SegmentNode<Square>>();
+        var map = new Dictionary<SegmentNode<TSquare>, SegmentNode<TSquare>>();
         foreach (var node in Nodes)
         {
-            var absolutePos = startSquare + new Square(node.Position.Coordinates);
-            var absoluteNode = new SegmentNode<Square>(absolutePos, node.Stayables);
+            var absolutePos = startSquare + new TSquare().WithValuesFrom(node.Position);
+            var absoluteNode = new SegmentNode<TSquare>(absolutePos, node.Stayables);
             map[node] = absoluteNode;
         }
         foreach (var (original, absolute) in map)
@@ -206,7 +205,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
 
         foreach (var (original, absolute) in absoluteNodesMap)
         {
-            var key = GetLineKey(original.Position).Shift(startSquare);
+            var key = original.Position.GetLineKey().Shift(startSquare);
             if (!result.TryGetValue(key, out var list))
                 result[key] = list = new List<SegmentNode<Square>>();
             list.Add(absolute);
@@ -218,7 +217,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
         var overlapping = new List<SegmentNode<TSquare>>();
         var adjacent = new List<SegmentNode<TSquare>>();
 
-        var sameKey = GetLineKey(newNode.Position);
+        var sameKey = newNode.Position.GetLineKey();
         if (_lineIndex.TryGetValue(sameKey, out var sameLineNodes))
         {
             foreach (var node in sameLineNodes)
@@ -270,18 +269,6 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
             node.Neighbors.Remove(neighbor);
         }
     }
-    private static TSquare OffsetPosition(TSquare pos, int dy, int dz, int dw)
-    {
-        var dict = new Dictionary<Axis, int>(pos.Coordinates);
-        if (dict.ContainsKey(Axis.Y)) dict[Axis.Y] += dy;
-        else if (dy != 0) dict.Add(Axis.Y, dy);
-        if (dict.ContainsKey(Axis.Z)) dict[Axis.Z] += dz;
-        else if (dz != 0) dict.Add(Axis.Z, dz);
-        if (dict.ContainsKey(Axis.W)) dict[Axis.W] += dw;
-        else if (dw != 0) dict.Add(Axis.W, dw);
-        return pos.CopyWith(dict);
-    }
-    private static LineKey GetLineKey(TSquare pos) => pos is Square s ? new(s) : pos is Square3D s3 ? new(s3) : pos is Square2D s2 ? new(s2) : throw new ArgumentException($"Неверный тип TSquare {pos}");
     private static HashSet<LineKey> GetNeighborLineKeys(TSquare position)
     {
         var axes = position.ActiveAxes;
@@ -295,8 +282,8 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
         var neighborKeys = new HashSet<LineKey>();
         foreach (var (dy, dz, dw) in deltas)
         {
-            var offsetPos = OffsetPosition(position, dy, dz, dw);
-            neighborKeys.Add(GetLineKey(offsetPos));
+            var offsetPos = position.WithOffset(0, dy, dz, dw);
+            neighborKeys.Add(offsetPos.GetLineKey());
         }
         return neighborKeys;
     }
@@ -321,12 +308,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
                 newStayables.AddStayable(i - startOffset);
         }
 
-        var newPos = source.Position;
-        Dictionary<Axis, int> dict = new(newPos.Coordinates)
-        {
-            [Axis.X] = source.Position.X + startOffset
-        };
-        var newSquare = newPos.CopyWith(dict);
+        var newSquare = source.Position.WithValue(Axis.X, source.Position.X + startOffset);
         return new SegmentNode<TSquare>(newSquare, newStayables);
     }
     private static (int minX, int maxX, HashSet<int> mergedIndices) MergeOverlappingNodes(SegmentNode<TSquare> newNode, List<SegmentNode<TSquare>> overlapping)
@@ -342,6 +324,22 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
         }
         var mergedIndices = MergeStayables(nodesToMerge, minX);
         return (minX, maxX, mergedIndices);
+    }
+    private static void AppendNeighbor(StringBuilder sb, SegmentNode<TSquare> node)
+    {
+        sb.Append('[');
+
+        bool first = true;
+        foreach (var pair in node.Position.Coordinates())
+        {
+            if (pair.Key == Axis.X) continue;
+            if (!first) sb.Append(", ");
+            first = false;
+            sb.Append(pair.Key).Append('=').Append(pair.Value);
+        }
+
+        if (!first) sb.Append(", ");
+        sb.Append("X=").Append(node.Position.X).Append("..").Append(node.XMax).Append(']');
     }
 
     public bool Add(TSquare square) => Add(square, 0);
@@ -393,22 +391,45 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
 
         return true;
     }
-    
+
     public override string ToString()
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"Count: {Count}, TotalStayables: {_totalStayablesCount}");
-        foreach (var line in _lineIndex.OrderBy(kvp => kvp.Key.Y).ThenBy(kvp => kvp.Key.Z).ThenBy(kvp => kvp.Key.W))
+
+        sb.Append("Count: ").Append(Count)
+          .Append(", TotalStayables: ").Append(_totalStayablesCount)
+          .AppendLine();
+
+        var sortedLines = _lineIndex
+            .OrderBy(kvp => kvp.Key.Y)
+            .ThenBy(kvp => kvp.Key.Z)
+            .ThenBy(kvp => kvp.Key.W);
+
+        foreach (var line in sortedLines)
         {
-            sb.AppendLine($"Line {line.Key}:");
-            foreach (var node in line.Value.OrderBy(n => n.Position.X))
+            sb.Append("Line ").Append(line.Key).Append(':').AppendLine();
+
+            var sortedNodes = line.Value.OrderBy(n => n.Position.X);
+            foreach (var node in sortedNodes)
             {
-                sb.AppendLine($"  PatternNode: {node}");
-                sb.AppendLine($"    Neighbors: {string.Join(", ", node.Neighbors.Select(nk => $"{nk.Position.Coordinates.Where(e => e.Key != Axis.X).Aggregate("[", (all, cur) => $"{all}{cur.Key}={cur.Value}, ")}X={nk.Position.X}..{nk.XMax}]"))}");
+                sb.Append("  PatternNode: ").Append(node.ToString()).AppendLine();
+                sb.Append("    Neighbors: ");
+
+                bool first = true;
+                foreach (var neighbor in node.Neighbors)
+                {
+                    if (!first) sb.Append(", ");
+                    first = false;
+                    AppendNeighbor(sb, neighbor);
+                }
+
+                sb.AppendLine();
             }
         }
+
         return sb.ToString();
     }
+
     public ISequenceEnumerator<Square> GetEnumerator(Square start) => new Enumerable(this, start);
 
     public RelativeGraph<TSquare> Copy() => PrivateCopy();
@@ -488,7 +509,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
                     var node = queue.Dequeue();
                     for (int x = node.Position.X; x <= node.XMax; x++)
                     {
-                        var square = RelativeGraph<Square>.Enumerable.CreateSquareFromNode(node, x);
+                        var square = node.Position.WithValue(Axis.X, x);
                         if (!square.Equals(StartPosition))
                         {
                             int offset = x - node.Position.X;
@@ -534,16 +555,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
         {
             if (!node.Position.IsSameLine(to)) return false;
             if (node.Position.X > to.X || to.X > node.XMax) return false;
-            return Math.Abs(to.X - from.X) == 1 &&
-                   from.Y == to.Y && from.Z == to.Z && from.W == to.W;
-        }
-        private static Square CreateSquareFromNode(SegmentNode<Square> node, int x)
-        {
-            Dictionary<Axis, int> dict = new(node.Position.Coordinates)
-            {
-                [Axis.X] = x
-            };
-            return new Square(dict);
+            return Math.Abs(to.X - from.X) == 1 && from.IsSameLine(to);
         }
         private static SegmentNode<Square>? FindNeighborNodeForTransition(SegmentNode<Square> currentNode, Square from, Square to)
         {
@@ -557,7 +569,6 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
             }
             return null;
         }
-
         protected override bool ProtectedCanMoveTo(IPath<Square> path)
         {
             {
