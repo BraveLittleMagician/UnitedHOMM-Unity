@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
-public class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TSquare>> where TSquare : struct, ISquare<TSquare>
+public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TSquare>> where TSquare : struct, ISquare<TSquare>
 {
     private readonly Dictionary<LineKey, List<SegmentNode<TSquare>>> _lineIndex = new();
     private int _totalStayablesCount;
@@ -211,10 +211,10 @@ public class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TSquare>>
                     }
                 }
             }
-            else if (startSquare is Square s2)
+            else if (startSquare is Square2D s2)
             {
                 var os = new TSquare().WithValuesFrom(node.Position);
-                if (os is Square offsetSquare)
+                if (os is Square2D offsetSquare)
                 {
                     var absolutePos = s2 + offsetSquare;
                     if (absolutePos is TSquare absoluteTPos)
@@ -485,7 +485,6 @@ public class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TSquare>>
         return DictionaryEquals(_lineIndex, other._lineIndex);
     }
     public override bool Equals(object? obj) => Equals(obj as RelativeGraph<TSquare>);
-
     public override int GetHashCode()
     {
         var hash = new HashCode();
