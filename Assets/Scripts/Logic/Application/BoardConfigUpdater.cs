@@ -21,8 +21,7 @@ public sealed class BoardConfigUpdater
     {
         if (newConfig == null) throw new ArgumentNullException(nameof(newConfig));
 
-        var axes = (MultipleAxes)newConfig.Axes;
-        int minimalSize = _board.GetMinimalFieldSize(axes);
+        int minimalSize = _board.GetMinimalFieldSize();
         var finalConfig = BoardSizeCorrector.CorrectConfig(newConfig, minimalSize);
 
         if (finalConfig == _currentConfig)

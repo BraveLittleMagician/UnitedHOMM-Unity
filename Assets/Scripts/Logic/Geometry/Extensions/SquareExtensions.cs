@@ -73,4 +73,9 @@ public static class SquareExtensions
         }
         return distSq <= (long)radius * radius;
     }
+    public static bool Contains(this Square size, Square position) =>
+        position.X >= 0 && position.X < size.X &&
+        position.Y >= 0 && position.Y < size.Y &&
+        position.Z >= 0 && position.Z < size.Z &&
+        position.W >= 0 && position.W < size.W;
 }

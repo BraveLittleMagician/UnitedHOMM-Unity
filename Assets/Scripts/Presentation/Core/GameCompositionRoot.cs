@@ -46,7 +46,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private Board _board = null!;
     private Decks _decks  = null!;
     private LoaderOfConfig _loaderOfConfig = null!;
-    private AxisAlignedBox _box = null!;
     private StateOfGame _stateOfGame = null!;
     private AdderOfRoomsToHouse _adderOfRooms = null!;
     private SpawnerOfPieces _spawnerOfPieces = null!;
@@ -93,11 +92,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _loaderOfConfig = new LoaderOfConfig();
         _configOfBoard = _loaderOfConfig.LoadBoardConfig();
         _seats = new Seats(_configOfBoard.NumberOfSides, _configOfBoard.NumberOfPlayersOnSide);
-        _box = new AxisAlignedBox(
-            (MultipleAxes)_configOfBoard.Axes,
-            _configOfBoard.FieldSize,
-            _configOfBoard.WUp,
-            _configOfBoard.WDown);
 
         _logger = new LoggerForUnity();
         _eventBus = new EventBus(_logger);
@@ -105,7 +99,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _stateOfGame = new StateOfGame(_eventBus, _logger);
         _house = new House(_seats, _eventBus, _logger);
         _registry = new Registry(_house);
-        _board = new Board(_seats, _box, _eventBus, _logger);
+
+        var boardSize = BoardSizeFactory.FromConfig(_configOfBoard);
+        _board = new Board(_seats, boardSize, _eventBus, _logger);
         _decks = new Decks(_seats, _eventBus, _logger);
 
         _combatService = new CombatService(_logger, _eventBus);

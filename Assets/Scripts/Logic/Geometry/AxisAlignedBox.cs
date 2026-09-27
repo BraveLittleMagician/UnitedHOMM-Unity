@@ -1,7 +1,6 @@
 ﻿#nullable enable
 
 using System;
-using System.Collections.Generic;
 
 public sealed class AxisAlignedBox : IEquatable<AxisAlignedBox>
 {
