@@ -198,9 +198,8 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
         protected override bool ProtectedCanMoveTo(IPath<TSquare> path)
         {
             if (path.Positions.Count - 1 > _stayables.Count) return false;
-            TSquare start = StartPosition;
             foreach (var pathSquare in path.Positions)
-                if (!start.IsWithinCircleRadius(pathSquare, _stayables.Count)) return false;
+                if (!StartPosition.IsWithinCircleRadius(pathSquare, _stayables.Count)) return false;
             return true;
         }
     }
