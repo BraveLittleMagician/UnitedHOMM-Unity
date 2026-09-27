@@ -10,18 +10,24 @@ public abstract class MovementInRoom<TSequence, TRoom, TPosition> : Movement
     private readonly IEventBus _eventBus;
     private readonly IPiece _owner;
 
-    protected MovementInRoom(IEventBus eventBus, IPiece owner)
+    protected MovementInRoom(TSequence movementSequence, TSequence attackSequence, IEventBus eventBus, IPiece owner)
     {
+        MovementSequence = movementSequence ?? throw new ArgumentNullException(nameof(movementSequence));
+        AttackSequence = attackSequence ?? throw new ArgumentNullException(nameof(attackSequence));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus)); ;
         _owner = owner ?? throw new ArgumentNullException(nameof(owner)); ;
         _eventBus.Subscribe<ModifiersUpdatedEvent>(OnModifiersUpdated);
         GeneralizedModifiers = new ModifiersOfMovement<TSequence, TPosition>(_eventBus, _owner);
+
+        ModifiedMovementSequence = GetModifiedSequence(isAttack: false);
+        ModifiedAttackSequence = GetModifiedSequence(isAttack: true);
     }
 
-    protected TSequence ModifiedMovementSequence { get; set; } = default!;
-    protected TSequence ModifiedAttackSequence { get; set; } = default!;
-    protected abstract TSequence MovementSequence { get; }
-    protected abstract TSequence AttackSequence { get; }
+    protected TSequence MovementSequence { get; }
+    protected TSequence AttackSequence { get; }
+
+    protected TSequence ModifiedMovementSequence { get; private set; }
+    protected TSequence ModifiedAttackSequence { get; private set; }
 
     protected ModifiersOfMovement<TSequence, TPosition> GeneralizedModifiers { get; } 
 
@@ -44,21 +50,12 @@ public abstract class MovementInRoom<TSequence, TRoom, TPosition> : Movement
             sequence = modifier.Apply(sequence);
         return sequence;
     }
-    protected abstract void CallUpdateModified();
-    protected void UpdateModifedSequencies()
-    {
-        ModifiedMovementSequence = GetModifiedSequence(false);
-        ModifiedAttackSequence = GetModifiedSequence(true);
-    }
 
     public abstract List<TPosition> GetStayables(TPosition start, bool isAttack);
     public override List<TPos> GetStayables<TPos>(TPos tpos, bool isAttack)
     {
         if (tpos is TPosition start)
-        {
-            var result = GetStayables(start, isAttack);
-            if (result is List<TPos> posResult) return posResult;
-        }
+            return (List<TPos>)(object)GetStayables(start, isAttack);
         return new List<TPos>();
     }
     public abstract Dictionary<TPosition, Stayable> GetPositions(TPosition start, bool isAttack);
@@ -96,8 +93,5 @@ public abstract class MovementInRoom<TSequence, TRoom, TPosition> : Movement
     {
         _eventBus.Unsubscribe<ModifiersUpdatedEvent>(OnModifiersUpdated);
         GeneralizedModifiers.Dispose();
-
-        if (MovementSequence is IDisposable movementDisposable) movementDisposable.Dispose();
-        if (!ReferenceEquals(MovementSequence, AttackSequence) && AttackSequence is IDisposable attackDisposable) attackDisposable.Dispose();
     }
 }

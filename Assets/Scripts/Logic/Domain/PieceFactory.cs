@@ -17,10 +17,18 @@ public sealed class PieceFactory
     {
         var piece = new Piece(index, definition.Owner, definition.Name, definition.Health, _eventBus, _logger);
 
-        if (definition.Movements != null) foreach (var m in definition.Movements) piece.AddMovement(m);
-        if (definition.MeleeAttacks != null) foreach (var a in definition.MeleeAttacks) piece.AddMeleeAttack(a);
-        if (definition.RangedAttacks != null) foreach (var a in definition.RangedAttacks) piece.AddRangedAttack(a);
-        if (definition.Abilities != null) foreach (var a in definition.Abilities) piece.AddAbility(a);
+        if (definition.MovementFactories != null)
+            foreach (var factory in definition.MovementFactories)
+                piece.AddMovement(factory.CreateFor(_eventBus, piece));
+
+        if (definition.MeleeAttacks != null)
+            foreach (var a in definition.MeleeAttacks) piece.AddMeleeAttack(a);
+
+        if (definition.RangedAttacks != null)
+            foreach (var a in definition.RangedAttacks) piece.AddRangedAttack(a);
+
+        if (definition.Abilities != null)
+            foreach (var a in definition.Abilities) piece.AddAbility(a);
 
         return piece;
     }

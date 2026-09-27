@@ -88,12 +88,30 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
     private ImmutableArray<KeyValuePair<TSquare, Stayable>>? ComputeAdded(IEnumerable<TSquare> newSquares, Stayable stayable)
     {
         var squares = _squares;
-        var newAllowed = newSquares
-            .Where(s => !s.IsZero && !squares.ContainsKey(s) && squares.Any(p => p.Key.IsAdjacent(s)))
-            .Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable))
-            .ToImmutableArray();
+        var builder = ImmutableArray.CreateBuilder<KeyValuePair<TSquare, Stayable>>();
+        var seen = new HashSet<TSquare>();
 
-        return newAllowed.Length == 0 ? null : newAllowed;
+        foreach (var s in newSquares)
+        {
+            if (s.IsZero) continue;
+            if (squares.ContainsKey(s)) continue;
+            if (!seen.Add(s)) continue;
+
+            bool touchesPattern = false;
+            foreach (var neighbor in GetNeighbors(s))
+            {
+                if (squares.ContainsKey(neighbor))
+                {
+                    touchesPattern = true;
+                    break;
+                }
+            }
+
+            if (touchesPattern)
+                builder.Add(new KeyValuePair<TSquare, Stayable>(s, stayable));
+        }
+
+        return builder.Count == 0 ? null : builder.ToImmutable();
     }
     private (HashSet<TSquare>? forRemove, ImmutableDictionary<TSquare, Stayable>? newSquares) ComputeRemoval(IEnumerable<TSquare> ienum)
     {

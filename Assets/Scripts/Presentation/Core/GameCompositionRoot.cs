@@ -43,6 +43,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private IFlow _flow = null!;
     private Seats _seats; 
     private ConfigOfBoard _configOfBoard = null!;
+    private DeckSequenceProvider _deckSequences = null!;
     private Board _board = null!;
     private Decks _decks  = null!;
     private LoaderOfConfig _loaderOfConfig = null!;
@@ -111,8 +112,12 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
         _adderOfRooms = new AdderOfRoomsToHouse(_house, _eventBus, _logger, _seats, _board, _decks);
 
-        _spawnerOfPieces = new SpawnerOfPieces(_flow, _logger, StartingPlacementPreset.CreateStandard());
+        _deckSequences = new DeckSequenceProvider(_eventBus);
+        var preset = StartingPlacementPreset.CreateStandard(_deckSequences);
+
+        _spawnerOfPieces = new SpawnerOfPieces(_flow, _logger, preset);
         _starterOfGame = new StarterOfGame(_stateOfGame, _adderOfRooms, _spawnerOfPieces);
+
 
         _presenter = new Presenter(_eventBus, _cameraWork, _configOfBoard);
     }

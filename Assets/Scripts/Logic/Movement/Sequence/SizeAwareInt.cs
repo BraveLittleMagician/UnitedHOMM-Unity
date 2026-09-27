@@ -43,7 +43,7 @@ public sealed class SizeAwareInt : ISequence<int, SizeAwareInt>, IDisposable
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
-        return _owner == other._owner;
+        return _owner == other._owner && _eventBus == other._eventBus;
     }
 
     public override bool Equals(object? obj) => obj is SizeAwareInt other && Equals(other);
