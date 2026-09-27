@@ -86,18 +86,17 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
     public int CountOfStayables { get; }
     public ImmutableDictionary<TSquare, Stayable> Values => _squares;
 
-    private static readonly Dictionary<MultipleAxes, (int[] dy, int[] dz, int[] dw)> _rangeCache = new()
+    private static (int[] dy, int[] dz, int[] dw) GetRanges(MultipleAxes axes) => axes switch
     {
-        [MultipleAxes.None] = (_zeroRange, _zeroRange, _zeroRange),
-        [MultipleAxes.One] = (_zeroRange, _zeroRange, _zeroRange),
-        [MultipleAxes.Two] = (_fullRange, _zeroRange, _zeroRange),
-        [MultipleAxes.Three] = (_fullRange, _fullRange, _zeroRange),
-        [MultipleAxes.Four] = (_fullRange, _fullRange, _fullRange),
+        MultipleAxes.None or MultipleAxes.One => (_zeroRange, _zeroRange, _zeroRange),
+        MultipleAxes.Two => (_fullRange, _zeroRange, _zeroRange),
+        MultipleAxes.Three => (_fullRange, _fullRange, _zeroRange),
+        MultipleAxes.Four => (_fullRange, _fullRange, _fullRange),
+        _ => throw new ArgumentOutOfRangeException(nameof(axes), axes, "Найдены оси MultipleAxes, которые не поддерживаются")
     };
-
     private static IEnumerable<TSquare> GetNeighbors(TSquare pos)
     {
-        var (dyRange, dzRange, dwRange) = _rangeCache[pos.ActiveAxes];
+        var (dyRange, dzRange, dwRange) = GetRanges(pos.ActiveAxes);
 
         foreach (int dx in _fullRange)
             foreach (int dy in dyRange)
@@ -119,7 +118,7 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
         queue.Enqueue(zero);
         visited.Add(zero);
 
-        var directions = GetNeighbors(zero);
+        var directions = GetNeighbors(zero).ToArray();
 
         while (queue.Count > 0)
         {

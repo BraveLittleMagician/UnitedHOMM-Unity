@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Unity.VisualScripting;
 
 public class SegmentNode<TSquare> : IEquatable<SegmentNode<TSquare>> where TSquare : struct, ISquare<TSquare>
 {
@@ -18,7 +19,7 @@ public class SegmentNode<TSquare> : IEquatable<SegmentNode<TSquare>> where TSqua
     public int XMax => Position.X + LastRelativeIndex;
     public TSquare Position { get; }
     public Stayables Stayables { get; }
-    public HashSet<SegmentNode<TSquare>> Neighbors { get; } = new();
+    public HashSet<SegmentNode<TSquare>> Neighbors { get; } = new(ReferenceEqualityComparer<SegmentNode<TSquare>>.Instance);
 
     private static bool IntersectsX((int XMin, int XMax) current, (int XMin, int XMax) other) => !(current.XMax < other.XMin || other.XMax < current.XMin);
     private static bool TouchesX((int XMin, int XMax) current, (int XMin, int XMax) other) => !(current.XMax < (other.XMin - 1) || other.XMax < (current.XMin - 1));

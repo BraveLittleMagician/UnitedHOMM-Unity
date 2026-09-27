@@ -5,13 +5,16 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
+using Unity.VisualScripting;
 
-public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> where TSquare : struct, ISquare<TSquare>
+public class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TSquare>> where TSquare : struct, ISquare<TSquare>
 {
     private readonly Dictionary<LineKey, List<SegmentNode<TSquare>>> _lineIndex = new();
     private int _totalStayablesCount;
+    private static readonly int[] _fullRange = { -1, 0, 1 };
+    private static readonly int[] _zeroRange = { 0 };
 
-    public RelativeGraph() : this (true) { }
+    public RelativeGraph() : this(true) { }
     public RelativeGraph(bool guaranteesAtLeastOneStayable)
     {
         GuaranteesAtLeastOneStayable = guaranteesAtLeastOneStayable;
@@ -37,7 +40,6 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
     public bool GuaranteesAtLeastOneStayable { get; private set; }
     public SegmentNode<TSquare> OriginNode { get; private set; }
     public IEnumerable<SegmentNode<TSquare>> Nodes => _lineIndex.Values.SelectMany(list => list);
-
 
     private void AddToIndex(SegmentNode<TSquare> node)
     {
@@ -151,7 +153,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
         copy.Count = 0;
         copy._totalStayablesCount = 0;
 
-        var nodeMap = new Dictionary<SegmentNode<TSquare>, SegmentNode<TSquare>>();
+        var nodeMap = new Dictionary<SegmentNode<TSquare>, SegmentNode<TSquare>>(ReferenceEqualityComparer<SegmentNode<TSquare>>.Instance);
 
         foreach (var node in Nodes)
         {
@@ -181,12 +183,48 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
     }
     private Dictionary<SegmentNode<TSquare>, SegmentNode<TSquare>> CreateAbsoluteNodes(TSquare startSquare)
     {
-        var map = new Dictionary<SegmentNode<TSquare>, SegmentNode<TSquare>>();
+        var map = new Dictionary<SegmentNode<TSquare>, SegmentNode<TSquare>>(ReferenceEqualityComparer<SegmentNode<TSquare>>.Instance);
         foreach (var node in Nodes)
         {
-            var absolutePos = startSquare + new TSquare().WithValuesFrom(node.Position);
-            var absoluteNode = new SegmentNode<TSquare>(absolutePos, node.Stayables);
-            map[node] = absoluteNode;
+            if (startSquare is Square s)
+            {
+                var os = new TSquare().WithValuesFrom(node.Position);
+                if (os is Square offsetSquare)
+                {
+                    var absolutePos = s + offsetSquare;
+                    if (absolutePos is TSquare absoluteTPos)
+                    {
+                        var absoluteNode = new SegmentNode<TSquare>(absoluteTPos, node.Stayables);
+                        map[node] = absoluteNode;
+                    }
+                }
+            }
+            else if (startSquare is Square3D s3)
+            {
+                var os = new TSquare().WithValuesFrom(node.Position);
+                if (os is Square3D offsetSquare)
+                {
+                    var absolutePos = s3 + offsetSquare;
+                    if (absolutePos is TSquare absoluteTPos)
+                    {
+                        var absoluteNode = new SegmentNode<TSquare>(absoluteTPos, node.Stayables);
+                        map[node] = absoluteNode;
+                    }
+                }
+            }
+            else if (startSquare is Square s2)
+            {
+                var os = new TSquare().WithValuesFrom(node.Position);
+                if (os is Square offsetSquare)
+                {
+                    var absolutePos = s2 + offsetSquare;
+                    if (absolutePos is TSquare absoluteTPos)
+                    {
+                        var absoluteNode = new SegmentNode<TSquare>(absoluteTPos, node.Stayables);
+                        map[node] = absoluteNode;
+                    }
+                }
+            }
         }
         foreach (var (original, absolute) in map)
         {
@@ -198,16 +236,16 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
         }
         return map;
     }
-    private Dictionary<LineKey, List<SegmentNode<Square>>> GetNodesFromPosition(Square startSquare)
+    private Dictionary<LineKey, List<SegmentNode<TSquare>>> GetNodesFromPosition(TSquare startSquare)
     {
         var absoluteNodesMap = CreateAbsoluteNodes(startSquare);
-        var result = new Dictionary<LineKey, List<SegmentNode<Square>>>();
+        var result = new Dictionary<LineKey, List<SegmentNode<TSquare>>>();
 
         foreach (var (original, absolute) in absoluteNodesMap)
         {
             var key = original.Position.GetLineKey().Shift(startSquare);
             if (!result.TryGetValue(key, out var list))
-                result[key] = list = new List<SegmentNode<Square>>();
+                result[key] = list = new List<SegmentNode<TSquare>>();
             list.Add(absolute);
         }
         return result;
@@ -269,22 +307,24 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
             node.Neighbors.Remove(neighbor);
         }
     }
-    private static HashSet<LineKey> GetNeighborLineKeys(TSquare position)
+    private static List<LineKey> GetNeighborLineKeys(TSquare position)
     {
         var axes = position.ActiveAxes;
-        var deltas = new List<(int dy, int dz, int dw)>();
-        foreach (int dy in axes.HasFlag(MultipleAxes.Two) ? new[] { -1, 0, 1 } : new[] { 0 })
-            foreach (int dz in axes.HasFlag(MultipleAxes.Three) ? new[] { -1, 0, 1 } : new[] { 0 })
-                foreach (int dw in axes.HasFlag(MultipleAxes.Four) ? new[] { -1, 0, 1 } : new[] { 0 })
-                    if (dy != 0 || dz != 0 || dw != 0)
-                        deltas.Add((dy, dz, dw));
 
-        var neighborKeys = new HashSet<LineKey>();
-        foreach (var (dy, dz, dw) in deltas)
-        {
-            var offsetPos = position.WithOffset(0, dy, dz, dw);
-            neighborKeys.Add(offsetPos.GetLineKey());
-        }
+        var dyRange = axes.HasFlag(MultipleAxes.Two) ? _fullRange : _zeroRange;
+        var dzRange = axes.HasFlag(MultipleAxes.Three) ? _fullRange : _zeroRange;
+        var dwRange = axes.HasFlag(MultipleAxes.Four) ? _fullRange : _zeroRange;
+
+        var neighborKeys = new List<LineKey>(26);
+
+        foreach (int dy in dyRange)
+            foreach (int dz in dzRange)
+                foreach (int dw in dwRange)
+                {
+                    if (dy == 0 && dz == 0 && dw == 0) continue;
+                    neighborKeys.Add(position.WithOffset(0, dy, dz, dw).GetLineKey());
+                }
+
         return neighborKeys;
     }
     private static HashSet<int> MergeStayables(IEnumerable<SegmentNode<TSquare>> nodes, int newMinX)
@@ -430,7 +470,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
         return sb.ToString();
     }
 
-    public ISequenceEnumerator<Square> GetEnumerator(Square start) => new Enumerable(this, start);
+    public ISequenceEnumerator<TSquare> GetEnumerator(TSquare start) => new Enumerable(this, start);
 
     public RelativeGraph<TSquare> Copy() => PrivateCopy();
     ISequence ICopyable<ISequence>.Copy() => PrivateCopy();
@@ -467,31 +507,29 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
     public static bool operator ==(RelativeGraph<TSquare> left, RelativeGraph<TSquare> right) => left.Equals(right);
     public static bool operator !=(RelativeGraph<TSquare> left, RelativeGraph<TSquare> right) => !(left == right);
 
-    private class Enumerable : SequenceEnumerable<Square>
+    private class Enumerable : SequenceEnumerable<TSquare>
     {
-        private readonly List<SegmentNode<Square>> _nodes;
-        private Dictionary<Square, Stayable>? _allPositionsCache;
-        private List<Square>? _onlyStayablesCache;
+        private readonly Dictionary<LineKey, List<SegmentNode<TSquare>>> _lineIndex;
+        private Dictionary<TSquare, Stayable>? _allPositionsCache;
+        private List<TSquare>? _onlyStayablesCache;
 
-        public Enumerable(RelativeGraph<TSquare> graph, Square startSquare) : base(startSquare)
+        public Enumerable(RelativeGraph<TSquare> graph, TSquare startSquare) : base(startSquare)
         {
-            _nodes = graph.GetNodesFromPosition(startSquare).Values.SelectMany(list => list).ToList();
+            _lineIndex = graph.GetNodesFromPosition(startSquare);
         }
 
-        protected override Dictionary<Square, Stayable> CreateAllPossiblePositions
+        protected override Dictionary<TSquare, Stayable> CreateAllPossiblePositions
         {
             get
             {
                 if (_allPositionsCache != null) return _allPositionsCache;
 
-                var result = new Dictionary<Square, Stayable>
+                var result = new Dictionary<TSquare, Stayable>
                 {
                     [StartPosition] = Stayable.NotStay
                 };
 
-                var startNode = _nodes.FirstOrDefault(node =>
-                    node.Position.X <= StartPosition.X && StartPosition.X <= node.XMax &&
-                    node.Position.IsSameLine(StartPosition));
+                var startNode = FindNodeContainingSquare(StartPosition);
 
                 if (startNode == null)
                 {
@@ -499,8 +537,8 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
                     return result;
                 }
 
-                var visitedNodes = new HashSet<SegmentNode<Square>>();
-                var queue = new Queue<SegmentNode<Square>>();
+                var visitedNodes = new HashSet<SegmentNode<TSquare>>();
+                var queue = new Queue<SegmentNode<TSquare>>();
                 queue.Enqueue(startNode);
                 visitedNodes.Add(startNode);
 
@@ -531,7 +569,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
                 return result;
             }
         }
-        protected override List<Square> CreateOnlyStayablesPositions
+        protected override List<TSquare> CreateOnlyStayablesPositions
         {
             get
             {
@@ -544,20 +582,26 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
             }
         }
 
-        private SegmentNode<Square>? FindNodeContainingSquare(Square square)
+        private SegmentNode<TSquare>? FindNodeContainingSquare(TSquare square)
         {
-            return _nodes.FirstOrDefault(node =>
-                node.Position.IsSameLine(square) &&
-                node.Position.X <= square.X && square.X <= node.XMax);
+            if (!_lineIndex.TryGetValue(square.GetLineKey(), out var candidates))
+                return null;
+
+            foreach (var node in candidates)
+            {
+                if (node.Position.X <= square.X && square.X <= node.XMax)
+                    return node;
+            }
+            return null;
         }
 
-        private static bool IsInsideSameNode(SegmentNode<Square> node, Square from, Square to)
+        private static bool IsInsideSameNode(SegmentNode<TSquare> node, TSquare from, TSquare to)
         {
             if (!node.Position.IsSameLine(to)) return false;
             if (node.Position.X > to.X || to.X > node.XMax) return false;
             return Math.Abs(to.X - from.X) == 1 && from.IsSameLine(to);
         }
-        private static SegmentNode<Square>? FindNeighborNodeForTransition(SegmentNode<Square> currentNode, Square from, Square to)
+        private static SegmentNode<TSquare>? FindNeighborNodeForTransition(SegmentNode<TSquare> currentNode, TSquare from, TSquare to)
         {
             if (!from.IsAdjacent(to)) return null;
 
@@ -569,45 +613,43 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
             }
             return null;
         }
-        protected override bool ProtectedCanMoveTo(IPath<Square> path)
+        protected override bool ProtectedCanMoveTo(IPath<TSquare> path)
         {
+            var steps = path.Positions;
+            if (steps.Count < 2) return false;
+
+            var currentNode = FindNodeContainingSquare(steps[0]);
+            if (currentNode == null) return false;
+
+            for (int i = 0; i < steps.Count - 1; i++)
             {
-                var steps = path.Positions;
-                if (steps.Count < 2) return false;
+                var from = steps[i];
+                var to = steps[i + 1];
+                bool stepValid = false;
 
-                var currentNode = FindNodeContainingSquare(steps[0]);
-                if (currentNode == null) return false;
-
-                for (int i = 0; i < steps.Count - 1; i++)
+                if (IsInsideSameNode(currentNode, from, to))
+                    stepValid = true;
+                else
                 {
-                    var from = steps[i];
-                    var to = steps[i + 1];
-                    bool stepValid = false;
-
-                    if (RelativeGraph<TSquare>.Enumerable.IsInsideSameNode(currentNode, from, to))
-                        stepValid = true;
-                    else
+                    var nextNode = FindNeighborNodeForTransition(currentNode, from, to);
+                    if (nextNode != null)
                     {
-                        var nextNode = RelativeGraph<TSquare>.Enumerable.FindNeighborNodeForTransition(currentNode, from, to);
-                        if (nextNode != null)
-                        {
-                            stepValid = true;
-                            currentNode = nextNode;
-                        }
+                        stepValid = true;
+                        currentNode = nextNode;
                     }
-
-                    if (!stepValid) return false;
                 }
 
-                var lastSquare = steps[^1];
-                var lastNode = FindNodeContainingSquare(lastSquare);
-                if (lastNode == null) return false;
-
-                int offset = lastSquare.X - lastNode.Position.X;
-                return lastNode.Stayables.Contains(offset);
+                if (!stepValid) return false;
             }
+
+            var lastSquare = steps[^1];
+            var lastNode = FindNodeContainingSquare(lastSquare);
+            if (lastNode == null) return false;
+
+            int offset = lastSquare.X - lastNode.Position.X;
+            return lastNode.Stayables.Contains(offset);
         }
-        public override bool CanMoveTo(Square target)
+        public override bool CanMoveTo(TSquare target)
         {
             return CreateAllPossiblePositions.TryGetValue(target, out var stayable) && stayable == Stayable.Stay;
         }
