@@ -33,6 +33,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
     [SerializeField] private Pointer _pointerHub = null!;
     [SerializeField] private Delta _deltaHub = null!;
 
+    [Header("Config")]
+    [SerializeField] private TextAsset _configJson = null!;
+
     private IEventBus _eventBus = null!;
     private ILogger _logger = null!;
     private IHouse _house = null!;
@@ -71,6 +74,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
     private void ValidateReferences()
     {
+        if (_configJson == null) throw new ArgumentNullException(nameof(_configJson));
         if (_view == null) throw new ArgumentNullException(nameof(_view));
         if (_boardUI == null) throw new ArgumentNullException(nameof(_boardUI));
         if (_selectionHub == null) throw new ArgumentNullException(nameof(_selectionHub));
@@ -90,7 +94,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     }
     private void CreateSystems()
     {
-        _loaderOfConfig = new LoaderOfConfig();
+        _loaderOfConfig = new LoaderOfConfig(_configJson.text);
         _configOfBoard = _loaderOfConfig.LoadBoardConfig();
         _seats = new Seats(_configOfBoard.NumberOfSides, _configOfBoard.NumberOfPlayersOnSide);
 

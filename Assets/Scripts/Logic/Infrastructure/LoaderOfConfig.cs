@@ -5,12 +5,19 @@ using UnityEngine;
 
 public sealed class LoaderOfConfig
 {
+    private readonly string _board;
+
+    public LoaderOfConfig(string text) => _board = text;
+
     public ConfigOfBoard LoadBoardConfig()
     {
-        var textAsset = Resources.Load<TextAsset>("appsettings");
-        if (textAsset == null) throw new Exception("Файл appsettings.json не найден в папке Resources");
-        var wrapper = JsonUtility.FromJson<ConfigWrapper>(textAsset.text) ?? throw new Exception("Не удалось распарсить appsettings.json");
-        if (wrapper.Board == null) throw new Exception("В appsettings.json отсутствует раздел 'Board'");
+        if (string.IsNullOrWhiteSpace(_board)) throw new InvalidOperationException("JSON конфигурации пуст");
+        var wrapper = JsonUtility.FromJson<ConfigWrapper>(_board)
+            ?? throw new Exception("Не удалось распарсить appsettings.json");
+
+        if (wrapper.Board == null)
+            throw new Exception("В appsettings.json отсутствует раздел 'Board'");
+
         int correctedSize = BoardSizeCorrector.CorrectSize(wrapper.Board.FieldSize);
 
         return new ConfigOfBoard
