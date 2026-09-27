@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -26,19 +27,32 @@ public sealed class EventBus : IEventBus
         {
             if (!_subscriptions.TryGetValue(type, out var list)) continue;
 
-            var snapshot = list.ToArray();
-            foreach (var entry in snapshot)
+            int count = list.Count;
+            if (count == 0) continue;
+
+            var buffer = ArrayPool<SubscriptionEntry>.Shared.Rent(count);
+            try
             {
-                try
+                list.CopyTo(buffer, 0);
+
+                for (int i = 0; i < count; i++)
                 {
-                    entry.Wrapper(eventData);
+                    var entry = buffer[i];
+                    try
+                    {
+                        entry.Wrapper(eventData);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(
+                            $"[{nameof(EventBus)}] Ошибка при обработке {eventType.Name} " +
+                            $"подписчиком {entry.Original.Target}: {ex}");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(
-                        $"[{nameof(EventBus)}] Ошибка при обработке {eventType.Name} " +
-                        $"подписчиком {entry.Original.Target}: {ex}");
-                }
+            }
+            finally
+            {
+                ArrayPool<SubscriptionEntry>.Shared.Return(buffer, clearArray: false);
             }
         }
     }
