@@ -85,6 +85,34 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
     public int Count => _squares.Count;
     public int CountOfStayables { get; }
     public ImmutableDictionary<TSquare, Stayable> Values => _squares;
+    
+    private ImmutableArray<KeyValuePair<TSquare, Stayable>>? ComputeAdded(IEnumerable<TSquare> newSquares, Stayable stayable)
+    {
+        var squares = _squares;
+        var newAllowed = newSquares
+            .Where(s => !s.IsZero && !squares.ContainsKey(s) && squares.Any(p => p.Key.IsAdjacent(s)))
+            .Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable))
+            .ToImmutableArray();
+
+        return newAllowed.Length == 0 ? null : newAllowed;
+    }
+    private (HashSet<TSquare>? forRemove, ImmutableDictionary<TSquare, Stayable>? newSquares) ComputeRemoval(IEnumerable<TSquare> ienum)
+    {
+        if (_squares.Count == 1) return (null, null);
+
+        var squares = _squares;
+
+        var forRemove = ienum.Where(s => !s.IsZero && squares.ContainsKey(s)).ToHashSet();
+        if (forRemove.Count == 0) return (null, null);
+
+        return (forRemove, squares.RemoveRange(forRemove));
+    }
+    private HashSet<TSquare>? ComputeForChange(IEnumerable<TSquare> ienum)
+    {
+        var squares = _squares;
+        var forChange = ienum.Where(s => !s.IsZero && squares.ContainsKey(s)).ToHashSet();
+        return forChange.Count == 0 ? null : forChange;
+    }
 
     private static (int[] dy, int[] dz, int[] dw) GetRanges(MultipleAxes axes) => axes switch
     {
@@ -140,7 +168,6 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
         return result;
     }
 
-
     public Pattern<TSquare> WithAdded(TSquare square, Stayable stayable) => WithAdded(new TSquare[] { square }, stayable);
     public Pattern<TSquare> WithRemoved(TSquare square) => WithRemoved(new TSquare[] { square });
     public Pattern<TSquare> WithSetStayable(TSquare square, Stayable stayable) => WithSetStayable(new TSquare[] { square }, stayable);
@@ -150,50 +177,51 @@ public readonly struct Pattern<TSquare> : ISequence<Square, Pattern<TSquare>>
 
     public Pattern<TSquare> WithAdded(IEnumerable<TSquare> newSquares, Stayable stayable)
     {
-        var squares = _squares;
-        var newAllowed = newSquares.Where(s => !s.IsZero && !squares.ContainsKey(s) && squares.Any(p => p.Key.IsAdjacent(s))).Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable)).ToImmutableArray();
-        if (newAllowed.Length == 0) return this;
-        return new Pattern<TSquare>(squares.SetItems(newAllowed), GuaranteesAtLeastOneStayable, recalculate: false);
+        var added = ComputeAdded(newSquares, stayable);
+        if (added == null) return this;
+        return new Pattern<TSquare>(_squares.SetItems(added.Value), GuaranteesAtLeastOneStayable, recalculate: false);
     }
     public (ImmutableDictionary<TSquare, Stayable> squares, bool guarantee) DataWithAdded(IEnumerable<TSquare> newSquares, Stayable stayable)
     {
-        var squares = _squares;
-        var newAllowed = newSquares.Where(s => !s.IsZero && !squares.ContainsKey(s) && squares.Any(p => p.Key.IsAdjacent(s))).Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable)).ToImmutableArray();
-        if (newAllowed.Length == 0) return (squares, GuaranteesAtLeastOneStayable);
-        return (squares.SetItems(newAllowed), false);
+        var added = ComputeAdded(newSquares, stayable);
+        if (added == null) return (_squares, GuaranteesAtLeastOneStayable);
+        return (_squares.SetItems(added.Value), false);
     }
     public Pattern<TSquare> WithRemoved(IEnumerable<TSquare> ienum)
     {
-        if (_squares.Count == 1) return this;
-        ImmutableDictionary<TSquare, Stayable> squares = _squares;
-        var forRemove = ienum.Where(s => !s.IsZero && squares.ContainsKey(s)).ToHashSet();
-        if (forRemove.Count == 0 || (CountOfStayables == 1 && forRemove.Any(s => squares[s] == Stayable.Stay))) return this;
-        return new Pattern<TSquare>(squares.RemoveRange(forRemove), GuaranteesAtLeastOneStayable, recalculate: true);
+        var (forRemove, newSquares) = ComputeRemoval(ienum);
+        if (forRemove == null) return this;
+
+        var squares = _squares;
+
+        if (CountOfStayables == 1 && forRemove.Any(s => squares[s] == Stayable.Stay)) return this;
+        return new Pattern<TSquare>(newSquares!, GuaranteesAtLeastOneStayable, recalculate: true);
     }
     public (ImmutableDictionary<TSquare, Stayable> squares, bool guarantee) DataWithRemoved(IEnumerable<TSquare> ienum)
     {
-        (ImmutableDictionary<TSquare, Stayable> squares, bool guaranteesAtLeastOneStayable) data = (_squares, GuaranteesAtLeastOneStayable);
-        if (_squares.Count == 1) return data;
-        var forRemove = ienum.Where(s => !s.IsZero && data.squares.ContainsKey(s)).ToHashSet();
-        if (forRemove.Count == 0) return data;
-        return (data.squares.RemoveRange(forRemove), false);
+        var (forRemove, newSquares) = ComputeRemoval(ienum);
+        if (forRemove == null) return (_squares, GuaranteesAtLeastOneStayable);
+
+        return (newSquares!, false);
     }
     public Pattern<TSquare> WithSetStayable(IEnumerable<TSquare> ienum, Stayable stayable)
     {
         var squares = _squares;
-        var forChange = ienum.Where(s => !s.IsZero && squares.ContainsKey(s)).ToHashSet();
-        if (forChange.Count == 0) return this;
-        if (stayable == Stayable.NotStay && CountOfStayables == 1 && forChange.Any(s => squares[s] == Stayable.Stay)) return this;
-        var items = forChange.Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable));
-        var newDict = squares.SetItems(items);
+        var forChange = ComputeForChange(ienum);
+        if (forChange == null) return this;
+
+        if (stayable == Stayable.NotStay && CountOfStayables == 1 && forChange.Any(s => squares[s] == Stayable.Stay))
+            return this;
+
+        var newDict = _squares.SetItems(forChange.Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable)));
         return new Pattern<TSquare>(newDict, GuaranteesAtLeastOneStayable, recalculate: false);
     }
     public (ImmutableDictionary<TSquare, Stayable> squares, bool guarantee) DataWithSetStayable(IEnumerable<TSquare> ienum, Stayable stayable)
     {
-        (ImmutableDictionary<TSquare, Stayable> squares, bool guaranteesAtLeastOneStayable) data = (_squares, GuaranteesAtLeastOneStayable);
-        var forChange = ienum.Where(s => !s.IsZero && data.squares.ContainsKey(s)).ToHashSet();
-        if (forChange.Count == 0) return data;
-        var newDict = data.squares.SetItems(forChange.Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable)));
+        var forChange = ComputeForChange(ienum);
+        if (forChange == null) return (_squares, GuaranteesAtLeastOneStayable);
+
+        var newDict = _squares.SetItems(forChange.Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable)));
         return (newDict, false);
     }
 

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
-using Unity.VisualScripting;
 
 public class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TSquare>> where TSquare : struct, ISquare<TSquare>
 {
