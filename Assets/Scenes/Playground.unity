@@ -485,6 +485,7 @@ MonoBehaviour:
   _scrollHub: {fileID: 526232277}
   _pointerHub: {fileID: 526232276}
   _deltaHub: {fileID: 526232275}
+  _configJson: {fileID: 4900000, guid: ac67625c654dc53468ef2f9780a41680, type: 3}
 --- !u!114 &526232269
 MonoBehaviour:
   m_ObjectHideFlags: 0
