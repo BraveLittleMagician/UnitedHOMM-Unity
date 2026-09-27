@@ -22,6 +22,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
     private void OnPieceDied(PieceDiedEvent e)
     {
         if (Remove(e.Piece.IndexInHouse)) Logger.Log($"Фигура {e.Piece} удалена из {Name} после смерти");
+        e.Piece.Dispose();
     }
     protected abstract bool ValidateAdd(IPiece piece, TPosition position, out string error);
     protected abstract bool ValidateDisplace(IPath<TPosition> path, IPiece piece, out string error);
@@ -60,7 +61,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
             if (piece.IndexInHouse == index)
             {
                 _pieces.Remove(pos);
-                OnPieceRemoved(index);
+                OnPieceRemoved(piece);
                 return true;
             }
         }
@@ -74,7 +75,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         if (!piece.Owner.Equals(player)) return false;
 
         _pieces.Remove(typedPos);
-        OnPieceRemoved(piece.IndexInHouse);
+        OnPieceRemoved(piece);
         return true;
     }
     public override bool Displace<TPos>(IPath<TPos> path, IndexOfPlayer player, out string error)
@@ -87,6 +88,12 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
 
         var start = typedPath.Positions[0];
         var end = typedPath.Positions[^1];
+
+        if (_pieces.ContainsKey(end))
+        {
+            error = $"Конечная позиция {end} занята";
+            return false;
+        }
 
         if (!_pieces.TryGetValue(start, out var piece) || !piece.Owner.Equals(player))
         {

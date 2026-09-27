@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Numerics;
 
 public sealed class House : IHouse
@@ -24,7 +25,7 @@ public sealed class House : IHouse
     }
 
     public Seats ActiveSeats { get; }
-    public IReadOnlyDictionary<Type, IRoom> Rooms => _rooms;
+    public IReadOnlyDictionary<Type, IRoom> Rooms => new ReadOnlyDictionary<Type, IRoom>(_rooms);
 
     private void OnPieceDied(PieceDiedEvent e)
     {

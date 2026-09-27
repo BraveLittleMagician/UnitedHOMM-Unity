@@ -29,19 +29,19 @@ public sealed class LoaderOfConfig
         2 => MultipleAxesFromTwo.Two,
         3 => MultipleAxesFromTwo.Three,
         4 => MultipleAxesFromTwo.Four,
-        _ => MultipleAxesFromTwo.Two
+        _ => throw new InvalidCastException($"Не найдено оси под номером {value}")
     };
     private static bool ParseTrueFalse(string value) => value?.ToLower() switch
     {
         "f" => false,
         "t" => true,
-        _ => false,
+        _ => throw new InvalidCastException($"Не удалось распарсить значение: {value}")
     };
 
     [Serializable]
     private class ConfigWrapper
     {
-        public BoardData Board = null!;
+        public BoardData? Board;
     }
 
     [Serializable]

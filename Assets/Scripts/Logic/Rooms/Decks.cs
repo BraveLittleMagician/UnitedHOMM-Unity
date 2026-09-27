@@ -7,6 +7,16 @@ public sealed class Decks : RoomT<int>, IIntPositionRoom
 {
     public Decks(Seats seats, IEventBus eventBus, ILogger logger) : base(seats, eventBus, logger) { }
 
+    protected override void OnPieceAdded(IPiece piece, bool fromAnotherRoom)
+    {
+        base.OnPieceAdded(piece, fromAnotherRoom);
+        EventBus.Publish(new DeckSizeChangedEvent(CountOfPieces, piece.Owner));
+    }
+    protected override void OnPieceRemoved(IPiece piece)
+    {
+        base.OnPieceRemoved(piece);
+        EventBus.Publish(new DeckSizeChangedEvent(CountOfPieces, piece.Owner));
+    }
     protected override bool ValidateAdd(IPiece piece, int position, out string error)
     {
         if (position < 0)
@@ -27,27 +37,5 @@ public sealed class Decks : RoomT<int>, IIntPositionRoom
         }
         error = "";
         return true;
-    }
-
-    public override bool Add<TPos>(IPiece piece, TPos pos, bool fromAnotherRoom, out string error)
-    {
-        if (base.Add(piece, pos, fromAnotherRoom, out error))
-        {
-            EventBus.Publish(new DeckSizeChangedEvent(CountOfPieces, piece.Owner));
-            return true;
-        }
-        return false;
-    }
-    public override bool Remove(BigInteger index)
-    {
-        var piece = Pieces.Values.FirstOrDefault(p => p.IndexInHouse == index);
-        if (piece == null) return false;
-
-        if (base.Remove(index))
-        {
-            EventBus.Publish(new DeckSizeChangedEvent(CountOfPieces, piece.Owner));
-            return true;
-        }
-        return false;
     }
 }

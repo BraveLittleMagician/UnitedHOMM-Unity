@@ -27,9 +27,9 @@ public abstract class Room : IRoom, IDisposable
     {
         PieceAdded?.Invoke(piece, this, fromAnotherRoom);
     }
-    protected virtual void OnPieceRemoved(BigInteger index)
+    protected virtual void OnPieceRemoved(IPiece piece)
     {
-        PieceRemoved?.Invoke(index, this);
+        PieceRemoved?.Invoke(piece.IndexInHouse, this);
     }
 
 
