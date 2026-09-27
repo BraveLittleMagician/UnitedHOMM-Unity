@@ -7,9 +7,9 @@ public class BoardUI : MonoBehaviour
     private StateOfGame _stateOfGame = null!;
 
 
-    public void Initialize(StateOfGame stateManager)
+    public void Initialize(StateOfGame stateOfGame)
     {
-        _stateOfGame = stateManager;
+        _stateOfGame = stateOfGame;
     }
 
     private void OnGUI()

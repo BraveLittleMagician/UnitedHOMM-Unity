@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-public interface ISquare<TSelf> : IAdjacentable<TSelf>, IComparable<TSelf>, IComparable, IComparableByDistance<TSelf>, IComparableByDistance, IEquatable<TSelf> where TSelf : struct, ISquare<TSelf>
+public interface ISquare<TSelf> : ISquarePosition, IAdjacentable<TSelf>, IComparable<TSelf>, IComparable, IComparableByDistance<TSelf>, IComparableByDistance, IEquatable<TSelf> where TSelf : struct, ISquare<TSelf>
 {
     public int X { get; init; }
     public bool IsZero { get; }

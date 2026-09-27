@@ -8,13 +8,20 @@ public sealed class AbilityService : IAbilityService
 {
     private readonly IEventBus _eventBus;
     private readonly ILogger _logger;
-    private readonly HashSet<IPiece> _activePieces = new();
+    private readonly HashSet<IPiece> _activePieces = new(ReferenceEqualityComparer<IPiece>.Instance);
     private bool _disposed;
 
     public AbilityService(IEventBus eventBus, ILogger logger)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _eventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
+    }
+
+    private void OnPieceDied(PieceDiedEvent e)
+    {
+        if (_activePieces.Remove(e.Piece))
+            _logger.LogDebug($"Фигура {e.Piece} убрана из активных после смерти");
     }
 
     public void ActivateAbilities(IPiece piece)

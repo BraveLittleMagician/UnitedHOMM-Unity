@@ -4,6 +4,8 @@ using System;
 
 public static class BoardSizeCorrector
 {
+    public const int MaxBoardSize = 4096;
+
     public static int CorrectSize(int proposedSize, int? minimalSize = null)
     {
         int correctedSize = proposedSize;
@@ -15,7 +17,7 @@ public static class BoardSizeCorrector
             if (correctedSize % 2 != 0) correctedSize++;
         }
 
-        correctedSize = Math.Min(4096, correctedSize);
+        correctedSize = Math.Min(MaxBoardSize, correctedSize);
 
         return correctedSize;
     }

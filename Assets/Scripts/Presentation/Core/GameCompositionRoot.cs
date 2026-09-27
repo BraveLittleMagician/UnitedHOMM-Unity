@@ -44,6 +44,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private Seats _seats; 
     private ConfigOfBoard _configOfBoard = null!;
     private Board _board = null!;
+    private Decks _decks  = null!;
     private LoaderOfConfig _loaderOfConfig = null!;
     private AxisAlignedBox _box = null!;
     private StateOfGame _stateOfGame = null!;
@@ -101,17 +102,18 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _logger = new LoggerForUnity();
         _eventBus = new EventBus(_logger);
 
-        _stateOfGame = new StateOfGame();
+        _stateOfGame = new StateOfGame(_eventBus, _logger);
         _house = new House(_seats, _eventBus, _logger);
         _registry = new Registry(_house);
         _board = new Board(_seats, _box, _eventBus, _logger);
+        _decks = new Decks(_seats, _eventBus, _logger);
 
         _combatService = new CombatService(_logger, _eventBus);
         _movementValidator = new MovementValidator(_logger);
         _abilityService = new AbilityService(_eventBus, _logger);
         _flow = new Flow(_house, _eventBus, _logger, _combatService, _movementValidator, _abilityService, _registry);
 
-        _adderOfRooms = new AdderOfRoomsToHouse(_house, _eventBus, _logger, _seats, _board);
+        _adderOfRooms = new AdderOfRoomsToHouse(_house, _eventBus, _logger, _seats, _board, _decks);
 
         _spawnerOfPieces = new SpawnerOfPieces(_flow, _logger, StartingPlacementPreset.CreateStandard());
         _starterOfGame = new StarterOfGame(_stateOfGame, _adderOfRooms, _spawnerOfPieces);

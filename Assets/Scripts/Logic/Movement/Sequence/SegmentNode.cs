@@ -1,12 +1,9 @@
 ﻿#nullable enable
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using Unity.VisualScripting;
 
-public class SegmentNode<TSquare> : IEquatable<SegmentNode<TSquare>> where TSquare : struct, ISquare<TSquare>
+public class SegmentNode<TSquare> where TSquare : struct, ISquare<TSquare>
 {
     public SegmentNode(TSquare square) : this(square, new Stayables(0)) { }
     public SegmentNode(TSquare square, Stayables stayables)
@@ -27,13 +24,6 @@ public class SegmentNode<TSquare> : IEquatable<SegmentNode<TSquare>> where TSqua
     public bool TouchesX(int x, int length) => TouchesX((Position.X, XMax), (x, x + length));
     public bool IntersectsX(int x, int length) => IntersectsX((Position.X, XMax), (x, x + length));
 
-    public bool Equals(SegmentNode<TSquare>? other) => other != null && Position.Equals(other.Position) && Stayables == other.Stayables;
-    public override bool Equals(object? obj)
-    {
-        if (obj is not SegmentNode<TSquare> other) return false;
-        return Equals(other);
-    }
-    public override int GetHashCode() => HashCode.Combine(Position, LastRelativeIndex);
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -64,12 +54,4 @@ public class SegmentNode<TSquare> : IEquatable<SegmentNode<TSquare>> where TSqua
 
         return sb.ToString();
     }
-
-    public static bool operator ==(SegmentNode<TSquare>? left, SegmentNode<TSquare>? right)
-    {
-        if (ReferenceEquals(left, right)) return true;
-        if (left is null || right is null) return false;
-        return left.Equals(right);
-    }
-    public static bool operator !=(SegmentNode<TSquare>? left, SegmentNode<TSquare>? right) => !(left == right);
 }

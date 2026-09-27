@@ -17,11 +17,9 @@ public sealed class MovementValidator : IMovementValidator
         if (path == null) throw new ArgumentNullException(nameof(path));
         if (room == null) throw new ArgumentNullException(nameof(room));
 
-        var roomType = room.GetType();
-
         foreach (var movement in piece.Movements)
         {
-            if (movement.IsApplicableToRoomType(roomType) &&
+            if (movement.IsApplicableToRoom(room) &&
                 movement.CanMove(piece, path, room, isAttack))
             {
                 error = "";
@@ -35,13 +33,10 @@ public sealed class MovementValidator : IMovementValidator
         return false;
     }
 
-    public bool HasApplicableMovement(IPiece piece, Type roomType)
+    public bool HasApplicableMovement(IPiece piece, IReadOnlyRoom room)
     {
-        if (piece == null) throw new ArgumentNullException(nameof(piece));
-        if (roomType == null) throw new ArgumentNullException(nameof(roomType));
-
         foreach (var movement in piece.Movements)
-            if (movement.IsApplicableToRoomType(roomType))
+            if (movement.IsApplicableToRoom(room))
                 return true;
         return false;
     }

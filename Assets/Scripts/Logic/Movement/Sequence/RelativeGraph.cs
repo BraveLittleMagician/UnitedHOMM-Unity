@@ -234,32 +234,6 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
         return (overlapping, adjacent);
     }
 
-    private static bool DictionaryEquals(Dictionary<LineKey, List<SegmentNode<TSquare>>> left, Dictionary<LineKey, List<SegmentNode<TSquare>>> right)
-    {
-        if (ReferenceEquals(left, right)) return true;
-        if (left == null || right == null) return false;
-        if (left.Count != right.Count) return false;
-
-        foreach (var kv in left)
-        {
-            if (!right.TryGetValue(kv.Key, out var rightList)) return false;
-            if (!ListEquals(kv.Value, rightList)) return false;
-        }
-        return true;
-    }
-    private static bool ListEquals(List<SegmentNode<TSquare>> left, List<SegmentNode<TSquare>> right)
-    {
-        if (ReferenceEquals(left, right)) return true;
-        if (left == null || right == null) return false;
-        if (left.Count != right.Count) return false;
-
-        for (int i = 0; i < left.Count; i++)
-        {
-            if (!EqualityComparer<SegmentNode<TSquare>>.Default.Equals(left[i], right[i]))
-                return false;
-        }
-        return true;
-    }
     private static void RemoveConnections(SegmentNode<TSquare> node)
     {
         foreach (var neighbor in node.Neighbors.ToList())
@@ -435,37 +409,6 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
 
     public RelativeGraph<TSquare> Copy() => PrivateCopy();
     ISequence ICopyable<ISequence>.Copy() => PrivateCopy();
-    public bool Equals(RelativeGraph<TSquare>? other)
-    {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        if (Count != other.Count) return false;
-        if (GuaranteesAtLeastOneStayable != other.GuaranteesAtLeastOneStayable) return false;
-        if (!EqualityComparer<SegmentNode<TSquare>>.Default.Equals(OriginNode, other.OriginNode)) return false;
-
-        return DictionaryEquals(_lineIndex, other._lineIndex);
-    }
-    public override bool Equals(object? obj) => Equals(obj as RelativeGraph<TSquare>);
-    public override int GetHashCode()
-    {
-        var hash = new HashCode();
-        hash.Add(Count);
-        hash.Add(GuaranteesAtLeastOneStayable);
-        hash.Add(OriginNode);
-
-        foreach (var kv in _lineIndex)
-        {
-            hash.Add(kv.Key);
-            foreach (var node in kv.Value)
-                hash.Add(node);
-        }
-
-        return hash.ToHashCode();
-    }
-
-    public static bool operator ==(RelativeGraph<TSquare> left, RelativeGraph<TSquare> right) => left.Equals(right);
-    public static bool operator !=(RelativeGraph<TSquare> left, RelativeGraph<TSquare> right) => !(left == right);
 
     private class Enumerable : SequenceEnumerable<TSquare>
     {

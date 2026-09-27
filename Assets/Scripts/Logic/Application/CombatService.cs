@@ -19,7 +19,7 @@ public sealed class CombatService : ICombatService
         if (target == null) return Result.Failure("Цель не может быть null");
         if (room == null) return Result.Failure("Комната не может быть null");
 
-        if (!CanAttack(attacker, target, room, out var error))
+        if (!CanAttack(attacker, target, out var error))
             return Result.Failure(error);
 
         if (attacker.MeleeAttacks.Count == 0)
@@ -40,7 +40,7 @@ public sealed class CombatService : ICombatService
         if (target == null) return Result.Failure("Цель не может быть null");
         if (room == null) return Result.Failure("Комната не может быть null");
 
-        if (!CanAttack(attacker, target, room, out var error))
+        if (!CanAttack(attacker, target, out var error))
             return Result.Failure(error);
 
         if (attacker.RangedAttacks.Count == 0)
@@ -55,7 +55,7 @@ public sealed class CombatService : ICombatService
         return Result.Success();
     }
 
-    public bool CanAttack(IPiece attacker, IPiece target, IRoom room, out string error)
+    public bool CanAttack(IPiece attacker, IPiece target, out string error)
     {
         if (ReferenceEquals(attacker, target))
         {

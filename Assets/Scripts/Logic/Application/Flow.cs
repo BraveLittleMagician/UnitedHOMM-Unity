@@ -10,10 +10,9 @@ public sealed class Flow : IFlow, IDisposable
     private readonly ICombatService _combatService;
     private readonly IMovementValidator _movementValidator;
     private readonly IAbilityService _abilityService;
-    private readonly IRegistry _registry;
     private bool _disposed;
 
-    public Flow(IHouse house, IEventBus eventBus, ILogger logger, ICombatService combatService, IMovementValidator movementValidator, IAbilityService abilityService, IRegistry registry)
+    public Flow(IHouse house, IEventBus eventBus, ILogger logger, ICombatService combatService, IMovementValidator movementValidator, IAbilityService abilityService)
     {
         _house = house ?? throw new ArgumentNullException(nameof(house));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
@@ -21,9 +20,6 @@ public sealed class Flow : IFlow, IDisposable
         _combatService = combatService ?? throw new ArgumentNullException(nameof(combatService));
         _movementValidator = movementValidator ?? throw new ArgumentNullException(nameof(movementValidator));
         _abilityService = abilityService ?? throw new ArgumentNullException(nameof(abilityService));
-        _registry = registry;
-        _eventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
-
     }
 
     private IResult<TRoom> GetRoom<TRoom>() where TRoom : IRoom
@@ -31,10 +27,6 @@ public sealed class Flow : IFlow, IDisposable
         if (!_house.TryToGetRoom<TRoom>(out var room))
             return Result<TRoom>.Failure($"Комната {typeof(TRoom).Name} не найдена");
         return Result<TRoom>.Success(room);
-    }
-    private void OnPieceDied(PieceDiedEvent e)
-    {
-        _abilityService.DeactivateAbilities(e.Piece);
     }
 
     public IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position) where TRoom : IRoom where TPos : struct
@@ -100,8 +92,6 @@ public sealed class Flow : IFlow, IDisposable
 
         if (!_movementValidator.CanMove(attacker, path, room, true, out var error)) return Result.Failure(error);
 
-        if (attacker.MeleeAttacks.Count == 0) return Result.Failure($"У {attacker} нет ближних атак");
-
         var attackResult = _combatService.PerformMeleeAttack(attacker, target, room);
         if (!attackResult.IsSuccess) return attackResult;
 
@@ -127,7 +117,11 @@ public sealed class Flow : IFlow, IDisposable
 
         _abilityService.DeactivateAbilities(piece);
 
-        if (!toRoom.Add(piece, toPosition, true, out var error)) return Result.Failure($"Не удалось добавить фигуру в целевую комнату: {error}");
+        if (!toRoom.Add(piece, toPosition, true, out var error))
+        {
+            _abilityService.ActivateAbilities(piece);
+            return Result.Failure($"Не удалось добавить фигуру в целевую комнату: {error}");
+        }
 
         if (!fromRoom.Remove(fromPosition, owner))
         {
@@ -144,8 +138,6 @@ public sealed class Flow : IFlow, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        _eventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied);
-        _abilityService.Dispose();
         _logger.Log("Flow уничтожен");
     }
 }

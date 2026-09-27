@@ -84,10 +84,12 @@ public abstract class MovementInRoom<TSequence, TRoom, TPosition> : Movement
         if (!sequence.CanMoveTo(path)) return false;
         return true;
     }
-    public override bool IsApplicableToRoomType(Type roomType)
+    public override bool IsApplicableToRoom(IReadOnlyRoom room)
     {
-        if (typeof(TPosition) == typeof(Square) || typeof(TPosition) == typeof(Square3D) || typeof(TPosition) == typeof(Square2D)) return typeof(ISquarePositionRoom).IsAssignableFrom(roomType);
-        if (typeof(TPosition) == typeof(int)) return typeof(IIntPositionRoom).IsAssignableFrom(roomType);
+        if (typeof(TPosition) == typeof(int))
+            return room is IIntPositionRoom;
+        if (typeof(ISquarePosition).IsAssignableFrom(typeof(TPosition)))
+            return room is ISquarePositionRoom;
         return false;
     }
     public override void Dispose()
