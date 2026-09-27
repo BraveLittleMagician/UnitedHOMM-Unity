@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-public abstract record Path<TPositions> : IPath<TPositions> where TPositions : struct
+public abstract class Path<TPositions> : IPath<TPositions> where TPositions : struct
 {
     protected Path(TPositions[] path, Func<TPositions, TPositions, bool> areAdjacent)
     {

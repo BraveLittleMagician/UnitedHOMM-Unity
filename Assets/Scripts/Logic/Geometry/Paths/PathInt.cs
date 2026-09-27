@@ -2,7 +2,7 @@
 
 using System;
 
-public record PathInt : Path<int>
+public class PathInt : Path<int>
 {
     public PathInt(int[] path) : base(path, (a, b) => Math.Abs(a - b) == 1) { }
 }

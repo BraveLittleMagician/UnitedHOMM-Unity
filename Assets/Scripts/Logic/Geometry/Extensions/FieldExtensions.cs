@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public static class FieldExtensions
 {
-    private static List<TSquare> GetStayables1D<TSquare>(List<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
+    private static List<TSquare> GetStayables1D<TSquare>(IReadOnlyList<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
     {
         List<TSquare> result = new ();
         int maxRadius = stayables.Count;
@@ -18,7 +18,7 @@ public static class FieldExtensions
         }
         return result;
     }
-    private static List<TSquare> GetStayables2D<TSquare>(List<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
+    private static List<TSquare> GetStayables2D<TSquare>(IReadOnlyList<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
     {
         List<TSquare> result = new();
         int maxRadius = stayables.Count;
@@ -32,7 +32,7 @@ public static class FieldExtensions
             }
         return result;
     }
-    private static List<TSquare> GetStayables3D<TSquare>(List<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
+    private static List<TSquare> GetStayables3D<TSquare>(IReadOnlyList<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
     {
         List<TSquare> result = new();
         int maxRadius = stayables.Count;
@@ -47,7 +47,7 @@ public static class FieldExtensions
                 }
         return result;
     }
-    private static List<TSquare> GetStayables4D<TSquare>(List<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
+    private static List<TSquare> GetStayables4D<TSquare>(IReadOnlyList<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
     {
         List<TSquare> result = new();
         int maxRadius = stayables.Count;
@@ -64,7 +64,7 @@ public static class FieldExtensions
         return result;
     }
 
-    private static List<TSquare> GetStayablesCircle1D<TSquare>(List<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
+    private static List<TSquare> GetStayablesCircle1D<TSquare>(IReadOnlyList<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
     {
         List<TSquare> result = new();
         int maxRadius = stayables.Count;
@@ -77,7 +77,7 @@ public static class FieldExtensions
         }
         return result;
     }
-    private static List<TSquare> GetStayablesCircle2D<TSquare>(List<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
+    private static List<TSquare> GetStayablesCircle2D<TSquare>(IReadOnlyList<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
     {
         List<TSquare> result = new();
         int maxRadius = stayables.Count;
@@ -94,7 +94,7 @@ public static class FieldExtensions
         }
         return result;
     }
-    private static List<TSquare> GetStayablesCircle3D<TSquare>(List<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
+    private static List<TSquare> GetStayablesCircle3D<TSquare>(IReadOnlyList<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
     {
         List<TSquare> result = new();
         int maxRadius = stayables.Count;
@@ -110,7 +110,7 @@ public static class FieldExtensions
                 }
         return result;
     }
-    private static List<TSquare> GetStayablesCircle4D<TSquare>(List<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
+    private static List<TSquare> GetStayablesCircle4D<TSquare>(IReadOnlyList<Stayable> stayables, TSquare startSquare) where TSquare : struct, ISquare<TSquare>
     {
         List<TSquare> result = new();
         int maxRadius = stayables.Count;
@@ -128,10 +128,10 @@ public static class FieldExtensions
         return result;
     }
 
-    private static Dictionary<TSquare, Stayable> GetPositions1D<TSquare>(TSquare startSquare, int maxRadius, List<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
+    private static Dictionary<TSquare, Stayable> GetPositions1D<TSquare>(TSquare startSquare, int maxRadius, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
     {
+        if (maxRadius == 0) return new();
         var result = new Dictionary<TSquare, Stayable>() { { startSquare, Stayable.NotStay } };
-        if (maxRadius == 0) return result;
         for (int x = -maxRadius; x <= maxRadius; x++)
         {
             if (x == 0) continue;
@@ -141,10 +141,10 @@ public static class FieldExtensions
         }
         return result;
     }
-    private static Dictionary<TSquare, Stayable> GetPositions2D<TSquare>(TSquare startSquare, int maxRadius, List<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
+    private static Dictionary<TSquare, Stayable> GetPositions2D<TSquare>(TSquare startSquare, int maxRadius, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
     {
+        if (maxRadius == 0) return new();
         var result = new Dictionary<TSquare, Stayable>() { { startSquare, Stayable.NotStay } }; 
-        if (maxRadius == 0) return result;
         for (int x = -maxRadius; x <= maxRadius; x++)
             for (int y = -maxRadius; y <= maxRadius; y++)
             {
@@ -156,10 +156,10 @@ public static class FieldExtensions
             }
         return result;
     }
-    private static Dictionary<TSquare, Stayable> GetPositions3D<TSquare>(TSquare startSquare, int maxRadius, List<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
+    private static Dictionary<TSquare, Stayable> GetPositions3D<TSquare>(TSquare startSquare, int maxRadius, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
     {
+        if (maxRadius == 0) return new();
         var result = new Dictionary<TSquare, Stayable>() { { startSquare, Stayable.NotStay } }; 
-        if (maxRadius == 0) return result;
         for (int x = -maxRadius; x <= maxRadius; x++)
             for (int y = -maxRadius; y <= maxRadius; y++)
                 for (int z = -maxRadius; z <= maxRadius; z++)
@@ -172,10 +172,10 @@ public static class FieldExtensions
                 }
         return result;
     }
-    private static Dictionary<TSquare, Stayable> GetPositions4D<TSquare>(TSquare startSquare, int maxRadius, List<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
+    private static Dictionary<TSquare, Stayable> GetPositions4D<TSquare>(TSquare startSquare, int maxRadius, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
     {
+        if (maxRadius == 0) return new();
         var result = new Dictionary<TSquare, Stayable>() { { startSquare, Stayable.NotStay } }; 
-        if (maxRadius == 0) return result;
         for (int x = -maxRadius; x <= maxRadius; x++)
             for (int y = -maxRadius; y <= maxRadius; y++)
                 for (int z = -maxRadius; z <= maxRadius; z++)
@@ -185,15 +185,15 @@ public static class FieldExtensions
                         int radius = Math.Max(Math.Max(Math.Max(Math.Abs(x), Math.Abs(y)), Math.Abs(z)), Math.Abs(w));
                         if (radius > maxRadius) continue;
                         var square = startSquare.WithOffset(x, y, z, w);
-                        result[square] = (radius - 1) < 0 ? Stayable.NotStay : stayables[radius - 1];
+                        result[square] = stayables[radius - 1];
                     }
         return result;
     }
 
     private static Dictionary<TSquare, Stayable> GetPositionsCircle1D<TSquare>(TSquare startSquare, int maxRadius, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
     {
+        if (maxRadius == 0) return new();
         var result = new Dictionary<TSquare, Stayable>() { { startSquare, Stayable.NotStay } }; 
-        if (maxRadius == 0) return result;
         for (int x = -maxRadius; x <= maxRadius; x++)
         {
             if (x == 0) continue;
@@ -205,8 +205,8 @@ public static class FieldExtensions
     }
     private static Dictionary<TSquare, Stayable> GetPositionsCircle2D<TSquare>(TSquare startSquare, int maxRadius, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
     {
+        if (maxRadius == 0) return new();
         var result = new Dictionary<TSquare, Stayable>() { { startSquare, Stayable.NotStay } };
-        if (maxRadius == 0) return result;
         for (int x = -maxRadius; x <= maxRadius; x++)
             for (int y = -maxRadius; y <= maxRadius; y++)
             {
@@ -221,8 +221,8 @@ public static class FieldExtensions
     }
     private static Dictionary<TSquare, Stayable> GetPositionsCircle3D<TSquare>(TSquare startSquare, int maxRadius, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
     {
+        if (maxRadius == 0) return new();
         var result = new Dictionary<TSquare, Stayable>() { { startSquare, Stayable.NotStay } };
-        if (maxRadius == 0) return result;
         for (int x = -maxRadius; x <= maxRadius; x++)
             for (int y = -maxRadius; y <= maxRadius; y++)
                 for (int z = -maxRadius; z <= maxRadius; z++)
@@ -238,8 +238,8 @@ public static class FieldExtensions
     }
     private static Dictionary<TSquare, Stayable> GetPositionsCircle4D<TSquare>(TSquare startSquare, int maxRadius, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare>
     {
+        if (maxRadius == 0) return new ();
         var result = new Dictionary<TSquare, Stayable>() { { startSquare, Stayable.NotStay } };
-        if (maxRadius == 0) return result;
         for (int x = -maxRadius; x <= maxRadius; x++)
             for (int y = -maxRadius; y <= maxRadius; y++)
                 for (int z = -maxRadius; z <= maxRadius; z++)
@@ -255,8 +255,7 @@ public static class FieldExtensions
         return result;
     }
 
-
-    public static List<TSquare> AdjacentStayables<TSquare>(CountOfDimensions count, TSquare startSquare, List<Stayable> stayables) where TSquare : struct, ISquare<TSquare> => count switch
+    public static List<TSquare> AdjacentStayables<TSquare>(CountOfDimensions count, TSquare startSquare, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare> => count switch
     {
         CountOfDimensions.Zero => new List<TSquare>(),
         CountOfDimensions.One => GetStayables1D(stayables, startSquare),
@@ -265,7 +264,7 @@ public static class FieldExtensions
         CountOfDimensions.Four => GetStayables4D(stayables, startSquare),
         _ => new List<TSquare>(),
     };
-    public static List<TSquare> AdjacentStayablesCircle<TSquare>(CountOfDimensions count, TSquare startSquare, List<Stayable> stayables) where TSquare : struct, ISquare<TSquare> => count switch
+    public static List<TSquare> AdjacentStayablesCircle<TSquare>(CountOfDimensions count, TSquare startSquare, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare> => count switch
     {
         CountOfDimensions.Zero => new List<TSquare>(),
         CountOfDimensions.One => GetStayablesCircle1D(stayables, startSquare),
@@ -274,7 +273,7 @@ public static class FieldExtensions
         CountOfDimensions.Four => GetStayablesCircle4D(stayables, startSquare),
         _ => new List<TSquare>(),
     };
-    public static Dictionary<TSquare, Stayable> AdjacentPositions<TSquare>(CountOfDimensions count, TSquare startSquare, int maxRadius, List<Stayable> stayables) where TSquare : struct, ISquare<TSquare> => count switch
+    public static Dictionary<TSquare, Stayable> AdjacentPositions<TSquare>(CountOfDimensions count, TSquare startSquare, int maxRadius, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare> => count switch
     {
         CountOfDimensions.Zero =>  new Dictionary<TSquare, Stayable>(),
         CountOfDimensions.One =>   GetPositions1D(startSquare, maxRadius, stayables),
@@ -283,7 +282,7 @@ public static class FieldExtensions
         CountOfDimensions.Four =>  GetPositions4D(startSquare, maxRadius, stayables),
         _ => new Dictionary<TSquare, Stayable>(),
     };
-    public static Dictionary<TSquare, Stayable> AdjacentPositionsCircle<TSquare>(CountOfDimensions count, TSquare startSquare, int maxRadius, List<Stayable> stayables) where TSquare : struct, ISquare<TSquare> => count switch
+    public static Dictionary<TSquare, Stayable> AdjacentPositionsCircle<TSquare>(CountOfDimensions count, TSquare startSquare, int maxRadius, IReadOnlyList<Stayable> stayables) where TSquare : struct, ISquare<TSquare> => count switch
     {
         CountOfDimensions.Zero => new Dictionary<TSquare, Stayable>(),
         CountOfDimensions.One =>   GetPositionsCircle1D(startSquare, maxRadius, stayables),
