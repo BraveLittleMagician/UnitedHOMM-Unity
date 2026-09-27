@@ -6,26 +6,23 @@ using System.Linq;
 
 public sealed class Board : RoomT<Square>, ISquarePositionRoom
 {
-    private AxisAlignedBox _allowedArea;
+    public AxisAlignedBox Box { get; private set; }
 
     public Board(Seats seats, AxisAlignedBox allowedArea, IEventBus eventBus, ILogger logger) : base(seats, eventBus, logger)
     {
-        _allowedArea = allowedArea ?? throw new ArgumentNullException(nameof(allowedArea));
+        Box = allowedArea ?? throw new ArgumentNullException(nameof(allowedArea));
         eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
     }
 
-    public IReadOnlyDictionary<Axis, (int Min, int Max)> Bounds => _allowedArea.Bounds;
-
     private void OnBoardConfigChanged(BoardConfigChangedEvent e)
     {
-        var newAxes = (MultipleAxes)e.NewConfig.Axes;
-        var newSize = e.NewConfig.FieldSize;
-        _allowedArea = new AxisAlignedBox(newAxes, newSize, e.NewConfig.WUp, e.NewConfig.WDown);
-        Logger.Log($"Размер доски обновлён: {newSize} по осям {newAxes}");
+        Box = AxisAlignedBox.FromConfig(e.NewConfig);
+        Logger.Log($"Размер доски обновлён: {Box}");
     }
+
     protected override bool ValidateAdd(IPiece piece, Square position, out string error)
     {
-        if (!_allowedArea.Contains(position))
+        if (!Box.Contains(position))
         {
             error = $"Позиция {position} выходит за границы доски";
             return false;
@@ -35,7 +32,7 @@ public sealed class Board : RoomT<Square>, ISquarePositionRoom
     }
     protected override bool ValidateDisplace(IPath<Square> path, IPiece piece, out string error)
     {
-        if (!_allowedArea.Contains(path.Positions[0]))
+        if (!Box.Contains(path.Positions[0]))
         {
             error = $"Начальная позиция {path.Positions[0]} выходит за границы доски";
             return false;
@@ -49,7 +46,7 @@ public sealed class Board : RoomT<Square>, ISquarePositionRoom
                 error = $"Позиция {pos} занята";
                 return false;
             }
-            if (!_allowedArea.Contains(pos))
+            if (!Box.Contains(pos))
             {
                 error = $"Позиция {pos} выходит за границы доски";
                 return false;
