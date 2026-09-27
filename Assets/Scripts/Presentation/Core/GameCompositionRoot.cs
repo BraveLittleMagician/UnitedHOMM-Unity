@@ -111,7 +111,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _combatService = new CombatService(_logger, _eventBus);
         _movementValidator = new MovementValidator(_logger);
         _abilityService = new AbilityService(_eventBus, _logger);
-        _flow = new Flow(_house, _eventBus, _logger, _combatService, _movementValidator, _abilityService, _registry);
+        _flow = new Flow(_house, _eventBus, _logger, _combatService, _movementValidator, _abilityService);
 
         _adderOfRooms = new AdderOfRoomsToHouse(_house, _eventBus, _logger, _seats, _board, _decks);
 

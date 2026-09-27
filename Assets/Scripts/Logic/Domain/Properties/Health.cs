@@ -2,17 +2,28 @@
 
 using System;
 
-public sealed class Health : Property, INumericProperty, ISettableProperty, IRecoverableProperty, IResettableProperty, ISettableNormalProperty
+public sealed class Health : Property, IPropertyWithNormal, ISettableNormalProperty, INumericProperty, ISettableProperty, IRecoverableProperty, IResettableProperty
 {
-    public int NormalValue { get; private set; }
+    private int _normalValue;
 
     public Health(int startValue) : base(startValue)
     {
         SetNormal(startValue);
     }
 
-    public override void Apply(IOperation operation) => operation.ApplyTo(this);
+    public int NormalValue
+    {
+        get => _normalValue;
+        private set
+        {
+            int oldValue = _normalValue;
+            _normalValue = Math.Max(1, value);
+            if (oldValue != _normalValue)
+                OnNormalChanged(oldValue);
+        }
+    }
 
+    public override void Apply(IOperation operation) => operation.ApplyTo(this);
     public void Add(int amount) => Value += Math.Abs(amount);
     public void Subtract(int amount) => Value -= Math.Abs(amount);
     public void Recover(int amount)
@@ -23,11 +34,16 @@ public sealed class Health : Property, INumericProperty, ISettableProperty, IRec
         Add(amount);
     }
     public void Reset() => Value = NormalValue;
-    public void Set(int value) => Value = Math.Max(0, value);
-    public void SetNormal(int value) => NormalValue = Math.Max(value, 1);
+    public void Set(int value) => Value = value;
+    public void SetNormal(int value) => NormalValue = value;
 
-    public void TakeBoost(int amount) => Add(amount);
-    public void TakeDamage(int amount) => Subtract(amount);
-    public void TakeHeal(int amount) => Recover(amount);
-    public void TakeReset() => Reset();
+    private void OnNormalChanged(int oldValue) => NormalChanged?.Invoke(this, oldValue);
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        NormalChanged = null;
+    }
+
+    public event Action<Property, int>? NormalChanged;
 }

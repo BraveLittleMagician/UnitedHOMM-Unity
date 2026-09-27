@@ -50,7 +50,6 @@ public sealed class Piece : IPiece
             _eventBus.Publish(new PieceDiedEvent(this));
         }
     }
-
     public void AddMovement(IMovement movement) => _movements.Add(movement);
     public void AddMeleeAttack(IMeleeAttack attack) => _meleeAttacks.Add(attack);
     public void AddRangedAttack(IRangedAttack attack) => _rangedAttacks.Add(attack);

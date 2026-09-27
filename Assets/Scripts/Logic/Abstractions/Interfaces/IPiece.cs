@@ -10,6 +10,8 @@ public interface IPiece : IDisposable
     IndexOfPlayer Owner { get; }
     string Name { get; }
     int Health { get; }
+    int HealthNormal { get; }
+    
     IReadOnlyList<IMovement> Movements { get; }
     IReadOnlyList<IMeleeAttack> MeleeAttacks { get; }
     IReadOnlyList<IRangedAttack> RangedAttacks { get; }

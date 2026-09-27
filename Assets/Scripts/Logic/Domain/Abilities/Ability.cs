@@ -20,9 +20,13 @@ public abstract class Ability : IAbility
     public TriggerType TriggerType { get; }
     public IEffect Effect { get; }
 
-    public void Activate(IPiece? owner)
+    public void Activate(IPiece owner)
     {
-        if (_owner != null) return;
+        if (_owner != null)
+        {
+            _logger.LogWarning($"Способность {GetType().Name} уже активирована");
+            return;
+        }
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
 
         _subscription = TriggerType switch
