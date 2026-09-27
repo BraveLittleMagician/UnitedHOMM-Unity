@@ -52,9 +52,13 @@ public sealed class House : IHouse
         room = default!;
         return false;
     }
-    public void RemovePiece(BigInteger index)
+    public bool RemovePiece(BigInteger index)
     {
         _indexes.MakeFree(index);
+        foreach (var iroom in _rooms.Values)
+            if (iroom.Remove(index))
+                return true;
+        return false;
     }
     public void Dispose()
     {

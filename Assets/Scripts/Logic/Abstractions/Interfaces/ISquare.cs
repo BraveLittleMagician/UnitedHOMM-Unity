@@ -8,7 +8,9 @@ public interface ISquare<TSelf> : IAdjacentable<TSelf>, IComparable<TSelf>, ICom
     public int X { get; init; }
     public bool IsZero { get; }
     public MultipleAxes ActiveAxes { get; }
-    public IReadOnlyDictionary<Axis, int> Coordinates { get; }
     public bool TryGetValue(Axis axis, out int value);
+
+    public int CountOfAxes { get; }
+    public KeyValuePair<Axis, int> GetCoordinateAt(int index);
     public TSelf CopyWith(IReadOnlyDictionary<Axis, int> dictionary);
 }

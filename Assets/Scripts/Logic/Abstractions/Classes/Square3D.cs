@@ -5,29 +5,21 @@ using System.Collections.Generic;
 
 public readonly struct Square3D : ISquare<Square3D>
 {
-    public Square3D(int start) { X = start; Y = start; Z = start; }
-    public Square3D(IReadOnlyDictionary<Axis, int> dictionary)
-    {
-        X = 0; Y = 0; Z = 0;
-        foreach (var (axis, value) in dictionary)
-        {
-            switch (axis)
-            {
-                case Axis.X: X = value; break;
-                case Axis.Y: Y = value; break;
-                case Axis.Z: Z = value; break;
-            }
-        }
-    }
-
-    private long SquaredDistanceFromCenter => (long)X * X + (long)Y * Y + (long)Z * Z;
     public int X { get; init; }
     public int Y { get; init; }
     public int Z { get; init; }
     public bool IsZero => (X | Y | Z) == 0;
+    public int CountOfAxes => 3;
     public MultipleAxes ActiveAxes => MultipleAxes.Three;
-    public IReadOnlyDictionary<Axis, int> Coordinates => new Square3DCoordinates (this);
-    public static Square3D Zero => new(0);
+    public KeyValuePair<Axis, int> GetCoordinateAt(int index) => index switch
+    {
+        0 => new(Axis.X, X),
+        1 => new(Axis.Y, Y),
+        2 => new(Axis.Z, Z),
+        _ => throw new ArgumentOutOfRangeException(nameof(index), $"Индекс {index} вне диапазона [0..2] для {nameof(Square3D)}")
+    };
+    private long SquaredDistanceFromCenter => (long)X * X + (long)Y * Y + (long)Z * Z;
+    public static Square3D Zero => new();
 
     private static Square3D ApplyOperation(Square3D l, Square3D r, Func<int, int, int> op) => new()
     {
@@ -35,19 +27,32 @@ public readonly struct Square3D : ISquare<Square3D>
         Y = op(l.Y, r.Y),
         Z = op(l.Z, r.Z),
     };
+
     public bool TryGetValue(Axis axis, out int value)
     {
-        bool changed = false;
-        value = 0;
         switch (axis)
         {
-            case Axis.X: value = X; changed = true; break;
-            case Axis.Y: value = Y; changed = true; break;
-            case Axis.Z: value = Z; changed = true; break;
+            case Axis.X: value = X; return true;
+            case Axis.Y: value = Y; return true;
+            case Axis.Z: value = Z; return true;
+            default: value = 0; return false;
         }
-
-        return changed;
     }
+    public Square3D CopyWith(IReadOnlyDictionary<Axis, int> dictionary)
+    {
+        int x = X, y = Y, z = Z;
+        foreach (var pair in dictionary)
+        {
+            switch (pair.Key)
+            {
+                case Axis.X: x = pair.Value; break;
+                case Axis.Y: y = pair.Value; break;
+                case Axis.Z: z = pair.Value; break;
+            }
+        }
+        return new Square3D { X = x, Y = y, Z = z };
+    }
+
     public bool IsAdjacent(Square3D other)
     {
         int diffX = Math.Abs(X - other.X);
@@ -80,14 +85,13 @@ public readonly struct Square3D : ISquare<Square3D>
         if (obj is Square3D other) return CompareTo(other);
         throw new ArgumentException($"Объект должен иметь тип {nameof(Square3D)}", nameof(obj));
     }
-    public override string ToString() => $"({X}, {Y}, {Z})";
-    public Square3D CopyWith(IReadOnlyDictionary<Axis, int> dictionary) => new(dictionary);
     public bool Equals(Square3D other) => X == other.X && Y == other.Y && Z == other.Z;
     public override bool Equals(object? obj) => obj is Square3D other && Equals(other);
     public override int GetHashCode() => HashCode.Combine(X, Y, Z);
+    public override string ToString() => $"({X}, {Y}, {Z})";
+
     public static bool operator ==(Square3D left, Square3D right) => left.Equals(right);
     public static bool operator !=(Square3D left, Square3D right) => !(left == right);
-
     public static bool operator <(Square3D l, Square3D r) => l.CompareTo(r) < 0;
     public static bool operator >(Square3D l, Square3D r) => l.CompareTo(r) > 0;
     public static bool operator <=(Square3D l, Square3D r) => l.CompareTo(r) <= 0;

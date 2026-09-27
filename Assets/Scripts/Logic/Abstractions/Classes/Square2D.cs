@@ -5,27 +5,19 @@ using System.Collections.Generic;
 
 public readonly struct Square2D : ISquare<Square2D>
 {
-    public Square2D(int start) { X = start; Y = start; }
-    public Square2D(IReadOnlyDictionary<Axis, int> dictionary)
-    {
-        X = 0; Y = 0;
-        foreach (var (axis, value) in dictionary)
-        {
-            switch (axis)
-            {
-                case Axis.X: X = value; break;
-                case Axis.Y: Y = value; break;
-            }
-        }
-    }
-
-    private long SquaredDistanceFromCenter => (long)X * X + (long)Y * Y;
     public int X { get; init; }
     public int Y { get; init; }
     public bool IsZero => (X | Y) == 0;
+    public int CountOfAxes => 2;
     public MultipleAxes ActiveAxes => MultipleAxes.Two;
-    public IReadOnlyDictionary<Axis, int> Coordinates => new Square2DCoordinates(this);
-    public static Square2D Zero { get; } = new(0);
+    public KeyValuePair<Axis, int> GetCoordinateAt(int index) => index switch
+    {
+        0 => new(Axis.X, X),
+        1 => new(Axis.Y, Y),
+        _ => throw new ArgumentOutOfRangeException(nameof(index), $"Индекс {index} вне диапазона [0..2] для {nameof(Square3D)}")
+    };
+    private long SquaredDistanceFromCenter => (long)X * X + (long)Y * Y;
+    public static Square2D Zero => new();
 
     private static Square2D ApplyOperation(Square2D l, Square2D r, Func<int, int, int> op) => new()
     {
@@ -35,16 +27,27 @@ public readonly struct Square2D : ISquare<Square2D>
 
     public bool TryGetValue(Axis axis, out int value)
     {
-        bool changed = false;
-        value = 0;
         switch (axis)
         {
-            case Axis.X: value = X; changed = true; break;
-            case Axis.Y: value = Y; changed = true; break;
-        };
-
-        return changed;
+            case Axis.X: value = X; return true;
+            case Axis.Y: value = Y; return true;
+            default: value = 0; return false;
+        }
     }
+    public Square2D CopyWith(IReadOnlyDictionary<Axis, int> dictionary)
+    {
+        int x = X, y = Y;
+        foreach (var pair in dictionary)
+        {
+            switch (pair.Key)
+            {
+                case Axis.X: x = pair.Value; break;
+                case Axis.Y: y = pair.Value; break;
+            }
+        }
+        return new Square2D { X = x, Y = y };
+    }
+
     public bool IsAdjacent(Square2D other)
     {
         int diffX = Math.Abs(X - other.X);
@@ -74,11 +77,10 @@ public readonly struct Square2D : ISquare<Square2D>
         if (obj is Square2D other) return CompareTo(other);
         throw new ArgumentException($"Объект должен иметь тип {nameof(Square2D)}", nameof(obj));
     }
-    public override string ToString() => $"[{X}, {Y}]";
-    public Square2D CopyWith(IReadOnlyDictionary<Axis, int> dictionary) => new (dictionary);
     public bool Equals(Square2D other) => X == other.X && Y == other.Y;
     public override bool Equals(object? obj) => obj is Square2D other && Equals(other);
     public override int GetHashCode() => HashCode.Combine(X, Y);
+    public override string ToString() => $"[{X}, {Y}]";
 
     public static bool operator ==(Square2D left, Square2D right) => left.Equals(right);
     public static bool operator !=(Square2D left, Square2D right) => !(left == right);
