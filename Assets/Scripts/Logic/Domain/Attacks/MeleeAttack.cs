@@ -4,7 +4,7 @@ public sealed class MeleeAttack : AttackBase, IMeleeAttack
 {
     public MeleeAttack(Operation operation) : base(operation) { }
 
-    public override void Execute(IPiece target, IReadOnlyRoom context)
+    public override void Execute(IPiece target)
     {
         target.ApplyOperation(Operation);
     }

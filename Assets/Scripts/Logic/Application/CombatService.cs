@@ -27,7 +27,7 @@ public sealed class CombatService : ICombatService
 
         var attack = attacker.MeleeAttacks[0];
 
-        attack.Execute(target, room);
+        attack.Execute(target);
 
         _logger.Log($"Ближняя атака: {attacker} → {target} в {room.Name}");
         _eventBus.Publish(new PieceAttackedEvent(attacker, target, room, AttackKind.Melee));
@@ -47,7 +47,7 @@ public sealed class CombatService : ICombatService
             return Result.Failure($"У {attacker} нет дальних атак");
 
         var attack = attacker.RangedAttacks[0];
-        attack.Execute(target, room);
+        attack.Execute(target);
 
         _logger.Log($"Дальняя атака: {attacker} → {target} в {room.Name}");
         _eventBus.Publish(new PieceAttackedEvent(attacker, target, room, AttackKind.Ranged));

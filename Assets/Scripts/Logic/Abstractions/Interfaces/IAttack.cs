@@ -2,7 +2,7 @@
 
 public interface IAttack 
 {
-    void Execute(IPiece target, IReadOnlyRoom context);
+    void Execute(IPiece target);
 }
 
 public interface IMeleeAttack : IAttack { }

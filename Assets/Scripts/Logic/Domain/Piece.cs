@@ -65,6 +65,8 @@ public sealed class Piece : IPiece
 
         foreach (var mov in _movements) (mov as IDisposable)?.Dispose();
         foreach (var ab in _abilities) { ab.Deactivate(); ab.Dispose(); }
+        foreach (var ma in _meleeAttacks) (ma as IDisposable)?.Dispose();
+        foreach (var ra in _rangedAttacks) (ra as IDisposable)?.Dispose();
 
         _movements.Clear();
         _meleeAttacks.Clear();

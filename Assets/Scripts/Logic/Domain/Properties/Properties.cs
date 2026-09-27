@@ -16,7 +16,7 @@ public sealed class Properties : IDisposable
         var type = property.GetType();
         if (_properties.ContainsKey(type)) throw new InvalidOperationException($"Свойство {type.Name} уже добавлено. Используйте TryToGet для получения.");
 
-        _properties[property.GetType()] = property;
+        _properties[type] = property;
     }
     public bool TryToGet<T>([NotNullWhen(true)] out T? property) where T : Property 
     {
