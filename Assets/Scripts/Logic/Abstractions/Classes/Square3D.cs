@@ -72,8 +72,8 @@ public readonly struct Square3D : ISquare<Square3D>
     }
     public int CompareByDistanceTo(object? obj)
     {
-        if (obj is Square3D other) return CompareByDistanceTo(other);
-        throw new ArgumentException($"Объект должен иметь тип {nameof(Square)}", nameof(obj));
+        if (obj is not Square3D other) return 0;
+        return CompareByDistanceTo(other);
     }
     public int CompareTo(object? obj)
     {

@@ -80,8 +80,8 @@ public readonly struct Square : ISquare<Square>
     }
     public int CompareByDistanceTo(object? obj)
     {
-        if (obj is Square other) return CompareByDistanceTo(other);
-        throw new ArgumentException($"Объект должен иметь тип {nameof(Square)}", nameof(obj));
+        if (obj is not Square other) return 0;
+        return CompareByDistanceTo(other);
     }
     public int CompareTo(object? obj)
     {
@@ -93,16 +93,6 @@ public readonly struct Square : ISquare<Square>
     public bool Equals(Square other) => X == other.X && Y == other.Y && Z == other.Z && W == other.W;
     public override bool Equals(object? obj) => obj is Square other && Equals(other);
     public override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
-    public bool IsSameLine(Square other)
-    {
-        foreach (var pair in Coordinates)
-        {
-            if (pair.Key == Axis.X) continue;
-            if (!other.TryGetValue(pair.Key, out var newNodeAxisValue) ||
-                (pair.Value - newNodeAxisValue) != 0) return false;
-        }
-        return true;
-    }
 
     public static bool operator ==(Square left, Square right) => left.Equals(right);
     public static bool operator !=(Square left, Square right) => !(left == right);

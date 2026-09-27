@@ -73,7 +73,7 @@ public abstract class Ability : IAbility
         void Handler(PieceDiedEvent e)
         {
             if (e.Piece == _owner)
-                Effect.Execute(_owner, null);
+                Effect.ExecuteWithoutRoom(_owner);
         }
         _eventBus.Subscribe<PieceDiedEvent>(Handler);
         return new SubscriptionToken<PieceDiedEvent>(_eventBus, Handler);

@@ -1,0 +1,1 @@
+﻿public interface IRoomT<TPosition> : IRoom where TPosition : struct { }

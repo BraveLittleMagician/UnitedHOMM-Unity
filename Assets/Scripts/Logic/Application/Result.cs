@@ -6,7 +6,6 @@ public class Result : IResult
 {
     public bool IsSuccess { get; }
     public string Error { get; }
-    public virtual object? ValueObject { get; protected set; } = null;
 
     protected Result(bool isSuccess, string error)
     {
@@ -23,11 +22,9 @@ public sealed class Result<T> : Result, IResult<T>
     private Result(bool isSuccess, string error, T? value) : base(isSuccess, error)
     {
         Value = value;
-        ValueObject = value;
     }
 
     public T? Value { get; }
-    public override object? ValueObject => Value;
 
     public static IResult<T> Success(T value) => new Result<T>(true, "", value);
     public new static IResult<T> Failure(string error) => new Result<T>(false, error, default);

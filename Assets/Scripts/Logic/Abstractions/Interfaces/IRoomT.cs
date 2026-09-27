@@ -10,5 +10,3 @@ public interface IRoom : IRoomWithoutRemove
 
     public event Action<BigInteger, IRoom>? PieceRemoved;
 }
-
-public interface IRoomT<TPosition> : IRoom where TPosition : struct { }

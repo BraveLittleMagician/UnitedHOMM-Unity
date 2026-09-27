@@ -6,5 +6,6 @@ public abstract class OneFieldEffect : IEffect
 
     public OneFieldEffect(Operation operation) => _operation = operation;
 
-    public void Execute(IPiece piece, IRoom? context) => piece.ApplyOperation(_operation);
+    public void Execute(IPiece piece, IRoom context) { }
+    public void ExecuteWithoutRoom(IPiece piece) => piece.ApplyOperation(_operation);
 }

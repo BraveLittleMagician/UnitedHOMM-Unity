@@ -11,5 +11,5 @@ public abstract class AttackBase : IAttack
 
     public Operation Operation { get; }
 
-    public abstract void Execute(IPiece target, IRoom context);
+    public abstract void Execute(IPiece target, IReadOnlyRoom context);
 }

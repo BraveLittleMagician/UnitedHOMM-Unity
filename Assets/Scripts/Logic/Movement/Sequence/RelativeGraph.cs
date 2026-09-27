@@ -102,7 +102,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
     private bool Add(TSquare square, Stayables stayables)
     {
         var newNode = new SegmentNode<TSquare>(square, stayables);
-        if (newNode.Stayables.Count == 0 && !newNode.Position.IsZeroLine && _totalStayablesCount == 0)
+        if (newNode.Stayables.Count == 0 && !newNode.Position.IsZeroLine() && _totalStayablesCount == 0)
             return false;
 
         var (overlapping, adjacent) = FindOverlappingAndAdjacent(newNode);
@@ -122,7 +122,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
         _totalStayablesCount += mergedIndices.Count;
 
         bool containsZeroInMerged = (minX <= 0 && maxX >= 0) &&
-            (newNode.Position.IsZeroLine || overlapping.Any(n => n.Position.IsZeroLine));
+            (newNode.Position.IsZeroLine() || overlapping.Any(n => n.Position.IsZeroLine()));
 
         var dict = new Dictionary<Axis, int>(square.Coordinates) { [Axis.X] = minX };
         var merged = new SegmentNode<TSquare>(square.CopyWith(dict), new Stayables(maxX - minX, mergedIndices.OrderBy(i => i).ToList()));
@@ -133,7 +133,7 @@ public class RelativeGraph<TSquare> : ISequence<Square, RelativeGraph<TSquare>> 
     }
     private bool Remove(SegmentNode<TSquare> node)
     {
-        if (GuaranteesAtLeastOneStayable && node.Position.X <= 0 && node.XMax >= 0 && node.Position.IsZeroLine) return false;
+        if (GuaranteesAtLeastOneStayable && node.Position.X <= 0 && node.XMax >= 0 && node.Position.IsZeroLine()) return false;
         if (!Contains(node)) return false;
         _totalStayablesCount -= node.Stayables.Count;
         RemoveConnections(node);

@@ -2,7 +2,10 @@
 
 using System;
 
-public interface ISequence : ICopyable<ISequence>, ICanHaveNotStayable { }
+public interface ISequence : ICopyable<ISequence> 
+{
+    bool GuaranteesAtLeastOneStayable { get; }
+}
 
 public interface ISequence<TPosition, TSelf> : ISequence, IEquatable<TSelf> where TSelf : notnull, ISequence where TPosition : struct
 {
