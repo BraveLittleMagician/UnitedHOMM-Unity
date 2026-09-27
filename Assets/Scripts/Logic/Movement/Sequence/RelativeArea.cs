@@ -133,13 +133,6 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
 
         public EnumerableSquare(List<Stayable> stayables, TSquare startSquare) : base(startSquare) => _stayables = stayables;
 
-        private static bool IsWithinRadius(TSquare start, TSquare target, int radius)
-        {
-            return Math.Abs(target.X - start.X) <= radius &&
-                   Math.Abs(target.Y - start.Y) <= radius &&
-                   Math.Abs(target.Z - start.Z) <= radius &&
-                   Math.Abs(target.W - start.W) <= radius;
-        }
         protected override List<TSquare> CreateOnlyStayablesPositions
         {
             get
@@ -160,12 +153,12 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
             if (path.Positions.Count - 1 > _stayables.Count) return false;
             TSquare start = StartPosition;
             foreach (var pathSquare in path.Positions)
-                if (!IsWithinRadius(start, pathSquare, _stayables.Count)) return false;
+                if (!start.IsWithinSquareRadius(pathSquare, _stayables.Count)) return false;
             return true;
         }
         public override bool CanMoveTo(TSquare target)
         {
-            if (!IsWithinRadius(StartPosition, target, _stayables.Count)) return false;
+            if (!StartPosition.IsWithinSquareRadius(target, _stayables.Count)) return false;
             IEnumerable<TSquare> adjacentSquares = FieldExtensions.AdjacentStayables(StartPosition.ActiveAxes.ToCountOfDimensions(), StartPosition, _stayables);
             if (!adjacentSquares.Contains(target)) return false;
             return true;
@@ -179,19 +172,6 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
 
         public EnumerableCircle(List<Stayable> stayables, TSquare startSquare) : base(startSquare) => _stayables = stayables;
 
-        private bool IsWithinRadius(TSquare start, TSquare target, int maxRadius)
-        {
-            long dx = target.X - start.X;
-            long dy = target.Y - start.Y;
-            long dz = target.Z - start.Z;
-            long dw = target.W - start.W;
-            long distSq = dx * dx + dy * dy;
-            if (Axes is Axes3D or Axes4D)
-                distSq += dz * dz;
-            if (Axes is Axes4D)
-                distSq += dw * dw;
-            return distSq <= (long)maxRadius * maxRadius;
-        }
         protected override List<TSquare> CreateOnlyStayablesPositions
         {
             get
@@ -209,7 +189,7 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
 
         public override bool CanMoveTo(TSquare target)
         {
-            if (!IsWithinRadius(target, StartPosition, _stayables.Count)) return false;
+            if (!StartPosition.IsWithinCircleRadius(target, _stayables.Count)) return false;
             CountOfDimensions countOfDimensions = StartPosition.ActiveAxes.ToCountOfDimensions();
             IEnumerable<TSquare> adjacentSquares = FieldExtensions.AdjacentStayables(countOfDimensions, StartPosition, _stayables);
             if (!adjacentSquares.Contains(target)) return false;
@@ -220,7 +200,7 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
             if (path.Positions.Count - 1 > _stayables.Count) return false;
             TSquare start = StartPosition;
             foreach (var pathSquare in path.Positions)
-                if (!IsWithinRadius(pathSquare, start, _stayables.Count)) return false;
+                if (!start.IsWithinCircleRadius(pathSquare, _stayables.Count)) return false;
             return true;
         }
     }
