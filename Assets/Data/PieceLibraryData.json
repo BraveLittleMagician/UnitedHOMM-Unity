@@ -1,0 +1,10 @@
+{
+  "Pieces": [
+    { "Name": "Pawn",   "PathToPrefab": "Prefabs/Pieces/Pawn" },
+    { "Name": "Rook",   "PathToPrefab": "Prefabs/Pieces/Rook" },
+    { "Name": "Knight", "PathToPrefab": "Prefabs/Pieces/Knight" },
+    { "Name": "Bishop", "PathToPrefab": "Prefabs/Pieces/Bishop" },
+    { "Name": "Queen",  "PathToPrefab": "Prefabs/Pieces/Queen" },
+    { "Name": "King",   "PathToPrefab": "Prefabs/Pieces/King" }
+  ]
+}

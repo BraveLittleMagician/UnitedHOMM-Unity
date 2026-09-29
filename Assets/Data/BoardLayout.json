@@ -1,0 +1,25 @@
+{
+  "GridSize": { "x": 8, "y": 8, "z": 8 },
+  "Placements": [
+    { "Position": { "x": 0, "y": 0, "z": 0 }, "Name": "Rook",   "Player": { "IndexOfSide": 0, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 1, "y": 0, "z": 0 }, "Name": "Knight", "Player": { "IndexOfSide": 0, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 2, "y": 0, "z": 0 }, "Name": "Bishop", "Player": { "IndexOfSide": 0, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 3, "y": 0, "z": 0 }, "Name": "Queen",  "Player": { "IndexOfSide": 0, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 4, "y": 0, "z": 0 }, "Name": "King",   "Player": { "IndexOfSide": 0, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 0, "y": 1, "z": 0 }, "Name": "Pawn",   "Player": { "IndexOfSide": 0, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 1, "y": 1, "z": 0 }, "Name": "Pawn",   "Player": { "IndexOfSide": 0, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 2, "y": 1, "z": 0 }, "Name": "Pawn",   "Player": { "IndexOfSide": 0, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 3, "y": 1, "z": 0 }, "Name": "Pawn",   "Player": { "IndexOfSide": 0, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 4, "y": 1, "z": 0 }, "Name": "Pawn",   "Player": { "IndexOfSide": 0, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 0, "y": 7, "z": 0 }, "Name": "Rook",   "Player": { "IndexOfSide": 1, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 1, "y": 7, "z": 0 }, "Name": "Knight", "Player": { "IndexOfSide": 1, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 2, "y": 7, "z": 0 }, "Name": "Bishop", "Player": { "IndexOfSide": 1, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 3, "y": 7, "z": 0 }, "Name": "Queen",  "Player": { "IndexOfSide": 1, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 4, "y": 7, "z": 0 }, "Name": "King",   "Player": { "IndexOfSide": 1, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 0, "y": 6, "z": 0 }, "Name": "Pawn",   "Player": { "IndexOfSide": 1, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 1, "y": 6, "z": 0 }, "Name": "Pawn",   "Player": { "IndexOfSide": 1, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 2, "y": 6, "z": 0 }, "Name": "Pawn",   "Player": { "IndexOfSide": 1, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 3, "y": 6, "z": 0 }, "Name": "Pawn",   "Player": { "IndexOfSide": 1, "IndexOfPlayerOnSide": 0 } },
+    { "Position": { "x": 4, "y": 6, "z": 0 }, "Name": "Pawn",   "Player": { "IndexOfSide": 1, "IndexOfPlayerOnSide": 0 } }
+  ]
+}
