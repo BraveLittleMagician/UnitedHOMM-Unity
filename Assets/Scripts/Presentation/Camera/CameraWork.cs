@@ -14,7 +14,7 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     [SerializeField] private float _snapDistance = 5f;
 
     private Camera _camera = null!;
-    //private LoaderOfBoard _boardLoader = null!;
+    private Transform _boardRoot = null!;
     private HoldRight _holdRightHub = null!;
     private HoldMiddle _holdMiddleHub = null!;
     private Delta _deltaHub = null!;
@@ -28,7 +28,7 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     private bool _middleHolding = false;
     private Vector3 _targetOffset = Vector3.zero;
 
-    public Vector3 RotationCenter => /*_boardLoader.*/transform.position + _targetOffset;
+    public Vector3 RotationCenter => _boardRoot.position + transform.position + _targetOffset;
 
     private void UpdatePosition()
     {
@@ -42,7 +42,7 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     }
     private void UpdateMarkers()
     {
-        _cubeCenterMarker.SetWorldPosition(/*_boardLoader.*/transform.position);
+        _cubeCenterMarker.SetWorldPosition(_boardRoot.position);
         _rotationCenterMarker.SetWorldPosition(RotationCenter);
 
         _cubeCenterMarker.Refresh();
@@ -55,9 +55,9 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     }
     private bool IsCloseToCenterOnScreen()
     {
-        //if (_boardLoader == null) return false;
+        if (_boardRoot == null) return false;
 
-        Vector3 centerWorld = transform.position;//_boardLoader.transform.position;
+        Vector3 centerWorld = _boardRoot.position;
         Vector3 rotationCenterWorld = RotationCenter;
 
         Vector3 screenCenter = _camera.WorldToScreenPoint(centerWorld);
@@ -116,9 +116,9 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
         _middleHolding = false;
         SetMarkersVisible(false);
     }
-    public void Initialize(/*LoaderOfBoard boardLoader, */Camera camera, WorldToScreenMarker cubeCenterMarker, WorldToScreenMarker rotationCenterMarker, HoldRight holdRightHub, HoldMiddle holdMiddleHub, Delta deltaHub, Scroll scrollHub)
+    public void Initialize(Transform piecesRoot, Camera camera, WorldToScreenMarker cubeCenterMarker, WorldToScreenMarker rotationCenterMarker, HoldRight holdRightHub, HoldMiddle holdMiddleHub, Delta deltaHub, Scroll scrollHub)
     {
-        //_boardLoader = boardLoader != null ? boardLoader : throw new ArgumentNullException(nameof(boardLoader));
+        _boardRoot = piecesRoot != null ? piecesRoot : throw new ArgumentNullException(nameof(piecesRoot));
         _camera = camera != null ? camera : throw new ArgumentNullException(nameof(camera));
         _cubeCenterMarker = cubeCenterMarker != null ? cubeCenterMarker : throw new ArgumentNullException(nameof(cubeCenterMarker));
         _rotationCenterMarker = rotationCenterMarker != null ? rotationCenterMarker : throw new ArgumentNullException(nameof(rotationCenterMarker));

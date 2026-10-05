@@ -1,16 +1,20 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public sealed class GameCompositionRoot : MonoBehaviour
 {
     [Header("Scene Components")]
-    [SerializeField] private View _view = null!;
+    [SerializeField] private Transform _piecesRoot = null!;
+    [SerializeField] private GameObject _gridLayerPrefab = null!;
+    [SerializeField] private Material _pieceMaterial = null!;
 
     [Header("UI")]
     [SerializeField] private BoardUI _boardUI = null!;
+    [SerializeField] private UIPointerProbe _uiPointerProbe = null!;
 
     [Header("Selection")]
     [SerializeField] private SelectionHub _selectionHub = null!;
@@ -34,102 +38,152 @@ public sealed class GameCompositionRoot : MonoBehaviour
     [SerializeField] private Delta _deltaHub = null!;
 
     [Header("Config")]
-    [SerializeField] private TextAsset _configJson = null!;
+    [SerializeField] private TextAsset _boardLayoutJson = null!;
+    [SerializeField] private TextAsset _pieceLibraryJson = null!;
 
-    private IEventBus _eventBus = null!;
+    // Infrastructure
     private ILogger _logger = null!;
+    private IEventBus _eventBus = null!;
+
+    // Data (из JSON)
+    private PiecePrefabRegistry _piecePrefabs = null!;
+    private ConfigOfBoard _configOfBoard = null!;
+    private IReadOnlyList<StartingPlacement> _placements = null!;
+
+    // Logic
+    private Seats _seats;
+    private Board _board = null!;
     private IHouse _house = null!;
     private IRegistry _registry = null!;
     private ICombatService _combatService = null!;
     private IMovementValidator _movementValidator = null!;
     private IAbilityService _abilityService = null!;
     private IFlow _flow = null!;
-    private Seats _seats; 
-    private ConfigOfBoard _configOfBoard = null!;
+
     private DeckSequenceProvider _deckSequences = null!;
-    private Board _board = null!;
-    private Decks _decks  = null!;
-    private LoaderOfConfig _loaderOfConfig = null!;
-    private StateOfGame _stateOfGame = null!;
-    private AdderOfRoomsToHouse _adderOfRooms = null!;
-    private SpawnerOfPieces _spawnerOfPieces = null!;
-    private StarterOfGame _starterOfGame = null!;
     private Presenter _presenter = null!;
 
     private void Awake()
     {
         ValidateReferences();
 
-        CreateSystems();
-
-        Initialize();
-
-        Run();
+        CreateInfrastructure();
+        LoadData();
+        CreateLogic();
+        CreatePresentation();
+        InitializeSceneComponents();
     }
+
     private void Start()
     {
-        _presenter.Start();
-        _starterOfGame.Start();
+        StartGame();
+    }
+
+    private void OnDestroy()
+    {
+        _presenter?.Dispose();
+        _deckSequences?.Dispose();
+        _abilityService?.Dispose();
+        _house?.Dispose();
     }
 
     private void ValidateReferences()
     {
-        if (_configJson == null) throw new ArgumentNullException(nameof(_configJson));
-        if (_view == null) throw new ArgumentNullException(nameof(_view));
+        if (_piecesRoot == null) throw new ArgumentNullException(nameof(_piecesRoot));
+        if (_gridLayerPrefab == null) throw new ArgumentNullException(nameof(_gridLayerPrefab));
+        if (_pieceMaterial == null) throw new ArgumentNullException(nameof(_pieceMaterial));
         if (_boardUI == null) throw new ArgumentNullException(nameof(_boardUI));
+        if (_uiPointerProbe == null) throw new ArgumentNullException(nameof(_uiPointerProbe));
         if (_selectionHub == null) throw new ArgumentNullException(nameof(_selectionHub));
         if (_deselectOnEmptyClick == null) throw new ArgumentNullException(nameof(_deselectOnEmptyClick));
         if (_camera == null) throw new ArgumentNullException(nameof(_camera));
         if (_cameraWork == null) throw new ArgumentNullException(nameof(_cameraWork));
         if (_cubeCenterMarker == null) throw new ArgumentNullException(nameof(_cubeCenterMarker));
         if (_rotationCenterMarker == null) throw new ArgumentNullException(nameof(_rotationCenterMarker));
+        if (_inputActions == null) throw new ArgumentNullException(nameof(_inputActions));
         if (_mouseEventer == null) throw new ArgumentNullException(nameof(_mouseEventer));
         if (_clickLeftHub == null) throw new ArgumentNullException(nameof(_clickLeftHub));
         if (_clickRightHub == null) throw new ArgumentNullException(nameof(_clickRightHub));
         if (_holdRightHub == null) throw new ArgumentNullException(nameof(_holdRightHub));
         if (_holdMiddleHub == null) throw new ArgumentNullException(nameof(_holdMiddleHub));
         if (_scrollHub == null) throw new ArgumentNullException(nameof(_scrollHub));
-        if (_deltaHub == null) throw new ArgumentNullException(nameof(_deltaHub));
         if (_pointerHub == null) throw new ArgumentNullException(nameof(_pointerHub));
+        if (_deltaHub == null) throw new ArgumentNullException(nameof(_deltaHub));
+        if (_boardLayoutJson == null) throw new ArgumentNullException(nameof(_boardLayoutJson));
+        if (_pieceLibraryJson == null) throw new ArgumentNullException(nameof(_pieceLibraryJson));
     }
-    private void CreateSystems()
-    {
-        _loaderOfConfig = new LoaderOfConfig(_configJson.text);
-        _configOfBoard = _loaderOfConfig.LoadBoardConfig();
-        _seats = new Seats(_configOfBoard.NumberOfSides, _configOfBoard.NumberOfPlayersOnSide);
 
+    private void CreateInfrastructure()
+    {
         _logger = new LoggerForUnity();
         _eventBus = new EventBus(_logger);
+    }
+    private void LoadData()
+    {
+        _piecePrefabs = PieceLibraryLoader.Load(_pieceLibraryJson.text);
+        _deckSequences = new DeckSequenceProvider(_eventBus);
+        var templates = StandardPieceTemplates.CreateAll(_deckSequences, _eventBus);
+        var templateRegistry = new PieceTemplateRegistry(templates);
+        var layoutResult = BoardLayoutLoader.Load(_boardLayoutJson.text, templateRegistry);
+        _configOfBoard = layoutResult.Config;
+        _placements = layoutResult.Placements;
 
-        _stateOfGame = new StateOfGame(_eventBus, _logger);
+        _logger.Log($"Данные загружены: {_placements.Count} фигур, поле {_configOfBoard.FieldSize}, осей {_configOfBoard.Axes}");
+    }
+
+    private void CreateLogic()
+    {
+        _seats = new Seats(_configOfBoard.NumberOfSides, _configOfBoard.NumberOfPlayersOnSide);
+
         _house = new House(_seats, _eventBus, _logger);
         _registry = new Registry(_house);
 
         var boardSize = BoardSizeFactory.FromConfig(_configOfBoard);
         _board = new Board(_seats, boardSize, _eventBus, _logger);
-        _decks = new Decks(_seats, _eventBus, _logger);
+        _house.AddRoom(_board);
+        _house.AddRoom(new Decks(_seats, _eventBus, _logger));
 
         _combatService = new CombatService(_logger, _eventBus);
         _movementValidator = new MovementValidator(_logger);
         _abilityService = new AbilityService(_eventBus, _logger);
+
         _flow = new Flow(_house, _eventBus, _logger, _combatService, _movementValidator, _abilityService);
-
-        _adderOfRooms = new AdderOfRoomsToHouse(_house, _eventBus, _logger, _seats, _board, _decks);
-
-        _deckSequences = new DeckSequenceProvider(_eventBus);
-        var preset = StartingPlacementPreset.CreateStandard(_deckSequences);
-
-        _spawnerOfPieces = new SpawnerOfPieces(_flow, _logger, preset);
-        _starterOfGame = new StarterOfGame(_stateOfGame, _adderOfRooms, _spawnerOfPieces);
-
-
-        _presenter = new Presenter(_eventBus, _cameraWork, _configOfBoard);
     }
-    private void Initialize()
+
+    private void CreatePresentation()
+    {
+        _presenter = new Presenter(_eventBus, _logger, _piecePrefabs, _piecesRoot);
+        _presenter.SetMaterial(_pieceMaterial);
+    }
+
+    private void InitializeSceneComponents()
     {
         _mouseEventer.Initialize(_inputActions, _clickLeftHub, _clickRightHub, _holdRightHub, _holdMiddleHub, _scrollHub, _pointerHub, _deltaHub);
-        _cameraWork.Initialize(_camera, _cubeCenterMarker, _rotationCenterMarker, _holdRightHub, _holdMiddleHub, _deltaHub, _scrollHub);
-        _boardUI.Initialize(_stateOfGame);
+
+        _cameraWork.Initialize(_piecesRoot, _camera, _cubeCenterMarker, _rotationCenterMarker, _holdRightHub, _holdMiddleHub, _deltaHub, _scrollHub);
+
+        _boardUI.Initialize(_flow, _eventBus, _uiPointerProbe);
+
+        _deselectOnEmptyClick.Initialize(_selectionHub, _clickLeftHub, _pointerHub, _uiPointerProbe, _camera);
+
+        _mouseEventer.Run();
+        _cameraWork.Run();
+        _boardUI.Run();
+        _deselectOnEmptyClick.Run();
     }
-    private void Run() { }
+
+    private void StartGame()
+    {
+        foreach (var placement in _placements)
+        {
+            var result = _flow.AddPiece<Board, Square>(placement.Definition, placement.Position);
+
+            if (result.IsSuccess)
+                continue;
+
+            _logger.LogError($"Не удалось развернуть '{placement.Definition.Name}' в {placement.Position}: {result.Error}");
+        }
+
+        _logger.Log("Все фигуры развёрнуты");
+    }
 }
