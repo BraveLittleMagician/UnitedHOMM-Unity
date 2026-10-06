@@ -9,10 +9,10 @@ public sealed class Presenter : IDisposable
 {
     private const float _cellSize = 1f;
 
+    private readonly ILogger _logger;
     private readonly IEventBus _eventBus;
     private readonly PiecePrefabRegistry _prefabs;
     private readonly Transform _piecesRoot;
-    private readonly ILogger _logger;
 
     private readonly Dictionary<BigInteger, GameObject> _views = new();
     private readonly Dictionary<BigInteger, IPiece> _pieces = new();
@@ -22,10 +22,10 @@ public sealed class Presenter : IDisposable
 
     public Presenter(IEventBus eventBus, ILogger logger, PiecePrefabRegistry prefabs, Transform piecesRoot)
     {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _prefabs = prefabs ?? throw new ArgumentNullException(nameof(prefabs));
-        _piecesRoot = piecesRoot ?? throw new ArgumentNullException(nameof(piecesRoot));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _piecesRoot = piecesRoot != null ? piecesRoot : throw new ArgumentNullException(nameof(piecesRoot));
 
         _eventBus.Subscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Subscribe<PieceMovedEvent<Square>>(OnPieceMoved);
@@ -63,7 +63,7 @@ public sealed class Presenter : IDisposable
         info.Initialize(piece.Name, piece.Owner, piece.IndexInHouse);
         info.PositionInGrid = new Vector3Int(position.X, position.Y, position.Z);
 
-        PieceColorizer.ApplyInitialColor(go, info, _material, piece.Owner, _teamCount: GetMaxSide() + 1, _subteamCount: GetMaxSubteam() + 1);
+        PieceColorizer.ApplyInitialColor(go, info, _material, piece.Owner, teamCount: GetMaxSide() + 1, subteamCount: GetMaxSubteam() + 1);
 
         _views[piece.IndexInHouse] = go;
         _pieces[piece.IndexInHouse] = piece;
@@ -87,11 +87,9 @@ public sealed class Presenter : IDisposable
     }
     private void OnPieceDied(PieceDiedEvent e)
     {
-        if (!_views.TryGetValue(e.Piece.IndexInHouse, out var go))
-            return;
+        if (!_views.TryGetValue(e.Piece.IndexInHouse, out var go)) return;
 
-        if (go != null)
-            UnityEngine.Object.Destroy(go);
+        if (go != null) UnityEngine.Object.Destroy(go);
 
         _views.Remove(e.Piece.IndexInHouse);
         _pieces.Remove(e.Piece.IndexInHouse);
@@ -122,10 +120,8 @@ public sealed class Presenter : IDisposable
     {
         int maxSide = 0;
         foreach (var piece in _pieces.Values)
-        {
-            if (piece.Owner.IndexOfSide > maxSide)
-                maxSide = piece.Owner.IndexOfSide;
-        }
+            if (piece.Owner.IndexOfSide > maxSide) maxSide = piece.Owner.IndexOfSide;
+        
         return maxSide;
     }
 
@@ -134,8 +130,7 @@ public sealed class Presenter : IDisposable
         int maxSub = 0;
         foreach (var piece in _pieces.Values)
         {
-            if (piece.Owner.IndexOfPlayerOnSide > maxSub)
-                maxSub = piece.Owner.IndexOfPlayerOnSide;
+            if (piece.Owner.IndexOfPlayerOnSide > maxSub) maxSub = piece.Owner.IndexOfPlayerOnSide;
         }
         return maxSub;
     }
@@ -151,9 +146,8 @@ public sealed class Presenter : IDisposable
         _eventBus.Unsubscribe<PieceSelectedEvent<Square>>(OnPieceSelected);
 
         foreach (var go in _views.Values)
-        {
             if (go != null) UnityEngine.Object.Destroy(go);
-        }
+
         _views.Clear();
         _pieces.Clear();
 

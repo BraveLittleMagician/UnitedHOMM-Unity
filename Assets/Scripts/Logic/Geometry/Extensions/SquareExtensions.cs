@@ -78,4 +78,9 @@ public static class SquareExtensions
         position.Y >= 0 && position.Y < size.Y &&
         position.Z >= 0 && position.Z < size.Z &&
         position.W >= 0 && position.W < size.W;
+    public static bool Contains(this Square size, int x, int y, int z, int w) =>
+        x >= 0 && x < size.X &&
+        y >= 0 && y < size.Y &&
+        z >= 0 && z < size.Z &&
+        w >= 0 && w < size.W;
 }
