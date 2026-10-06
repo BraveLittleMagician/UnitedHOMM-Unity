@@ -31,8 +31,7 @@ public sealed class DeckSequenceProvider : IDisposable
         if (_disposed) return;
         _disposed = true;
 
-        foreach (var seq in _cache.Values)
-            seq.Dispose();
+        foreach (var seq in _cache.Values) seq.Dispose();
         _cache.Clear();
     }
 }

@@ -66,7 +66,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private void Awake()
     {
         ValidateReferences();
-
         CreateInfrastructure();
         LoadData();
         CreateLogic();

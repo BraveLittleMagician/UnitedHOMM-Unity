@@ -27,26 +27,19 @@ public sealed class Board : RoomT<Square>, ISquarePositionRoom
         return true;
     }
     protected override bool ValidateDisplace(IPath<Square> path, IPiece piece, out string error)
-    {
-        if (!Size.Contains(path.Positions[0]))
+    { 
+        var start = path.Positions[0];
+        if (!Size.Contains(start))
         {
-            error = $"Начальная позиция {path.Positions[0]} выходит за границы доски";
+            error = $"Начальная позиция {start} выходит за границы доски {Size}";
             return false;
         }
 
-        for (int i = 1; i < path.Positions.Count; i++)
+        var end = path.Positions[^1];
+        if (!Size.Contains(end))
         {
-            var pos = path.Positions[i];
-            if (_pieces.ContainsKey(pos))
-            {
-                error = $"Позиция {pos} занята";
-                return false;
-            }
-            if (!Size.Contains(pos))
-            {
-                error = $"Позиция {pos} выходит за границы доски";
-                return false;
-            }
+            error = $"Конечная позиция {end} выходит за границы доски {Size}";
+            return false;
         }
 
         error = "";
