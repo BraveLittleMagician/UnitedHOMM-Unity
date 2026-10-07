@@ -11,6 +11,8 @@ public sealed class Presenter : IDisposable
 
     private readonly ILogger _logger;
     private readonly IEventBus _eventBus;
+    private readonly ISelectionHub _selectionHub;
+    private readonly UIPointerProbe _uiPointerProbe;
     private readonly PiecePrefabRegistry _prefabs;
     private readonly Transform _piecesRoot;
 
@@ -20,17 +22,18 @@ public sealed class Presenter : IDisposable
     private Material _material = null!;
     private bool _disposed;
 
-    public Presenter(IEventBus eventBus, ILogger logger, PiecePrefabRegistry prefabs, Transform piecesRoot)
+    public Presenter(IEventBus eventBus, ILogger logger, ISelectionHub selectionHub, UIPointerProbe uiPointerProbe, PiecePrefabRegistry prefabs, Transform piecesRoot)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _selectionHub = selectionHub ?? throw new ArgumentNullException(nameof(selectionHub));
+        _uiPointerProbe = uiPointerProbe ?? throw new ArgumentNullException(nameof(uiPointerProbe));
         _prefabs = prefabs ?? throw new ArgumentNullException(nameof(prefabs));
         _piecesRoot = piecesRoot != null ? piecesRoot : throw new ArgumentNullException(nameof(piecesRoot));
 
         _eventBus.Subscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Subscribe<PieceMovedEvent<Square>>(OnPieceMoved);
         _eventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
-        _eventBus.Subscribe<PieceSelectedEvent<Square>>(OnPieceSelected);
 
         _logger.Log("Presenter инициализирован");
     }
@@ -67,6 +70,9 @@ public sealed class Presenter : IDisposable
         _views[piece.IndexInHouse] = go;
         _pieces[piece.IndexInHouse] = piece;
 
+        var button = go.GetOrAddComponent<ButtonBehaviorEvents>();
+        button.Initialize(_selectionHub, _uiPointerProbe);
+
         _logger.LogDebug($"Создан визуал для {piece} в {position}");
     }
     private void OnPieceMoved(PieceMovedEvent<Square> e)
@@ -79,10 +85,7 @@ public sealed class Presenter : IDisposable
 
         go.transform.localPosition = GridToWorld(e.ToPosition);
 
-        if (go.TryGetComponent<InfoOfPiece>(out var info))
-            info.PositionInGrid = new Vector3Int(e.ToPosition.X, e.ToPosition.Y, e.ToPosition.Z);
-
-        _logger.LogDebug($"{e.Piece.Name}: {e.FromPosition} → {e.ToPosition}");
+        if (go.TryGetComponent<InfoOfPiece>(out var info)) info.PositionInGrid = new Vector3Int(e.ToPosition.X, e.ToPosition.Y, e.ToPosition.Z);
     }
     private void OnPieceDied(PieceDiedEvent e)
     {
@@ -94,17 +97,6 @@ public sealed class Presenter : IDisposable
         _pieces.Remove(e.Piece.IndexInHouse);
 
         _logger.LogDebug($"Визуал {e.Piece} уничтожен");
-    }
-    private void OnPieceSelected(PieceSelectedEvent<Square> e)
-    {
-        foreach (var (index, view) in _views)
-        {
-            if (view == null) continue;
-            if (!view.TryGetComponent<InfoOfPiece>(out var info)) continue;
-
-            bool isSelected = index == e.Piece.IndexInHouse;
-            PieceColorizer.SetVisualState(info, isSelected, highlighted: false, hovered: false);
-        }
     }
 
     private static UnityEngine.Vector3 GridToWorld(Square position)
@@ -142,7 +134,6 @@ public sealed class Presenter : IDisposable
         _eventBus.Unsubscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Unsubscribe<PieceMovedEvent<Square>>(OnPieceMoved);
         _eventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied);
-        _eventBus.Unsubscribe<PieceSelectedEvent<Square>>(OnPieceSelected);
 
         foreach (var go in _views.Values)
             if (go != null) UnityEngine.Object.Destroy(go);
