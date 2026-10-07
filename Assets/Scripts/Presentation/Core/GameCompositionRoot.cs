@@ -121,8 +121,10 @@ public sealed class GameCompositionRoot : MonoBehaviour
     {
         _piecePrefabs = PieceLibraryLoader.Load(_pieceLibraryJson.text);
         _deckSequences = new DeckSequenceProvider(_eventBus);
+
         var templates = StandardPieceTemplates.CreateAll(_deckSequences, _eventBus);
         var templateRegistry = new PieceTemplateRegistry(templates);
+
         var layoutResult = BoardLayoutLoader.Load(_boardLayoutJson.text, templateRegistry);
         _configOfBoard = layoutResult.Config;
         _placements = layoutResult.Placements;

@@ -51,8 +51,7 @@ public sealed class Presenter : IDisposable
             return;
         }
 
-        if (_material == null)
-            throw new InvalidOperationException("Presenter.SetMaterial не был вызван");
+        if (_material == null) throw new InvalidOperationException("Presenter.SetMaterial не был вызван");
 
         var prefab = _prefabs.GetPrefab(piece.Name);
         var go = UnityEngine.Object.Instantiate(prefab, _piecesRoot);

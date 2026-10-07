@@ -18,7 +18,6 @@ public class BoardUI : EventSubscriberBehaviour, IRunnable
     private readonly List<string> _logEntries = new();
 
     private IPiece? _selectedPiece;
-    private IRoom? _selectedPieceRoom;
     private Square? _selectedPiecePosition;
     private int _pieceCount;
     private bool _initialized;
@@ -73,7 +72,6 @@ public class BoardUI : EventSubscriberBehaviour, IRunnable
         if (_selectedPiece != null && _selectedPiece.IndexInHouse == e.Piece.IndexInHouse)
         {
             _selectedPiece = null;
-            _selectedPieceRoom = null;
             _selectedPiecePosition = null;
         }
     }
@@ -154,7 +152,6 @@ public class BoardUI : EventSubscriberBehaviour, IRunnable
         if (GUILayout.Button("Снять выделение"))
         {
             _selectedPiece = null;
-            _selectedPieceRoom = null;
             _selectedPiecePosition = null;
             AddLog("Выделение снято");
         }
