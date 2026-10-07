@@ -41,9 +41,6 @@ public class BoardUI : EventSubscriberBehaviour, IRunnable
         _eventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
         AddSubscription(() => _eventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied));
 
-        _eventBus.Subscribe<PieceSelectedEvent<Square>>(OnPieceSelected);
-        AddSubscription(() => _eventBus.Unsubscribe<PieceSelectedEvent<Square>>(OnPieceSelected));
-
         _eventBus.Subscribe<PieceMovedEvent<Square>>(OnPieceMoved);
         AddSubscription(() => _eventBus.Unsubscribe<PieceMovedEvent<Square>>(OnPieceMoved));
 
@@ -76,12 +73,6 @@ public class BoardUI : EventSubscriberBehaviour, IRunnable
         }
     }
 
-    private void OnPieceSelected(PieceSelectedEvent<Square> e)
-    {
-        _selectedPiece = e.Piece;
-        _selectedPiecePosition = e.Position;
-        AddLog($"Выбрана {e.Piece.Name}");
-    }
     private void OnPieceMoved(PieceMovedEvent<Square> e)
     {
         if (_selectedPiece != null && _selectedPiece.IndexInHouse == e.Piece.IndexInHouse)
