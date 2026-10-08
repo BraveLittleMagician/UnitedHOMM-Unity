@@ -23,4 +23,11 @@ public static class GameObjectExtensions
         foreach (Transform child in obj.transform)
             child.gameObject.SetLayerRecursively(layer);
     }
+    public static Vector3 ToWorldCenter(this Square size, float cellSize = 1f)
+    {
+        return new Vector3(
+            (size.X - 1) / 2f * cellSize,
+            (size.Z - 1) / 2f * cellSize,
+            (size.Y - 1) / 2f * cellSize);
+    }
 }

@@ -13,79 +13,17 @@ public class BoardUI : EventSubscriberBehaviour, IRunnable
 
     private IFlow _flow = null!;
     private IEventBus _eventBus = null!;
+    private ISelectionHub _selectionHub = null!;
     private UIPointerProbe _uiPointerProbe = null!;
 
     private readonly List<string> _logEntries = new();
 
-    private IPiece? _selectedPiece;
-    private Square? _selectedPiecePosition;
+    private InfoOfPiece? _selectedInfo;
     private int _pieceCount;
     private bool _initialized;
 
     private Rect PanelRect => new(_panelMargin, _panelMargin, _panelWidth, _panelHeight);
 
-    public void Initialize(IFlow flow, IEventBus eventBus, UIPointerProbe uiPointerProbe)
-    {
-        _flow = flow ?? throw new ArgumentNullException(nameof(flow));
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _uiPointerProbe = uiPointerProbe ?? throw new ArgumentNullException(nameof(uiPointerProbe));
-    }
-
-    public void Run()
-    {
-        if (_flow == null) throw new InvalidOperationException("BoardUI не инициализирован");
-
-        _eventBus.Subscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
-        AddSubscription(() => _eventBus.Unsubscribe<PieceDeployedEvent<Square>>(OnPieceDeployed));
-
-        _eventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
-        AddSubscription(() => _eventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied));
-
-        _eventBus.Subscribe<PieceMovedEvent<Square>>(OnPieceMoved);
-        AddSubscription(() => _eventBus.Unsubscribe<PieceMovedEvent<Square>>(OnPieceMoved));
-
-        _uiPointerProbe.RegisterRegion(PanelRect);
-
-        _initialized = true;
-        AddLog("BoardUI готов");
-    }
-
-    protected override void OnCleanup()
-    {
-        _uiPointerProbe?.UnregisterRegion(PanelRect);
-    }
-
-    private void OnPieceDeployed(PieceDeployedEvent<Square> e)
-    {
-        _pieceCount++;
-        AddLog($"Развёрнута {e.Piece.Name} в {e.Position}");
-    }
-
-    private void OnPieceDied(PieceDiedEvent e)
-    {
-        _pieceCount = Math.Max(0, _pieceCount - 1);
-        AddLog($"Погибла {e.Piece.Name}");
-
-        if (_selectedPiece != null && _selectedPiece.IndexInHouse == e.Piece.IndexInHouse)
-        {
-            _selectedPiece = null;
-            _selectedPiecePosition = null;
-        }
-    }
-
-    private void OnPieceMoved(PieceMovedEvent<Square> e)
-    {
-        if (_selectedPiece != null && _selectedPiece.IndexInHouse == e.Piece.IndexInHouse)
-            _selectedPiecePosition = e.ToPosition;
-
-        AddLog($"{e.Piece.Name}: {e.FromPosition} → {e.ToPosition}");
-    }
-    private void AddLog(string message)
-    {
-        _logEntries.Add(message);
-        if (_logEntries.Count > _maxLogEntries)
-            _logEntries.RemoveAt(0);
-    }
 
     private void OnGUI()
     {
@@ -110,53 +48,112 @@ public class BoardUI : EventSubscriberBehaviour, IRunnable
         GUILayout.EndArea();
     }
 
+    private void OnSelectionChanged(ISelectable? oldSelection, ISelectable? newSelection)
+    {
+        if (newSelection is MonoBehaviour mono &&
+            mono.TryGetComponent<InfoOfPiece>(out var info))
+        {
+            _selectedInfo = info;
+            AddLog($"Выбрана {info.Name}");
+        }
+        else
+        {
+            _selectedInfo = null;
+        }
+    }
+    private void OnPieceDeployed(PieceDeployedEvent<Square> e)
+    {
+        _pieceCount++;
+        AddLog($"Развёрнута {e.Piece.Name} в {e.Position}");
+    }
+    private void OnPieceMoved(PieceMovedEvent<Square> e)
+    {
+        AddLog($"{e.Piece.Name}: {e.FromPosition} → {e.ToPosition}");
+    }
+    private void OnPieceDied(PieceDiedEvent e)
+    {
+        _pieceCount = Math.Max(0, _pieceCount - 1);
+        AddLog($"Погибла {e.Piece.Name}");
+
+        if (_selectedInfo != null && _selectedInfo.IndexInHouse == e.Piece.IndexInHouse)
+            _selectedInfo = null;
+    }
+    private void AddLog(string message)
+    {
+        _logEntries.Add(message);
+        if (_logEntries.Count > _maxLogEntries)
+            _logEntries.RemoveAt(0);
+    }
     private void DrawStateSection()
     {
         GUILayout.Label("--- Состояние ---");
         GUILayout.Label($"Фигур на доске: {_pieceCount}");
     }
-
     private void DrawSelectedPieceSection()
     {
         GUILayout.Label("--- Выбранная фигура ---");
 
-        if (_selectedPiece == null)
+        if (_selectedInfo == null)
         {
             GUILayout.Label("Ничего не выбрано");
             return;
         }
 
-        GUILayout.Label($"Имя: {_selectedPiece.Name}");
-        GUILayout.Label($"Игрок: {_selectedPiece.Owner}");
-        GUILayout.Label($"Здоровье: {_selectedPiece.Health}");
-        GUILayout.Label($"Индекс: {_selectedPiece.IndexInHouse}");
+        GUILayout.Label($"Имя: {_selectedInfo.Name}");
+        GUILayout.Label($"Игрок: {_selectedInfo.Player}");
+        GUILayout.Label($"Индекс: {_selectedInfo.IndexInHouse}");
 
-        if (_selectedPiecePosition.HasValue)
-            GUILayout.Label($"Позиция: {_selectedPiecePosition.Value}");
+        var pos = _selectedInfo.PositionInGrid;
+        GUILayout.Label($"Позиция: ({pos.x}, {pos.y}, {pos.z})");
     }
-
     private void DrawActionsSection()
     {
         GUILayout.Label("--- Действия ---");
 
-        GUI.enabled = _selectedPiece != null;
-        if (GUILayout.Button("Снять выделение"))
-        {
-            _selectedPiece = null;
-            _selectedPiecePosition = null;
-            AddLog("Выделение снято");
-        }
+        GUI.enabled = _selectedInfo != null;
+        if (GUILayout.Button("Снять выделение")) _selectionHub.DropSelection();
         GUI.enabled = true;
 
-        if (GUILayout.Button("Очистить лог"))
-            _logEntries.Clear();
+        if (GUILayout.Button("Очистить лог")) _logEntries.Clear();
     }
 
     private void DrawLogSection()
     {
         GUILayout.Label("--- Лог ---");
 
-        for (int i = 0; i < _logEntries.Count; i++)
-            GUILayout.Label(_logEntries[i]);
+        for (int i = 0; i < _logEntries.Count; i++) GUILayout.Label(_logEntries[i]);
+    }
+    protected override void OnCleanup()
+    {
+        if (_uiPointerProbe != null)
+            _uiPointerProbe.UnregisterRegion(PanelRect);
+    }
+    public void Initialize(IFlow flow, IEventBus eventBus, ISelectionHub selectionHub, UIPointerProbe uiPointerProbe)
+    {
+        _flow = flow ?? throw new ArgumentNullException(nameof(flow));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _selectionHub = selectionHub ?? throw new ArgumentNullException(nameof(selectionHub));
+        _uiPointerProbe = uiPointerProbe != null ? uiPointerProbe : throw new ArgumentNullException(nameof(uiPointerProbe));
+    }
+    public void Run()
+    {
+        if (_flow == null) throw new InvalidOperationException("BoardUI не инициализирован");
+
+        _eventBus.Subscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
+        AddSubscription(() => _eventBus.Unsubscribe<PieceDeployedEvent<Square>>(OnPieceDeployed));
+
+        _eventBus.Subscribe<PieceMovedEvent<Square>>(OnPieceMoved);
+        AddSubscription(() => _eventBus.Unsubscribe<PieceMovedEvent<Square>>(OnPieceMoved));
+
+        _eventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
+        AddSubscription(() => _eventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied));
+
+        _selectionHub.OnSelectionChanged += OnSelectionChanged;
+        AddSubscription(() => _selectionHub.OnSelectionChanged -= OnSelectionChanged);
+
+        _uiPointerProbe.RegisterRegion(PanelRect);
+
+        _initialized = true;
+        AddLog("BoardUI готов");
     }
 }

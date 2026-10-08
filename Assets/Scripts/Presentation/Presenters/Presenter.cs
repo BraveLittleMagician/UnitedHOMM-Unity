@@ -15,6 +15,7 @@ public sealed class Presenter : IDisposable
     private readonly UIPointerProbe _uiPointerProbe;
     private readonly PiecePrefabRegistry _prefabs;
     private readonly Transform _piecesRoot;
+    private readonly CameraWork _cameraWork;
 
     private readonly Dictionary<BigInteger, GameObject> _views = new();
     private readonly Dictionary<BigInteger, IPiece> _pieces = new();
@@ -22,18 +23,20 @@ public sealed class Presenter : IDisposable
     private Material _material = null!;
     private bool _disposed;
 
-    public Presenter(IEventBus eventBus, ILogger logger, ISelectionHub selectionHub, UIPointerProbe uiPointerProbe, PiecePrefabRegistry prefabs, Transform piecesRoot)
+    public Presenter(IEventBus eventBus, ILogger logger, ISelectionHub selectionHub, UIPointerProbe uiPointerProbe, PiecePrefabRegistry prefabs, CameraWork cameraWork, Transform piecesRoot)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _selectionHub = selectionHub ?? throw new ArgumentNullException(nameof(selectionHub));
-        _uiPointerProbe = uiPointerProbe ?? throw new ArgumentNullException(nameof(uiPointerProbe));
+        _uiPointerProbe = uiPointerProbe != null ? uiPointerProbe : throw new ArgumentNullException(nameof(uiPointerProbe));
         _prefabs = prefabs ?? throw new ArgumentNullException(nameof(prefabs));
+        _cameraWork = cameraWork != null ? cameraWork : throw new ArgumentNullException(nameof(cameraWork));
         _piecesRoot = piecesRoot != null ? piecesRoot : throw new ArgumentNullException(nameof(piecesRoot));
 
         _eventBus.Subscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Subscribe<PieceMovedEvent<Square>>(OnPieceMoved);
         _eventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
+        _eventBus.Subscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
 
         _logger.Log("Presenter инициализирован");
     }
@@ -98,7 +101,14 @@ public sealed class Presenter : IDisposable
 
         _logger.LogDebug($"Визуал {e.Piece} уничтожен");
     }
+    private void OnBoardConfigChanged(BoardConfigChangedEvent e)
+    {
+        var newSize = BoardSizeFactory.FromConfig(e.NewConfig);
+        var newCenter = newSize.ToWorldCenter();
+        _cameraWork.SetBoardCenter(newCenter);
 
+        _logger.LogDebug($"Центр доски обновлён: {newCenter}");
+    }
     private static UnityEngine.Vector3 GridToWorld(Square position)
     {
         return new UnityEngine.Vector3(
@@ -134,6 +144,7 @@ public sealed class Presenter : IDisposable
         _eventBus.Unsubscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Unsubscribe<PieceMovedEvent<Square>>(OnPieceMoved);
         _eventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied);
+        _eventBus.Unsubscribe<BoardConfigChangedEvent>(OnBoardConfigChanged);
 
         foreach (var go in _views.Values)
             if (go != null) UnityEngine.Object.Destroy(go);

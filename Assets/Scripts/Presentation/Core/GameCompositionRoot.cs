@@ -9,7 +9,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
 {
     [Header("Scene Components")]
     [SerializeField] private Transform _piecesRoot = null!;
-    [SerializeField] private GameObject _gridLayerPrefab = null!;
     [SerializeField] private Material _pieceMaterial = null!;
 
     [Header("UI")]
@@ -72,12 +71,10 @@ public sealed class GameCompositionRoot : MonoBehaviour
         CreatePresentation();
         InitializeSceneComponents();
     }
-
     private void Start()
     {
         StartGame();
     }
-
     private void OnDestroy()
     {
         _presenter?.Dispose();
@@ -89,7 +86,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private void ValidateReferences()
     {
         if (_piecesRoot == null) throw new ArgumentNullException(nameof(_piecesRoot));
-        if (_gridLayerPrefab == null) throw new ArgumentNullException(nameof(_gridLayerPrefab));
         if (_pieceMaterial == null) throw new ArgumentNullException(nameof(_pieceMaterial));
         if (_boardUI == null) throw new ArgumentNullException(nameof(_boardUI));
         if (_uiPointerProbe == null) throw new ArgumentNullException(nameof(_uiPointerProbe));
@@ -111,7 +107,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
         if (_boardLayoutJson == null) throw new ArgumentNullException(nameof(_boardLayoutJson));
         if (_pieceLibraryJson == null) throw new ArgumentNullException(nameof(_pieceLibraryJson));
     }
-
     private void CreateInfrastructure()
     {
         _logger = new LoggerForUnity();
@@ -131,7 +126,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
         _logger.Log($"Данные загружены: {_placements.Count} фигур, поле {_configOfBoard.FieldSize}, осей {_configOfBoard.Axes}");
     }
-
     private void CreateLogic()
     {
         _seats = new Seats(_configOfBoard.NumberOfSides, _configOfBoard.NumberOfPlayersOnSide);
@@ -150,20 +144,18 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
         _flow = new Flow(_house, _eventBus, _logger, _combatService, _movementValidator, _abilityService);
     }
-
     private void CreatePresentation()
     {
-        _presenter = new Presenter(_eventBus, _logger, _selectionHub, _uiPointerProbe, _piecePrefabs, _piecesRoot);
+        _presenter = new Presenter(_eventBus, _logger, _selectionHub, _uiPointerProbe, _piecePrefabs, _cameraWork, _piecesRoot);
         _presenter.SetMaterial(_pieceMaterial);
     }
-
     private void InitializeSceneComponents()
     {
         _mouseEventer.Initialize(_inputActions, _clickLeftHub, _clickRightHub, _holdRightHub, _holdMiddleHub, _scrollHub, _pointerHub, _deltaHub);
+        var boardSize = BoardSizeFactory.FromConfig(_configOfBoard);
+        _cameraWork.Initialize(boardSize.ToWorldCenter(), _camera, _cubeCenterMarker, _rotationCenterMarker, _holdRightHub, _holdMiddleHub, _deltaHub, _scrollHub);
 
-        _cameraWork.Initialize(_piecesRoot, _camera, _cubeCenterMarker, _rotationCenterMarker, _holdRightHub, _holdMiddleHub, _deltaHub, _scrollHub);
-
-        _boardUI.Initialize(_flow, _eventBus, _uiPointerProbe);
+        _boardUI.Initialize(_flow, _eventBus, _selectionHub, _uiPointerProbe);
 
         _deselectOnEmptyClick.Initialize(_selectionHub, _clickLeftHub, _pointerHub, _uiPointerProbe, _camera);
 
@@ -172,7 +164,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _boardUI.Run();
         _deselectOnEmptyClick.Run();
     }
-
     private void StartGame()
     {
         foreach (var placement in _placements)

@@ -417,11 +417,8 @@ GameObject:
   m_Component:
   - component: {fileID: 526232267}
   - component: {fileID: 526232268}
-  - component: {fileID: 526232272}
   - component: {fileID: 526232271}
   - component: {fileID: 526232270}
-  - component: {fileID: 526232274}
-  - component: {fileID: 526232269}
   - component: {fileID: 526232282}
   - component: {fileID: 526232281}
   - component: {fileID: 526232280}
@@ -430,6 +427,7 @@ GameObject:
   - component: {fileID: 526232277}
   - component: {fileID: 526232276}
   - component: {fileID: 526232275}
+  - component: {fileID: 526232283}
   m_Layer: 0
   m_Name: Holder
   m_TagString: Untagged
@@ -468,12 +466,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 581b99dd37d0a9548a538eb25d9a7ae2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameCompositionRoot
-  _view: {fileID: 526232272}
+  _piecesRoot: {fileID: 1446525816}
+  _pieceMaterial: {fileID: 2100000, guid: ff62a0f7a8b671a4b9e0bd7d497ab399, type: 2}
   _boardUI: {fileID: 526232271}
+  _uiPointerProbe: {fileID: 2137650709}
   _selectionHub: {fileID: 526232270}
-  _deselectOnEmptyClick: {fileID: 526232269}
+  _deselectOnEmptyClick: {fileID: 526232283}
   _camera: {fileID: 1823688466}
-  _cameraWork: {fileID: 526232274}
+  _cameraWork: {fileID: 1823688470}
   _cubeCenterMarker: {fileID: 540639274}
   _rotationCenterMarker: {fileID: 1790386481}
   _inputActions: {fileID: -944628639613478452, guid: 26a82c6068b2d6e4999ee75d711d1002, type: 3}
@@ -485,23 +485,8 @@ MonoBehaviour:
   _scrollHub: {fileID: 526232277}
   _pointerHub: {fileID: 526232276}
   _deltaHub: {fileID: 526232275}
-  _configJson: {fileID: 4900000, guid: ac67625c654dc53468ef2f9780a41680, type: 3}
---- !u!114 &526232269
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 526232266}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 41ce2200235a8494693b4f91e5e1235b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeselectOnEmptyClick
-  _clickableLayers:
-    serializedVersion: 2
-    m_Bits: 256
-  _maxRayDistance: 1000
+  _boardLayoutJson: {fileID: 4900000, guid: 6643bcb3ebf525743add7def57f90fc9, type: 3}
+  _pieceLibraryJson: {fileID: 4900000, guid: be8c9d236e0997c4bb4262ce6b086126, type: 3}
 --- !u!114 &526232270
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -526,37 +511,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13681ddf1e483b34aba0d7b1801bf2da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoardUI
---- !u!114 &526232272
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 526232266}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 34f4b6366882ce041843f062b925bd6b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::View
---- !u!114 &526232274
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 526232266}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4951c993a48e9fb4080234fbda381088, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraWork
-  _distance: 15
-  _rotationSpeed: 5
-  _panSpeed: 1
-  _zoomSpeed: 5
-  _minDistance: 5
-  _maxDistance: 60
-  _snapDistance: 5
 --- !u!114 &526232275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -653,6 +607,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee664053700e9a54783f3fd5a771b031, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MouseEventer
+--- !u!114 &526232283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f03cecda3d840047a51475d453e4006, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeselectOnEmptyClick
+  _clickableLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  _maxRayDistance: 1000
 --- !u!1 &540639270
 GameObject:
   m_ObjectHideFlags: 0
@@ -823,7 +793,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1193,6 +1163,7 @@ GameObject:
   - component: {fileID: 2137650704}
   - component: {fileID: 2137650703}
   - component: {fileID: 2137650708}
+  - component: {fileID: 2137650709}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1343,10 +1314,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13681ddf1e483b34aba0d7b1801bf2da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridUI
+--- !u!114 &2137650709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2137650701}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c769e39f6abb65649b0e65ab5aae7538, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIPointerProbe
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 526232267}
-  - {fileID: 1446525816}
   - {fileID: 2013410475}
+  - {fileID: 1446525816}

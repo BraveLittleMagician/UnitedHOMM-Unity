@@ -14,13 +14,13 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     [SerializeField] private float _snapDistance = 5f;
 
     private Camera _camera = null!;
-    private Transform _boardRoot = null!;
     private HoldRight _holdRightHub = null!;
     private HoldMiddle _holdMiddleHub = null!;
     private Delta _deltaHub = null!;
     private Scroll _scrollHub = null!;
     private WorldToScreenMarker _cubeCenterMarker = null!;
     private WorldToScreenMarker _rotationCenterMarker = null!;
+    private Vector3 _boardCenter = Vector3.zero;
 
     private float _x = 0f;
     private float _y = 0f;
@@ -28,7 +28,7 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     private bool _middleHolding = false;
     private Vector3 _targetOffset = Vector3.zero;
 
-    public Vector3 RotationCenter => _boardRoot.position + transform.position + _targetOffset;
+    public Vector3 RotationCenter => _boardCenter + _targetOffset;
 
     private void UpdatePosition()
     {
@@ -42,7 +42,7 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     }
     private void UpdateMarkers()
     {
-        _cubeCenterMarker.SetWorldPosition(_boardRoot.position);
+        _cubeCenterMarker.SetWorldPosition(_boardCenter);
         _rotationCenterMarker.SetWorldPosition(RotationCenter);
 
         _cubeCenterMarker.Refresh();
@@ -55,9 +55,7 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     }
     private bool IsCloseToCenterOnScreen()
     {
-        if (_boardRoot == null) return false;
-
-        Vector3 centerWorld = _boardRoot.position;
+        Vector3 centerWorld = _boardCenter;
         Vector3 rotationCenterWorld = RotationCenter;
 
         Vector3 screenCenter = _camera.WorldToScreenPoint(centerWorld);
@@ -116,9 +114,9 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
         _middleHolding = false;
         SetMarkersVisible(false);
     }
-    public void Initialize(Transform piecesRoot, Camera camera, WorldToScreenMarker cubeCenterMarker, WorldToScreenMarker rotationCenterMarker, HoldRight holdRightHub, HoldMiddle holdMiddleHub, Delta deltaHub, Scroll scrollHub)
+    public void Initialize(Vector3 boardCenter, Camera camera, WorldToScreenMarker cubeCenterMarker, WorldToScreenMarker rotationCenterMarker, HoldRight holdRightHub, HoldMiddle holdMiddleHub, Delta deltaHub, Scroll scrollHub)
     {
-        _boardRoot = piecesRoot != null ? piecesRoot : throw new ArgumentNullException(nameof(piecesRoot));
+        _boardCenter = boardCenter;
         _camera = camera != null ? camera : throw new ArgumentNullException(nameof(camera));
         _cubeCenterMarker = cubeCenterMarker != null ? cubeCenterMarker : throw new ArgumentNullException(nameof(cubeCenterMarker));
         _rotationCenterMarker = rotationCenterMarker != null ? rotationCenterMarker : throw new ArgumentNullException(nameof(rotationCenterMarker));
@@ -133,7 +131,15 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     {
         Vector3 angles = transform.eulerAngles;
         _x = angles.y;
+
         _y = angles.x;
+        if (_y > 180f)
+            _y -= 360f;
+        _y = Mathf.Clamp(_y, -90f, 90f);
+
+        float initialDistance = Vector3.Distance(transform.position, RotationCenter);
+        if (initialDistance > 0.01f)
+            _distance = Mathf.Clamp(initialDistance, _minDistance, _maxDistance);
 
         _holdRightHub.RegisterSubscriber(this);
         AddSubscription(() => _holdRightHub.UnregisterSubscriber(this));
@@ -149,5 +155,11 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
 
         SetMarkersVisible(false);
         UpdateMarkers();
+    }
+    public void SetBoardCenter(Vector3 center)
+    {
+        _boardCenter = center;
+        _targetOffset = Vector3.zero;
+        UpdatePosition();
     }
 }
