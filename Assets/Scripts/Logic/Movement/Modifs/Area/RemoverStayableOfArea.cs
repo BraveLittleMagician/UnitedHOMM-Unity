@@ -6,7 +6,7 @@ public class RemoverStayableOfArea<TSquare> : ModificatorOfArea<TSquare> where T
     public RemoverStayableOfArea(int index) => Index = index;
     public override RelativeArea<TSquare> Apply(RelativeArea<TSquare> sequence)
     {
-        var (stayables, length, isCircle, _) = sequence.DataWithRemovedStayable(Index);
-        return new RelativeArea<TSquare>(stayables, length, isCircle, false);
+        var (activeAxes, stayables, length, isCircle, _) = sequence.DataWithRemovedStayable(Index);
+        return new RelativeArea<TSquare>(activeAxes, stayables, length, isCircle, false);
     }
 }

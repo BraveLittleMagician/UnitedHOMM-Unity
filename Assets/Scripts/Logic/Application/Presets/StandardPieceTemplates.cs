@@ -1,15 +1,22 @@
 ﻿#nullable enable
 
+using System;
 using System.Collections.Generic;
 
 public static class StandardPieceTemplates
 {
     public static IReadOnlyList<PieceTemplate> CreateAll(DeckSequenceProvider deckSequences, IEventBus eventBus)
     {
-        var noMovements = System.Array.Empty<IMovementFactory>();
-        var noMelee = System.Array.Empty<IMeleeAttack>();
-        var noRanged = System.Array.Empty<IRangedAttack>();
-        var noAbilities = System.Array.Empty<IAbility>();
+        var noMelee = Array.Empty<IMeleeAttack>();
+        var noRanged = Array.Empty<IRangedAttack>();
+        var noAbilities = Array.Empty<IAbility>();
+        var noMovements = Array.Empty<IMovementFactory>();
+
+        var kingMovement = new IMovementFactory[]
+        {
+            new MovementCombinedFactory<RelativeArea<Square>, Board, Square>(
+                new RelativeArea<Square>(activeAxes: MultipleAxes.Two, isCircle: false))
+        };
 
         return new List<PieceTemplate>
         {
@@ -56,7 +63,7 @@ public static class StandardPieceTemplates
             new(
                 name: "King",
                 health: 25,
-                movementFactories: noMovements,
+                movementFactories: kingMovement,
                 meleeAttacks: noMelee,
                 rangedAttacks: noRanged,
                 abilities: noAbilities),

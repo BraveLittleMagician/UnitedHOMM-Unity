@@ -52,24 +52,26 @@ public static class SquareExtensions
         }
         return true;
     }
-    public static bool IsWithinSquareRadius<TSquare>(this TSquare start, TSquare target, int radius) where TSquare : struct, ISquare<TSquare>
+    public static bool IsWithinSquareRadius<TSquare>(this TSquare start, TSquare target, int radius, MultipleAxes activeAxes) where TSquare : struct, ISquare<TSquare>
     {
         var diff = target.Subtract(start);
         for (int i = 0; i < diff.CountOfAxes; i++)
         {
             var coord = diff.GetCoordinateAt(i);
+            if (!activeAxes.HasFlag((MultipleAxes)(int)coord.Key)) continue;
             if (Math.Abs(coord.Value) > radius) return false;
         }
         return true;
     }
-    public static bool IsWithinCircleRadius<TSquare>(this TSquare start, TSquare target, int radius) where TSquare : struct, ISquare<TSquare>
+    public static bool IsWithinCircleRadius<TSquare>(this TSquare start, TSquare target, int radius, MultipleAxes activeAxes) where TSquare : struct, ISquare<TSquare>
     {
         var diff = target.Subtract(start);
         long distSq = 0;
         for (int i = 0; i < diff.CountOfAxes; i++)
         {
-            int v = diff.GetCoordinateAt(i).Value;
-            distSq += (long)v * v;
+            var coord = diff.GetCoordinateAt(i);
+            if (!activeAxes.HasFlag((MultipleAxes)(int)coord.Key)) continue;
+            distSq += (long)coord.Value * coord.Value;
         }
         return distSq <= (long)radius * radius;
     }

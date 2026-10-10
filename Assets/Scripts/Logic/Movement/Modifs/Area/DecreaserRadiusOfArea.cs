@@ -4,7 +4,7 @@ public class DecreaserRadiusOfArea<TSquare> : ModificatorOfArea<TSquare> where T
 {
     public override RelativeArea<TSquare> Apply(RelativeArea<TSquare> sequence)
     {
-        var (stayables, length, isCircle, guarantees) = sequence.DataWithDecreasedRadius();
-        return new RelativeArea<TSquare>(stayables, length, isCircle, false);
+        var (activeAxes, stayables, length, isCircle, guarantees) = sequence.DataWithDecreasedRadius();
+        return new RelativeArea<TSquare>(activeAxes, stayables, length, isCircle, false);
     }
 }
