@@ -16,6 +16,8 @@ public sealed class Presenter : IDisposable
     private readonly PiecePrefabRegistry _prefabs;
     private readonly Transform _piecesRoot;
     private readonly CameraWork _cameraWork;
+    private readonly int _teamCount;
+    private readonly int _subteamCount;
 
     private readonly Dictionary<BigInteger, GameObject> _views = new();
     private readonly Dictionary<BigInteger, IPiece> _pieces = new();
@@ -23,7 +25,7 @@ public sealed class Presenter : IDisposable
     private Material _material = null!;
     private bool _disposed;
 
-    public Presenter(IEventBus eventBus, ILogger logger, ISelectionHub selectionHub, UIPointerProbe uiPointerProbe, PiecePrefabRegistry prefabs, CameraWork cameraWork, Transform piecesRoot)
+    public Presenter(IEventBus eventBus, ILogger logger, ISelectionHub selectionHub, UIPointerProbe uiPointerProbe, PiecePrefabRegistry prefabs, CameraWork cameraWork, Seats seats, Transform piecesRoot)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
@@ -32,6 +34,8 @@ public sealed class Presenter : IDisposable
         _prefabs = prefabs ?? throw new ArgumentNullException(nameof(prefabs));
         _cameraWork = cameraWork != null ? cameraWork : throw new ArgumentNullException(nameof(cameraWork));
         _piecesRoot = piecesRoot != null ? piecesRoot : throw new ArgumentNullException(nameof(piecesRoot));
+        _teamCount = seats.CountOfSides;
+        _subteamCount = seats.CountOfPlayersOnSide;
 
         _eventBus.Subscribe<PieceDeployedEvent<Square>>(OnPieceDeployed);
         _eventBus.Subscribe<PieceMovedEvent<Square>>(OnPieceMoved);
@@ -68,13 +72,13 @@ public sealed class Presenter : IDisposable
         info.Initialize(piece.Name, piece.Owner, piece.IndexInHouse);
         info.PositionInGrid = new Vector3Int(position.X, position.Y, position.Z);
 
-        PieceColorizer.ApplyInitialColor(go, info, _material, piece.Owner, teamCount: GetMaxSide() + 1, subteamCount: GetMaxSubteam() + 1);
+        PieceColorizer.ApplyInitialColor(go, info, _material, piece.Owner, _teamCount, _subteamCount);
 
         _views[piece.IndexInHouse] = go;
         _pieces[piece.IndexInHouse] = piece;
 
         var button = go.GetOrAddComponent<ButtonBehaviorEvents>();
-        button.Initialize(_selectionHub, _uiPointerProbe);
+        button.Initialize(_selectionHub, _uiPointerProbe, _cameraWork);
 
         _logger.LogDebug($"Создан визуал для {piece} в {position}");
     }
@@ -115,25 +119,6 @@ public sealed class Presenter : IDisposable
             position.X * _cellSize,
             position.Z * _cellSize,
             position.Y * _cellSize);
-    }
-
-    private int GetMaxSide()
-    {
-        int maxSide = 0;
-        foreach (var piece in _pieces.Values)
-            if (piece.Owner.IndexOfSide > maxSide) maxSide = piece.Owner.IndexOfSide;
-        
-        return maxSide;
-    }
-
-    private int GetMaxSubteam()
-    {
-        int maxSub = 0;
-        foreach (var piece in _pieces.Values)
-        {
-            if (piece.Owner.IndexOfPlayerOnSide > maxSub) maxSub = piece.Owner.IndexOfPlayerOnSide;
-        }
-        return maxSub;
     }
 
     public void Dispose()

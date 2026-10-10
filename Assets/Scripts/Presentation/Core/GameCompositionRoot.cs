@@ -146,7 +146,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     }
     private void CreatePresentation()
     {
-        _presenter = new Presenter(_eventBus, _logger, _selectionHub, _uiPointerProbe, _piecePrefabs, _cameraWork, _piecesRoot);
+        _presenter = new Presenter(_eventBus, _logger, _selectionHub, _uiPointerProbe, _piecePrefabs, _cameraWork, _seats, _piecesRoot);
         _presenter.SetMaterial(_pieceMaterial);
     }
     private void InitializeSceneComponents()

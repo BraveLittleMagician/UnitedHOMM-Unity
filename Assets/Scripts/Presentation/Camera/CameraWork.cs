@@ -28,6 +28,7 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     private bool _middleHolding = false;
     private Vector3 _targetOffset = Vector3.zero;
 
+    public bool IsManipulating => _rightHolding || _middleHolding;
     public Vector3 RotationCenter => _boardCenter + _targetOffset;
 
     private void UpdatePosition()
@@ -96,23 +97,30 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     }
     public void TriggerHoldRightStarted()
     {
+        if (_rightHolding) return;
         _rightHolding = true;
         SetMarkersVisible(true);
+        ManipulationChanged?.Invoke(true);
     }
     public void TriggerHoldRightCanceled()
     {
+        if (!_rightHolding) return;
         _rightHolding = false;
         SetMarkersVisible(false);
+        ManipulationChanged?.Invoke(true);
     }
     public void TriggerHoldMiddleStarted()
     {
+        if (_middleHolding) return;
         _middleHolding = true;
         SetMarkersVisible(true);
     }
     public void TriggerHoldMiddleCanceled()
     {
+        if (!_middleHolding) return;
         _middleHolding = false;
         SetMarkersVisible(false);
+        ManipulationChanged?.Invoke(true);
     }
     public void Initialize(Vector3 boardCenter, Camera camera, WorldToScreenMarker cubeCenterMarker, WorldToScreenMarker rotationCenterMarker, HoldRight holdRightHub, HoldMiddle holdMiddleHub, Delta deltaHub, Scroll scrollHub)
     {
@@ -162,4 +170,6 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
         _targetOffset = Vector3.zero;
         UpdatePosition();
     }
+
+    public event Action<bool>? ManipulationChanged;
 }

@@ -8,6 +8,7 @@ public class ButtonBehaviorEvents : MonoBehaviour, ISelectable, IHoverable, IPre
 {
     private ISelectionHub _selectionHub = null!;
     private UIPointerProbe _uiPointerProbe = null!;
+    private CameraWork _cameraWork = null!;
     private InfoOfPiece _info = null!;
 
     [field: SerializeField] public bool Interactable { get; private set; } = true;
@@ -16,6 +17,11 @@ public class ButtonBehaviorEvents : MonoBehaviour, ISelectable, IHoverable, IPre
     public bool IsHovered { get; private set; }
     public bool IsPressed { get; private set; }
 
+    private void OnDestroy()
+    {
+        if (_cameraWork != null) _cameraWork.ManipulationChanged -= OnManipulationChanged;
+    }
+
     private void UpdateVisualState()
     {
         if (_info == null) return;
@@ -23,14 +29,16 @@ public class ButtonBehaviorEvents : MonoBehaviour, ISelectable, IHoverable, IPre
 
         PieceColorizer.SetVisualState(_info, IsSelected, highlighted: false, hovered: IsHovered);
     }
-    public void Initialize(ISelectionHub selectionHub, UIPointerProbe uiPointerProbe)
+    private void OnManipulationChanged(bool isManipulating)
     {
-        _selectionHub = selectionHub ?? throw new ArgumentNullException(nameof(selectionHub));
-        _uiPointerProbe = uiPointerProbe != null ? uiPointerProbe : throw new ArgumentNullException(nameof(uiPointerProbe)); 
-        if (!TryGetComponent(out _info!))
-            throw new InvalidOperationException($"На объекте '{name}' отсутствует InfoOfPiece. ButtonBehaviorEvents требует его для управления визуалом.");
+        if (isManipulating && IsHovered) ForceHoverExit();
     }
-    public void Interact(bool val) => Interactable = val;
+    private void ForceHoverExit()
+    {
+        IsHovered = false;
+        UpdateVisualState();
+        Dehovered?.Invoke();
+    }
 
     public void OnSelected()
     {
@@ -76,21 +84,36 @@ public class ButtonBehaviorEvents : MonoBehaviour, ISelectable, IHoverable, IPre
     public void OnPointerClick(PointerEventData eventData)
     {
         if (!Interactable) return;
+        if (_cameraWork.IsManipulating) return;
         if (_uiPointerProbe.IsPointerOverUI(eventData.position)) return;
         _selectionHub.Select(this);
     }
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (_cameraWork.IsManipulating) return;
         if (_uiPointerProbe.IsPointerOverUI(eventData.position)) return;
         OnHoverEnter();
     }
     public void OnPointerExit(PointerEventData _) => OnHoverExit();
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (_cameraWork.IsManipulating) return;
         if (_uiPointerProbe.IsPointerOverUI(eventData.position)) return;
         OnPress();
     }
     public void OnPointerUp(PointerEventData _) => OnRelease();
+    public void Initialize(ISelectionHub selectionHub, UIPointerProbe uiPointerProbe, CameraWork cameraWork)
+    {
+        _selectionHub = selectionHub ?? throw new ArgumentNullException(nameof(selectionHub));
+        _uiPointerProbe = uiPointerProbe != null ? uiPointerProbe : throw new ArgumentNullException(nameof(uiPointerProbe));
+        _cameraWork = cameraWork != null ? cameraWork : throw new ArgumentNullException(nameof(cameraWork));
+        if (!TryGetComponent(out _info!))
+            throw new InvalidOperationException($"На объекте '{name}' отсутствует InfoOfPiece. ButtonBehaviorEvents требует его для управления визуалом.");
+
+        _cameraWork.ManipulationChanged += OnManipulationChanged;
+    }
+    public void Interact(bool val) => Interactable = val;
+
 
     public event Action? Selected;
     public event Action? Deselected;
