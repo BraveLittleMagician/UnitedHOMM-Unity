@@ -3,9 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-public abstract class MovementInRoom<TSequence, TRoom, TPosition> : Movement 
-    where TSequence : notnull, ISequence<TPosition, TSequence> 
-    where TRoom : IRoomT<TPosition> where TPosition : struct
+public abstract class MovementInRoom<TSequence, TRoom, TPosition> : Movement where TSequence : notnull, ISequence<TPosition, TSequence> where TRoom : IRoomT<TPosition> where TPosition : struct
 {
     private readonly IEventBus _eventBus;
     private readonly IPiece _owner;
@@ -55,7 +53,10 @@ public abstract class MovementInRoom<TSequence, TRoom, TPosition> : Movement
     public override List<TPos> GetStayables<TPos>(TPos tpos, bool isAttack)
     {
         if (tpos is TPosition start)
-            return (List<TPos>)(object)GetStayables(start, isAttack);
+        {
+            var result = GetStayables(start, isAttack);
+            if (result is List<TPos> posResult) return posResult;
+        }
         return new List<TPos>();
     }
     public abstract Dictionary<TPosition, Stayable> GetPositions(TPosition start, bool isAttack);
