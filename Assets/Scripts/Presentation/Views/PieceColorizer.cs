@@ -8,7 +8,7 @@ public static class PieceColorizer
 {
     private static readonly List<Material> _singleMaterial = new(1);
 
-    public static void ApplyInitialColor(GameObject pieceObj, InfoOfPiece info, Material pieceMaterial, IndexOfPlayer player, int teamCount, int subteamCount)
+    public static void ApplyInitialColor(GameObject pieceObj, InfoOfPiece info, Material pieceMaterial, IdOfPlayer player, int teamCount, int subteamCount)
     {
         var renderers = pieceObj.GetComponentsInChildren<Renderer>();
         if (renderers.Length == 0) throw new InvalidOperationException(
@@ -48,7 +48,7 @@ public static class PieceColorizer
             r.SetPropertyBlock(block);
     }
 
-    private static (double hue, double lightness) GetHL(IndexOfPlayer index, int teamCount, int subteamCount)
+    private static (double hue, double lightness) GetHL(IdOfPlayer index, int teamCount, int subteamCount)
     {
         int half = teamCount / 2;
 

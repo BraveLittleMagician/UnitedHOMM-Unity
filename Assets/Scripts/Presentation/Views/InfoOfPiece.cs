@@ -7,9 +7,9 @@ using UnityEngine;
 public class InfoOfPiece : MonoBehaviour
 {
     [field: SerializeField] public string Name { get; private set; } = "";
-    [field: SerializeField] public IndexOfPlayer Player { get; private set; }
-    [field: SerializeField] public BigInteger IndexInHouse { get; private set; }
     [field: SerializeField] public Vector3Int PositionInGrid { get; set; }
+    public IdOfPlayer Player { get; private set; }
+    public BigInteger IndexInHouse { get; private set; }
     public MaterialPropertyBlock Block { get; set; } = null!;
 
     public void Start()
@@ -18,7 +18,7 @@ public class InfoOfPiece : MonoBehaviour
         if (Name == "") throw new InvalidOperationException(nameof(Name));
     }
 
-    public void Initialize(string name, IndexOfPlayer player, BigInteger indexInHouse)
+    public void Initialize(string name, IdOfPlayer player, BigInteger indexInHouse)
     {
         Name = name;
         Player = player;

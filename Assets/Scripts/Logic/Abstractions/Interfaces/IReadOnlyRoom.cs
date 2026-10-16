@@ -11,5 +11,5 @@ public interface IReadOnlyRoom : IPiecesGetter, IDisposable
     public Seats ActiveSeats { get; }
 
     public bool TryToGetPiece<TPos>(TPos position, [NotNullWhen(true)] out IPiece? piece) where TPos : struct;
-    public bool TryToGetPiecesForPlayer(IndexOfPlayer player, out IEnumerable<IPiece> pieces);
+    public bool TryToGetPiecesForPlayer(IdOfPlayer player, out IEnumerable<IPiece> pieces);
 }

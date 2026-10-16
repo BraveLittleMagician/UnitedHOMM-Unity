@@ -7,7 +7,7 @@ using System.Numerics;
 public interface IPiece : IDisposable
 {
     BigInteger IndexInHouse { get; }
-    IndexOfPlayer Owner { get; }
+    IdOfPlayer Owner { get; }
     string Name { get; }
     int Health { get; }
     int HealthNormal { get; }

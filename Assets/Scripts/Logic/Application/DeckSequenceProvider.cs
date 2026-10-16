@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public sealed class DeckSequenceProvider : IDisposable
 {
     private readonly IEventBus _eventBus;
-    private readonly Dictionary<IndexOfPlayer, SizeAwareInt> _cache = new();
+    private readonly Dictionary<IdOfPlayer, SizeAwareInt> _cache = new();
     private bool _disposed;
 
     public DeckSequenceProvider(IEventBus eventBus)
@@ -14,7 +14,7 @@ public sealed class DeckSequenceProvider : IDisposable
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
     }
 
-    public SizeAwareInt GetFor(IndexOfPlayer player)
+    public SizeAwareInt GetFor(IdOfPlayer player)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(DeckSequenceProvider));
 

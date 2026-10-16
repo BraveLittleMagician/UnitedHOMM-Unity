@@ -15,7 +15,7 @@ public sealed class Piece : IPiece
     private readonly ILogger _logger;
     private bool _disposed;
 
-    public Piece(BigInteger indexInHouse, IndexOfPlayer owner, string name, int health, IEventBus eventBus, ILogger logger)
+    public Piece(BigInteger indexInHouse, IdOfPlayer owner, string name, int health, IEventBus eventBus, ILogger logger)
     {
         IndexInHouse = indexInHouse;
         Owner = owner;
@@ -32,7 +32,7 @@ public sealed class Piece : IPiece
 
 
     public BigInteger IndexInHouse { get; }
-    public IndexOfPlayer Owner { get; }
+    public IdOfPlayer Owner { get; }
     public string Name { get; }
     public int Health => _properties.TryToGet<Health>(out var health) ? health.Value : 0;
     public int HealthNormal => _properties.TryToGet<Health>(out var health) ? health.NormalValue : 0;

@@ -49,7 +49,7 @@ public sealed class Flow : IFlow, IDisposable
 
         return Result<IPiece>.Success(piece);
     }
-    public IResult MovePiece<TRoom, TPos>(IndexOfPlayer owner, IPath<TPos> path) where TRoom : IRoom where TPos : struct
+    public IResult MovePiece<TRoom, TPos>(IdOfPlayer owner, IPath<TPos> path) where TRoom : IRoom where TPos : struct
     {
         if (path == null) return Result.Failure("Путь не может быть null");
 
@@ -71,7 +71,7 @@ public sealed class Flow : IFlow, IDisposable
         _logger.Log($"Фигура {piece} перемещена с {start} на {path.Positions[^1]} в {room.Name}");
         return Result.Success();
     }
-    public IResult MeleeAttack<TRoom, TPos>(IndexOfPlayer attackerOwner, IPath<TPos> path) where TRoom : IRoom where TPos : struct
+    public IResult MeleeAttack<TRoom, TPos>(IdOfPlayer attackerOwner, IPath<TPos> path) where TRoom : IRoom where TPos : struct
     {
         if (path == null) return Result.Failure("Путь не может быть null");
 
@@ -97,7 +97,7 @@ public sealed class Flow : IFlow, IDisposable
 
         return Result.Success();
     }
-    public IResult ChangeRoom<TRoomFrom, TRoomTo, TPosFrom, TPosTo>(IndexOfPlayer owner, TPosFrom fromPosition, TPosTo toPosition) where TRoomFrom : IRoom where TRoomTo : IRoom where TPosFrom : struct where TPosTo : struct
+    public IResult ChangeRoom<TRoomFrom, TRoomTo, TPosFrom, TPosTo>(IdOfPlayer owner, TPosFrom fromPosition, TPosTo toPosition) where TRoomFrom : IRoom where TRoomTo : IRoom where TPosFrom : struct where TPosTo : struct
     {
         var fromResult = GetRoom<TRoomFrom>();
         if (!fromResult.IsSuccess) return Result.Failure(fromResult.Error!);

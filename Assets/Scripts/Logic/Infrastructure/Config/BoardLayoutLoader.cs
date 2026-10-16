@@ -132,7 +132,7 @@ public static class BoardLayoutLoader
         {
             var template = templates.Get(p.Name ?? throw new NullReferenceException(nameof(p.Name)));
             if (p.Player == null || p.Position == null) throw new NullReferenceException(nameof(p));
-            var owner = new IndexOfPlayer(
+            var owner = new IdOfPlayer(
                 p.Player.IndexOfSide,
                 p.Player.IndexOfPlayerOnSide);
             var position = new Square

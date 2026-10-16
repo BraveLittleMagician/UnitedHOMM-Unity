@@ -68,7 +68,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
 
         return false;
     }
-    public override bool Remove<TPos>(TPos position, IndexOfPlayer player)
+    public override bool Remove<TPos>(TPos position, IdOfPlayer player)
     {
         if (position is not TPosition typedPos) return false;
         if (!_pieces.TryGetValue(typedPos, out var piece)) return false;
@@ -78,7 +78,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         OnPieceRemoved(piece);
         return true;
     }
-    public override bool Displace<TPos>(IPath<TPos> path, IndexOfPlayer player, out string error)
+    public override bool Displace<TPos>(IPath<TPos> path, IdOfPlayer player, out string error)
     {
         if (path is not IPath<TPosition> typedPath)
         {
@@ -129,7 +129,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         piece = null;
         return false;
     }
-    public override bool TryToGetPiecesForPlayer(IndexOfPlayer player, out IEnumerable<IPiece> pieces)
+    public override bool TryToGetPiecesForPlayer(IdOfPlayer player, out IEnumerable<IPiece> pieces)
     {
         var list = _pieces.Values.Where(p => p.Owner.Equals(player)).ToList();
         pieces = list;

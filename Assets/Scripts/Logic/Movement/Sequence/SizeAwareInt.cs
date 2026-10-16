@@ -6,11 +6,11 @@ using System.Collections.Generic;
 public sealed class SizeAwareInt : ISequence<int, SizeAwareInt>, IDisposable
 {
     private readonly IEventBus _eventBus;
-    private readonly IndexOfPlayer _owner;
+    private readonly IdOfPlayer _owner;
     private int _count;
     private bool _disposed;
 
-    public SizeAwareInt(IEventBus eventBus, IndexOfPlayer owner, int initialCount = 0)
+    public SizeAwareInt(IEventBus eventBus, IdOfPlayer owner, int initialCount = 0)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _owner = owner;
