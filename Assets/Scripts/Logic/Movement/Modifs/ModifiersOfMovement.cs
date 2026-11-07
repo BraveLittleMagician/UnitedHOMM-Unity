@@ -3,13 +3,12 @@
 using System;
 using System.Collections.Generic;
 
-public class ModifiersOfMovement<TSequence, TPosition> : Modifiers
-    where TSequence : notnull, ISequence<TPosition, TSequence>
-    where TPosition : struct
+public sealed class ModifiersOfMovement<TSequence, TPosition> : IDisposable where TSequence : notnull, ISequence<TPosition, TSequence> where TPosition : struct
 {
     private readonly IEventBus _eventBus;
     private readonly IPiece _owner;
-    private readonly Dictionary<Type, AttackMovement> _modifiers = new();
+    private readonly Dictionary<Type, ModifierOfMovement<TSequence, TPosition>> _modifiers = new();
+    private bool _disposed;
 
     public ModifiersOfMovement(IEventBus eventBus, IPiece owner)
     {
@@ -17,118 +16,37 @@ public class ModifiersOfMovement<TSequence, TPosition> : Modifiers
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
     }
 
-    public IEnumerable<ModifierOfMovement<TSequence, TPosition>> Attacks
-    {
-        get
-        {
-            foreach (var modifs in _modifiers.Values)
-                if (modifs.Attack != null)
-                    yield return modifs.Attack;
-        }
-    }
+    public IEnumerable<ModifierOfMovement<TSequence, TPosition>> All => _modifiers.Values;
 
-    public IEnumerable<ModifierOfMovement<TSequence, TPosition>> Movements
+    public bool Add<TModif>(TModif modifier)
+        where TModif : ModifierOfMovement<TSequence, TPosition>
     {
-        get
-        {
-            foreach (var modifs in _modifiers.Values)
-                if (modifs.Movement != null)
-                    yield return modifs.Movement;
-        }
-    }
+        if (modifier == null) throw new ArgumentNullException(nameof(modifier));
+        if (_disposed) throw new ObjectDisposedException(nameof(ModifiersOfMovement<TSequence, TPosition>));
 
-    private bool AddPrivate<TModif>(TModif m, bool isAttack) where TModif : ModifierOfMovement
-    {
-        if (m is not ModifierOfMovement<TSequence, TPosition> modifier)
+        if (!_modifiers.TryAdd(typeof(TModif), modifier))
             return false;
 
-        var type = m.GetType();
-
-        if (!_modifiers.TryGetValue(type, out var modifs))
-        {
-            modifs = new AttackMovement();
-            if (!modifs.Add(modifier, isAttack))
-                return false;
-
-            _modifiers[type] = modifs;
-            return true;
-        }
-
-        return modifs.Add(modifier, isAttack);
-    }
-
-    private bool RemovePrivate<TModif>(bool isAttack) where TModif : ModifierOfMovement
-    {
-        if (!_modifiers.TryGetValue(typeof(TModif), out var gotten)) return false;
-
-        if (!gotten.Remove(isAttack)) return false;
-
-        if (gotten.Attack == null && gotten.Movement == null)
-            _modifiers.Remove(typeof(TModif));
-
+        _eventBus.Publish(new ModifiersUpdatedEvent(_owner, typeof(TSequence)));
         return true;
     }
 
-    public override bool Add<TModif>(TModif m, bool isAttack)
+    public bool Remove<TModif>()
+        where TModif : ModifierOfMovement<TSequence, TPosition>
     {
-        if (AddPrivate(m, isAttack))
-        {
-            _eventBus.Publish(new ModifiersUpdatedEvent(_owner, isAttack, typeof(TSequence)));
-            return true;
-        }
-        return false;
+        if (_disposed) throw new ObjectDisposedException(nameof(ModifiersOfMovement<TSequence, TPosition>));
+
+        if (!_modifiers.Remove(typeof(TModif)))
+            return false;
+
+        _eventBus.Publish(new ModifiersUpdatedEvent(_owner, typeof(TSequence)));
+        return true;
     }
 
-    public override bool Remove<TModif>(bool isAttack)
+    public void Dispose()
     {
-        if (RemovePrivate<TModif>(isAttack))
-        {
-            _eventBus.Publish(new ModifiersUpdatedEvent(_owner, isAttack, typeof(TSequence)));
-            return true;
-        }
-        return false;
-    }
-
-    public override void Dispose()
-    {
+        if (_disposed) return;
+        _disposed = true;
         _modifiers.Clear();
-    }
-
-    private class AttackMovement
-    {
-        public ModifierOfMovement<TSequence, TPosition>? Attack { get; private set; }
-        public ModifierOfMovement<TSequence, TPosition>? Movement { get; private set; }
-
-        public bool Add(ModifierOfMovement<TSequence, TPosition> modifier, bool isAttack)
-        {
-            if (isAttack)
-            {
-                if (Attack != null) return false;
-                Attack = modifier;
-                return true;
-            }
-            else
-            {
-                if (Movement != null) return false;
-                Movement = modifier;
-                return true;
-            }
-        }
-
-        public bool Remove(bool isAttack)
-        {
-            if (isAttack)
-            {
-                if (Attack == null) return false;
-                Attack = null;
-                return true;
-            }
-            else
-            {
-                if (Movement == null) return false;
-                Movement = null;
-                return true;
-            }
-        }
     }
 }

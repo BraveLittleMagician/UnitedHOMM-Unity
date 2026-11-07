@@ -138,11 +138,10 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _house.AddRoom(_board);
         _house.AddRoom(new Decks(_seats, _eventBus, _logger));
 
-        _combatService = new CombatService(_logger, _eventBus);
         _movementValidator = new MovementValidator(_logger);
         _abilityService = new AbilityService(_eventBus, _logger);
 
-        _flow = new Flow(_house, _eventBus, _logger, _combatService, _movementValidator, _abilityService);
+        _flow = new Flow(_house, _eventBus, _logger, _movementValidator, _abilityService);
     }
     private void CreatePresentation()
     {

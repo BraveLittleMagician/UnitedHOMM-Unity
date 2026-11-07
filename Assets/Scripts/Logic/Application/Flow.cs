@@ -7,17 +7,20 @@ public sealed class Flow : IFlow, IDisposable
     private readonly IHouse _house;
     private readonly IEventBus _eventBus;
     private readonly ILogger _logger;
-    private readonly ICombatService _combatService;
     private readonly IMovementValidator _movementValidator;
     private readonly IAbilityService _abilityService;
     private bool _disposed;
 
-    public Flow(IHouse house, IEventBus eventBus, ILogger logger, ICombatService combatService, IMovementValidator movementValidator, IAbilityService abilityService)
+    public Flow(
+        IHouse house,
+        IEventBus eventBus,
+        ILogger logger,
+        IMovementValidator movementValidator,
+        IAbilityService abilityService)
     {
         _house = house ?? throw new ArgumentNullException(nameof(house));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _combatService = combatService ?? throw new ArgumentNullException(nameof(combatService));
         _movementValidator = movementValidator ?? throw new ArgumentNullException(nameof(movementValidator));
         _abilityService = abilityService ?? throw new ArgumentNullException(nameof(abilityService));
     }
@@ -29,7 +32,8 @@ public sealed class Flow : IFlow, IDisposable
         return Result<TRoom>.Success(room);
     }
 
-    public IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position) where TRoom : IRoom where TPos : struct
+    public IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position)
+        where TRoom : IRoom where TPos : struct
     {
         var roomResult = GetRoom<TRoom>();
         if (!roomResult.IsSuccess) return Result<IPiece>.Failure(roomResult.Error!);
@@ -43,13 +47,16 @@ public sealed class Flow : IFlow, IDisposable
             piece.Dispose();
             return Result<IPiece>.Failure($"Не удалось добавить фигуру в комнату: {error}");
         }
+
         _abilityService.ActivateAbilities(piece);
         _eventBus.Publish(new PieceDeployedEvent<TPos>(piece, position, room));
         _logger.Log($"Фигура {piece} добавлена в {room.Name} на позицию {position}");
 
         return Result<IPiece>.Success(piece);
     }
-    public IResult MovePiece<TRoom, TPos>(IdOfPlayer owner, IPath<TPos> path) where TRoom : IRoom where TPos : struct
+
+    public IResult MovePiece<TRoom, TPos>(IdOfPlayer owner, IPath<TPos> path)
+        where TRoom : IRoom where TPos : struct
     {
         if (path == null) return Result.Failure("Путь не может быть null");
 
@@ -59,61 +66,51 @@ public sealed class Flow : IFlow, IDisposable
         var room = roomResult.Value!;
         var start = path.Positions[0];
 
-        if (!room.TryToGetPiece(start, out var piece)) return Result.Failure($"На позиции {start} нет фигуры");
+        if (!room.TryToGetPiece(start, out var piece))
+            return Result.Failure($"На позиции {start} нет фигуры");
 
-        if (!piece.Owner.Equals(owner)) return Result.Failure($"Фигура {piece} не принадлежит игроку {owner}");
+        if (!piece.Owner.Equals(owner))
+            return Result.Failure($"Фигура {piece} не принадлежит игроку {owner}");
 
-        if (!_movementValidator.CanMove(piece, path, room, false, out var error)) return Result.Failure(error);
+        if (!_movementValidator.CanMove(piece, path, room, out var error))
+            return Result.Failure(error);
 
-        if (!room.Displace(path, owner, out var displaceError)) return Result.Failure($"Перемещение не удалось: {displaceError}");
+        if (!room.Displace(path, owner, out var displaceError))
+            return Result.Failure($"Перемещение не удалось: {displaceError}");
 
         _eventBus.Publish(new PieceMovedEvent<TPos>(piece, path.Positions[0], path.Positions[^1], room));
         _logger.Log($"Фигура {piece} перемещена с {start} на {path.Positions[^1]} в {room.Name}");
         return Result.Success();
     }
-    public IResult MeleeAttack<TRoom, TPos>(IdOfPlayer attackerOwner, IPath<TPos> path) where TRoom : IRoom where TPos : struct
+
+    public IResult MeleeAttack<TRoom, TPos>(IdOfPlayer attackerOwner, IPath<TPos> path)
+        where TRoom : IRoom where TPos : struct
     {
-        if (path == null) return Result.Failure("Путь не может быть null");
-
-        var roomResult = GetRoom<TRoom>();
-        if (!roomResult.IsSuccess) return Result.Failure(roomResult.Error!);
-
-        var room = roomResult.Value!;
-        var start = path.Positions[0];
-        var targetPos = path.Positions[^1];
-
-        if (!room.TryToGetPiece(start, out var attacker)) return Result.Failure($"На стартовой позиции {start} нет фигуры");
-
-        if (!attacker.Owner.Equals(attackerOwner)) return Result.Failure($"Фигура {attacker} не принадлежит игроку {attackerOwner}");
-
-        if (!room.TryToGetPiece(targetPos, out var target)) return Result.Failure($"На позиции {targetPos} нет фигуры для атаки");
-
-        if (attacker.Owner.IndexOfSide == target.Owner.IndexOfSide) return Result.Failure("Нельзя атаковать союзника");
-
-        if (!_movementValidator.CanMove(attacker, path, room, true, out var error)) return Result.Failure(error);
-
-        var attackResult = _combatService.PerformMeleeAttack(attacker, target, room);
-        if (!attackResult.IsSuccess) return attackResult;
-
-        return Result.Success();
+        return Result.Failure("Атака ещё не реализована. Будет добавлена отдельным способом.");
     }
-    public IResult ChangeRoom<TRoomFrom, TRoomTo, TPosFrom, TPosTo>(IdOfPlayer owner, TPosFrom fromPosition, TPosTo toPosition) where TRoomFrom : IRoom where TRoomTo : IRoom where TPosFrom : struct where TPosTo : struct
+
+    public IResult ChangeRoom<TRoomFrom, TRoomTo, TPosFrom, TPosTo>(
+        IdOfPlayer owner, TPosFrom fromPosition, TPosTo toPosition)
+        where TRoomFrom : IRoom where TRoomTo : IRoom
+        where TPosFrom : struct where TPosTo : struct
     {
         var fromResult = GetRoom<TRoomFrom>();
         if (!fromResult.IsSuccess) return Result.Failure(fromResult.Error!);
 
         var fromRoom = fromResult.Value!;
         var toResult = GetRoom<TRoomTo>();
-
         if (!toResult.IsSuccess) return Result.Failure(toResult.Error!);
 
         var toRoom = toResult.Value!;
 
-        if (ReferenceEquals(fromRoom, toRoom)) return Result.Failure("Начальная и конечная комнаты одинаковы");
+        if (ReferenceEquals(fromRoom, toRoom))
+            return Result.Failure("Начальная и конечная комнаты одинаковы");
 
-        if (!fromRoom.TryToGetPiece(fromPosition, out var piece)) return Result.Failure($"На позиции {fromPosition} нет фигуры");
+        if (!fromRoom.TryToGetPiece(fromPosition, out var piece))
+            return Result.Failure($"На позиции {fromPosition} нет фигуры");
 
-        if (!piece.Owner.Equals(owner)) return Result.Failure($"Фигура {piece} не принадлежит игроку {owner}");
+        if (!piece.Owner.Equals(owner))
+            return Result.Failure($"Фигура {piece} не принадлежит игроку {owner}");
 
         _abilityService.DeactivateAbilities(piece);
 
@@ -134,6 +131,7 @@ public sealed class Flow : IFlow, IDisposable
         _logger.Log($"Фигура {piece} перемещена из {fromRoom.Name}:{fromPosition} в {toRoom.Name}:{toPosition}");
         return Result.Success();
     }
+
     public void Dispose()
     {
         if (_disposed) return;

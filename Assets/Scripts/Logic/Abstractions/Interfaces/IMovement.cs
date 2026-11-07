@@ -3,10 +3,10 @@
 using System;
 using System.Collections.Generic;
 
-public interface IMovement 
+public interface IMovement : IDisposable
 {
-    bool CanMove<TPos>(IPiece piece, IPath<TPos> path, IReadOnlyRoom room, bool isAttack) where TPos : struct;
+    bool CanMove<TPos>(IPath<TPos> path) where TPos : struct;
     bool IsApplicableToRoom(IReadOnlyRoom room);
-    List<TPos> GetStayables<TPos>(TPos tpos, bool isAttack) where TPos : struct;
-    Dictionary<TPos, Stayable> GetPositions<TPos>(TPos tpos, bool isAttack) where TPos : struct;
-} 
+    List<TPos> GetStayables<TPos>(TPos position) where TPos : struct;
+    Dictionary<TPos, Stayable> GetPositions<TPos>(TPos position) where TPos : struct;
+}
