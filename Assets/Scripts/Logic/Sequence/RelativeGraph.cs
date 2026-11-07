@@ -37,9 +37,102 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
 
     public int Count { get; private set; }
     public bool GuaranteesAtLeastOneStayable { get; private set; }
-    public SegmentNode<TSquare> OriginNode { get; private set; }
+    public SegmentNode<TSquare>? OriginNode { get; private set; }
     public IEnumerable<SegmentNode<TSquare>> Nodes => _lineIndex.Values.SelectMany(list => list);
 
+    private bool AddInternal(TSquare square, Stayables stayables, bool forceAdd)
+    {
+        var newNode = new SegmentNode<TSquare>(square, stayables);
+        if (newNode.Stayables.Count == 0 && !newNode.Position.IsZeroLine() && _totalStayablesCount == 0) return false;
+        
+        var (overlapping, adjacent) = FindOverlappingAndAdjacent(newNode);
+        if (!forceAdd && adjacent.Count == 0 && overlapping.Count == 0 && Count > 0) return false;
+
+        if (overlapping.Count == 0)
+        {
+            AddToIndex(newNode);
+            _totalStayablesCount += newNode.Stayables.Count;
+            ReconnectNode(newNode);
+
+            if (newNode.Position.X <= 0 && newNode.XMax >= 0 && newNode.Position.IsZeroLine())
+                OriginNode = newNode;
+
+            return true;
+        }
+
+        var (minX, maxX, mergedIndices) = MergeOverlappingNodes(newNode, overlapping);
+        RemoveOutdatedNodes(overlapping);
+        _totalStayablesCount += mergedIndices.Count;
+
+        bool containsZeroInMerged = (minX <= 0 && maxX >= 0) &&
+            (newNode.Position.IsZeroLine() || overlapping.Any(n => n.Position.IsZeroLine()));
+
+        var merged = new SegmentNode<TSquare>(square.WithValue(Axis.X, minX), new Stayables(maxX - minX, mergedIndices.OrderBy(i => i).ToList()));
+        if (containsZeroInMerged) OriginNode = merged;
+        AddToIndex(merged);
+        ReconnectNode(merged);
+        return true;
+    }
+    /// <summary>
+    /// Удаляет из графа всё, что оказалось отрезано от origin-сегмента.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Инвариант класса: граф всегда связен и содержит origin-сегмент
+    /// (или пуст при <see cref="GuaranteesAtLeastOneStayable"/> = <c>false</c>).
+    /// </para>
+    /// <para>
+    /// <see cref="Remove(TSquare)"/> может разрезать сегмент пополам. Если после
+    /// разреза одна из половин не соединена с origin напрямую и не «подхвачена»
+    /// параллельной линией (соседний Y/Z-сегмент, с которым у неё есть
+    /// перекрытие по X) — эта половина становится недостижимой. Такие «сироты»
+    /// бесполезны: BFS из точки старта их всё равно не увидит, но они занимают
+    /// память и искажают <see cref="Count"/>.
+    /// </para>
+    /// <para>
+    /// Вызывается после каждого <see cref="Remove(TSquare)"/>. При
+    /// <see cref="GuaranteesAtLeastOneStayable"/> = <c>false</c> допускается
+    /// отсутствие origin (например, после удаления origin-сегмента) — в этом
+    /// случае <see cref="OriginNode"/> уже сброшен в <c>null</c> и метод становится
+    /// no-op.
+    /// </para>
+    /// </remarks>
+    private void PruneDisconnectedFromOrigin()
+    {
+        SegmentNode<TSquare>? anchor = OriginNode;
+        anchor ??= Nodes.FirstOrDefault(n => n.Position.X <= 0 && n.XMax >= 0 && n.Position.IsZeroLine());
+
+        if (anchor == null) return;
+
+        var visited = new HashSet<SegmentNode<TSquare>>();
+        var queue = new Queue<SegmentNode<TSquare>>();
+        queue.Enqueue(anchor);
+        visited.Add(anchor);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var neighbor in current.Neighbors)
+            {
+                if (visited.Add(neighbor))
+                    queue.Enqueue(neighbor);
+            }
+        }
+
+        var toRemove = new List<SegmentNode<TSquare>>();
+        foreach (var node in Nodes)
+        {
+            if (!visited.Contains(node))
+                toRemove.Add(node);
+        }
+
+        foreach (var node in toRemove)
+        {
+            _totalStayablesCount -= node.Stayables.Count;
+            RemoveConnections(node);
+            RemoveFromIndex(node);
+        }
+    }
     private void AddToIndex(SegmentNode<TSquare> node)
     {
         var key = node.Position.GetLineKey();
@@ -100,41 +193,13 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
         var key = node.Position.GetLineKey();
         return _lineIndex.TryGetValue(key, out var list) && list.Contains(node);
     }
-    private bool Add(TSquare square, Stayables stayables)
+    private bool Add(TSquare square, Stayables stayables) => AddInternal(square, stayables, false);
+    private bool Remove(SegmentNode<TSquare> node) => RemoveInternal(node, false);
+    private bool RemoveInternal(SegmentNode<TSquare> node, bool force)
     {
-        var newNode = new SegmentNode<TSquare>(square, stayables);
-        if (newNode.Stayables.Count == 0 && !newNode.Position.IsZeroLine() && _totalStayablesCount == 0)
-            return false;
-
-        var (overlapping, adjacent) = FindOverlappingAndAdjacent(newNode);
-        if (adjacent.Count == 0 && overlapping.Count == 0 && Count > 0)
-            return false;
-
-        if (overlapping.Count == 0)
-        {
-            AddToIndex(newNode);
-            _totalStayablesCount += newNode.Stayables.Count;
-            ReconnectNode(newNode);
-            return true;
-        }
-
-        var (minX, maxX, mergedIndices) = MergeOverlappingNodes(newNode, overlapping);
-        RemoveOutdatedNodes(overlapping);
-        _totalStayablesCount += mergedIndices.Count;
-
-        bool containsZeroInMerged = (minX <= 0 && maxX >= 0) &&
-            (newNode.Position.IsZeroLine() || overlapping.Any(n => n.Position.IsZeroLine()));
-
-        var merged = new SegmentNode<TSquare>(square.WithValue(Axis.X, minX), new Stayables(maxX - minX, mergedIndices.OrderBy(i => i).ToList()));
-        if (containsZeroInMerged) OriginNode = merged;
-        AddToIndex(merged);
-        ReconnectNode(merged);
-        return true;
-    }
-    private bool Remove(SegmentNode<TSquare> node)
-    {
-        if (GuaranteesAtLeastOneStayable && node.Position.X <= 0 && node.XMax >= 0 && node.Position.IsZeroLine()) return false;
+        if (!force && GuaranteesAtLeastOneStayable && node.Position.X <= 0 && node.XMax >= 0 && node.Position.IsZeroLine()) return false;
         if (!Contains(node)) return false;
+        if (ReferenceEquals(OriginNode, node)) OriginNode = null;
         _totalStayablesCount -= node.Stayables.Count;
         RemoveConnections(node);
         RemoveFromIndex(node);
@@ -147,7 +212,7 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
     }
     private RelativeGraph<TSquare> PrivateCopy()
     {
-        var copy = new RelativeGraph<TSquare>();
+        var copy = new RelativeGraph<TSquare>(GuaranteesAtLeastOneStayable);
         copy._lineIndex.Clear();
         copy.Count = 0;
         copy._totalStayablesCount = 0;
@@ -171,9 +236,9 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
             }
         }
 
-        copy.OriginNode = nodeMap.TryGetValue(OriginNode, out var newOrigin)
+        copy.OriginNode = OriginNode != null && nodeMap.TryGetValue(OriginNode, out var newOrigin)
             ? newOrigin
-            : throw new InvalidOperationException("Не удалось скопировать OriginNode");
+            : null;
 
         foreach (var list in copy._lineIndex.Values)
             list.Sort((a, b) => a.Position.X.CompareTo(b.Position.X));
@@ -354,16 +419,31 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
         if (!TryToGet(square, out var node)) return false;
 
         int offset = square.X - node.Position.X;
-        if (node.LastRelativeIndex == 0) return Remove(node);
+        if (node.LastRelativeIndex == 0)
+        {
+            if (!Remove(node)) return false;
+            PruneDisconnectedFromOrigin();
+            return true;
+        }
 
         var leftNode = (offset > 0) ? RelativeGraph<TSquare>.CreateSubNode(node, 0, offset - 1) : null;
         var rightNode = (offset < node.LastRelativeIndex) ? RelativeGraph<TSquare>.CreateSubNode(node, offset + 1, node.LastRelativeIndex) : null;
 
-        if (!Remove(node)) return false;
+        if (GuaranteesAtLeastOneStayable && node.Position.X <= 0 && node.XMax >= 0 && node.Position.IsZeroLine())
+        {
+            bool leftHasOrigin = leftNode != null && leftNode.Position.X <= 0 && leftNode.XMax >= 0 && leftNode.Position.IsZeroLine();
+            bool rightHasOrigin = rightNode != null && rightNode.Position.X <= 0 && rightNode.XMax >= 0 && rightNode.Position.IsZeroLine();
 
-        if (leftNode != null && !Add(leftNode.Position, leftNode.Stayables)) throw new Exception($"Элемент {leftNode} должен суметь добавиться");
-        if (rightNode != null && !Add(rightNode.Position, rightNode.Stayables)) throw new Exception($"Элемент {rightNode} должен суметь добавиться");
+            if (!leftHasOrigin && !rightHasOrigin)
+                return false;
+        }
 
+        if (!RemoveInternal(node, force: true)) return false;
+
+        if (leftNode != null) AddInternal(leftNode.Position, leftNode.Stayables, true);
+        if (rightNode != null) AddInternal(rightNode.Position, rightNode.Stayables, leftNode == null);
+
+        PruneDisconnectedFromOrigin();
         return true;
     }
 
@@ -405,9 +485,8 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
         return sb.ToString();
     }
 
-    public ISequenceEnumerator<TSquare> GetEnumerator(TSquare start) => new Enumerable(this, start);
-
     public RelativeGraph<TSquare> Copy() => PrivateCopy();
+    public ISequenceEnumerator<TSquare> GetEnumerator(TSquare start) => new Enumerable(this, start);
     ISequence ICopyable<ISequence>.Copy() => PrivateCopy();
 
     private class Enumerable : SequenceEnumerable<TSquare>
@@ -516,6 +595,7 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
             }
             return null;
         }
+
         protected override bool ProtectedCanMoveTo(IPath<TSquare> path)
         {
             var steps = path.Positions;
@@ -552,9 +632,41 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
             int offset = lastSquare.X - lastNode.Position.X;
             return lastNode.Stayables.Contains(offset);
         }
+
         public override bool CanMoveTo(TSquare target)
         {
             return CreateAllPossiblePositions.TryGetValue(target, out var stayable) && stayable == Stayable.Stay;
         }
+        public override IEnumerable<TSquare> GetNeighbors(TSquare cell)
+        {
+            var node = FindNodeContainingSquare(cell);
+            if (node == null) yield break;
+            var all = CreateAllPossiblePositions;
+
+            if (cell.X > node.Position.X)
+            {
+                var candidate = cell.WithValue(Axis.X, cell.X - 1);
+                if (all.ContainsKey(candidate)) yield return candidate;
+            }
+            if (cell.X < node.XMax)
+            {
+                var candidate = cell.WithValue(Axis.X, cell.X + 1);
+                if (all.ContainsKey(candidate)) yield return candidate;
+            }
+
+            foreach (var neighbor in node.Neighbors)
+            {
+                for (int x = neighbor.Position.X; x <= neighbor.XMax; x++)
+                {
+                    var candidate = neighbor.Position.WithValue(Axis.X, x);
+                    if (!candidate.IsAdjacent(cell)) continue;
+                    if (!all.ContainsKey(candidate)) continue;
+                    yield return candidate;
+                }
+            }
+        }
+
+        public override IPath<TSquare> CombinePositionsIntoPath(TSquare[] positions)
+            => new PathSequence<TSquare>(positions);
     }
 }

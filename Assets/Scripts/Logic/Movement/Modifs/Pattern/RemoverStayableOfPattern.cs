@@ -9,7 +9,7 @@ public class RemoverStayableOfPattern<TSquare> : ModificatorOfPattern<TSquare> w
     public RemoverStayableOfPattern(IEnumerable<TSquare> squares) => Squares = squares.ToHashSet();
     public override Pattern<TSquare> Apply(Pattern<TSquare> sequence)
     {
-        var (squares, guarantee) = sequence.DataWithSetStayable(Squares, Stayable.NotStay);
-        return new Pattern<TSquare>(squares, guarantee);
+        var (squares, attackable, guarantee) = sequence.DataWithSetStayable(Squares, Stayable.NotStay);
+        return new Pattern<TSquare>(squares, attackable, guarantee);
     }
 }

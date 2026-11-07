@@ -148,7 +148,6 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
                 if (!StartPosition.IsWithinSquareRadius(pathSquare, _stayables.Count, ActiveAxes)) return false;
             return true;
         }
-
         public override bool CanMoveTo(TSquare target)
         {
             if (!StartPosition.IsWithinSquareRadius(target, _stayables.Count, ActiveAxes)) return false;
@@ -156,6 +155,8 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
             if (!adjacentSquares.Contains(target)) return false;
             return true;
         }
+        public override IEnumerable<TSquare> GetNeighbors(TSquare cell) => cell.UnitNeighbors();
+        public override IPath<TSquare> CombinePositionsIntoPath(TSquare[] positions) => new PathSequence<TSquare>(positions);
     }
     private class EnumerableCircle : SequenceEnumerable<TSquare>
     {
@@ -181,7 +182,6 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
                 if (!StartPosition.IsWithinCircleRadius(pathSquare, _stayables.Count, ActiveAxes)) return false;
             return true;
         }
-
         public override bool CanMoveTo(TSquare target)
         {
             if (!StartPosition.IsWithinCircleRadius(target, _stayables.Count, ActiveAxes)) return false;
@@ -189,5 +189,7 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
             if (!adjacentSquares.Contains(target)) return false;
             return true;
         }
+        public override IEnumerable<TSquare> GetNeighbors(TSquare cell) => cell.UnitNeighbors();
+        public override IPath<TSquare> CombinePositionsIntoPath(TSquare[] positions) => new PathSequence<TSquare>(positions);
     }
 }

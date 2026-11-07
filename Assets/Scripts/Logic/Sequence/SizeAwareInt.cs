@@ -99,13 +99,6 @@ public sealed class SizeAwareInt : ISequence<int, SizeAwareInt>, IDisposable
                 return dict;
             }
         }
-
-        public override bool CanMoveTo(int target)
-        {
-            int count = _countProvider();
-            return target >= 0 && target < count && target != StartPosition;
-        }
-
         protected override bool ProtectedCanMoveTo(IPath<int> path)
         {
             var positions = path.Positions;
@@ -118,5 +111,17 @@ public sealed class SizeAwareInt : ISequence<int, SizeAwareInt>, IDisposable
             }
             return true;
         }
+        public override bool CanMoveTo(int target)
+        {
+            int count = _countProvider();
+            return target >= 0 && target < count && target != StartPosition;
+        }
+        public override IEnumerable<int> GetNeighbors(int cell)
+        {
+            int count = _countProvider();
+            if (cell > 0) yield return cell - 1;
+            if (cell < count - 1) yield return cell + 1;
+        }
+        public override IPath<int> CombinePositionsIntoPath(int[] positions) => new PathInt(positions);
     }
 }

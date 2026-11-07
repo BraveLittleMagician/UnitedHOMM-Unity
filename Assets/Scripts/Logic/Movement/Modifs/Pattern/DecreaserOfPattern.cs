@@ -9,7 +9,7 @@ public class DecreaserOfPattern<TSquare> : ModificatorOfPattern<TSquare> where T
     public DecreaserOfPattern(IEnumerable<TSquare> squares) => Squares = squares.ToHashSet();
     public override Pattern<TSquare> Apply(Pattern<TSquare> sequence)
     {
-        var (squares, guarantee) = sequence.DataWithRemoved(Squares);
-        return new Pattern<TSquare>(squares, guarantee);
+        var (squares, attackable, guarantee) = sequence.DataWithRemoved(Squares);
+        return new Pattern<TSquare>(squares, attackable, guarantee);
     }
 }
