@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System;
 using System.Collections.Generic;
 
@@ -10,11 +9,13 @@ public static class BoardLayoutLoader
         if (templates == null) throw new ArgumentNullException(nameof(templates));
 
         var dto = LoaderOfDataFromJSON.LoadFromJson<BoardLayoutJson>(json);
-
         ValidateLayout(dto, templates);
 
-        var config = BuildConfig(dto.GridSize ?? throw new NullReferenceException(nameof(dto.GridSize)));
-        var placements = BuildPlacements(dto.Placements ?? throw new NullReferenceException(nameof(dto.Placements)), templates);
+        var config = BuildConfig(
+            dto.GridSize ?? throw new NullReferenceException(nameof(dto.GridSize)));
+        var placements = BuildPlacements(
+            dto.Placements ?? throw new NullReferenceException(nameof(dto.Placements)),
+            templates);
 
         return new BoardLayoutResult(config, placements);
     }
@@ -26,10 +27,14 @@ public static class BoardLayoutLoader
         if (dto.GridSize == null) errors.Add("Отсутствует раздел 'GridSize'");
         else ValidateGridSize(dto.GridSize, errors);
 
-        if (dto.Placements == null || dto.Placements.Length == 0) errors.Add("Раздел 'Placements' пуст или отсутствует");
-        else ValidatePlacements(dto.Placements, templates, errors);
+        if (dto.Placements == null || dto.Placements.Length == 0)
+            errors.Add("Раздел 'Placements' пуст или отсутствует");
+        else
+            ValidatePlacements(dto.Placements, templates, errors);
 
-        if (errors.Count > 0) throw new InvalidOperationException($"BoardLayout.json содержит ошибки:\n  - {string.Join("\n  - ", errors)}");
+        if (errors.Count > 0)
+            throw new InvalidOperationException(
+                $"BoardLayout.json содержит ошибки:\n  - {string.Join("\n  - ", errors)}");
     }
 
     private static void ValidateGridSize(BoardSizeJson grid, List<string> errors)
@@ -40,12 +45,12 @@ public static class BoardLayoutLoader
 
         if (!IsValidBool($"{grid.WUp}"))
             errors.Add($"GridSize.wUp должен быть \"t\"/\"f\" или \"true\"/\"false\", получено '{grid.WUp}'");
-
         if (!IsValidBool($"{grid.WDown}"))
             errors.Add($"GridSize.wDown должен быть \"t\"/\"f\" или \"true\"/\"false\", получено '{grid.WDown}'");
     }
 
-    private static void ValidatePlacements(PlacementJson[] placements, PieceTemplateRegistry templates, List<string> errors)
+    private static void ValidatePlacements(
+        PlacementJson[] placements, PieceTemplateRegistry templates, List<string> errors)
     {
         var occupied = new HashSet<(int X, int Y, int Z, int W)>();
 
@@ -54,23 +59,9 @@ public static class BoardLayoutLoader
             var p = placements[i];
             var prefix = $"Placements[{i}]";
 
-            if (p == null)
-            {
-                errors.Add($"{prefix}: null-элемент");
-                continue;
-            }
-
-            if (p.Position == null)
-            {
-                errors.Add($"{prefix}: отсутствует 'Position'");
-                continue;
-            }
-
-            if (p.Player == null)
-            {
-                errors.Add($"{prefix}: отсутствует 'Player'");
-                continue;
-            }
+            if (p == null) { errors.Add($"{prefix}: null-элемент"); continue; }
+            if (p.Position == null) { errors.Add($"{prefix}: отсутствует 'Position'"); continue; }
+            if (p.Player == null) { errors.Add($"{prefix}: отсутствует 'Player'"); continue; }
 
             if (string.IsNullOrWhiteSpace(p.Name))
             {
@@ -96,7 +87,6 @@ public static class BoardLayoutLoader
 
             if (p.Player.IndexOfSide < 0)
                 errors.Add($"{prefix}: IndexOfSide не может быть отрицательным");
-
             if (p.Player.IndexOfPlayerOnSide < 0)
                 errors.Add($"{prefix}: IndexOfPlayerOnSide не может быть отрицательным");
         }
@@ -104,7 +94,7 @@ public static class BoardLayoutLoader
 
     private static ConfigOfBoard BuildConfig(BoardSizeJson grid)
     {
-        bool wUp = ParseBool  ($"{grid.WUp}");
+        bool wUp = ParseBool($"{grid.WUp}");
         bool wDown = ParseBool($"{grid.WDown}");
 
         int fieldSize = Math.Max(grid.X, Math.Max(grid.Y, grid.Z));
@@ -120,41 +110,50 @@ public static class BoardLayoutLoader
             WUp = wUp,
             WDown = wDown,
             NumberOfSides = 2,
-            NumberOfPlayersOnSide = 1
+            NumberOfPlayersOnSide = 1,
         };
     }
 
-    private static IReadOnlyList<StartingPlacement> BuildPlacements(PlacementJson[] placements, PieceTemplateRegistry templates)
+    private static IReadOnlyList<StartingPlacement> BuildPlacements(
+        PlacementJson[] placements, PieceTemplateRegistry templates)
     {
         var result = new List<StartingPlacement>(placements.Length);
-
         foreach (var p in placements)
         {
-            var template = templates.Get(p.Name ?? throw new NullReferenceException(nameof(p.Name)));
-            if (p.Player == null || p.Position == null) throw new NullReferenceException(nameof(p));
+            if (p == null) throw new InvalidOperationException("Placements[i] == null");
+            if (p.Player == null || p.Position == null)
+                throw new NullReferenceException(nameof(p));
+
+            var template = templates.Get(
+                p.Name ?? throw new NullReferenceException(nameof(p.Name)));
+
             var owner = new IdOfPlayer(
                 p.Player.IndexOfSide,
                 p.Player.IndexOfPlayerOnSide);
+
             var position = new Square
             {
                 X = p.Position.X,
                 Y = p.Position.Y,
                 Z = p.Position.Z,
-                W = p.Position.W
+                W = p.Position.W,
             };
 
             var definition = new PieceDefinition(
-                template.Name,
-                owner,
-                template.Health,
-                template.MovementFactories,
-                template.MeleeAttacks,
-                template.RangedAttacks,
-                template.Abilities);
+                Name: template.Name,
+                Owner: owner,
+                Health: template.Health,
+                MoveShapeName: template.MoveShapeName,
+                AttackShapeName: template.AttackShapeName,
+                AttackDamage: template.AttackDamage,
+                MaxAttackCharges: template.MaxAttackCharges,
+                MeleeAttacks: template.MeleeAttacks,
+                RangedAttacks: template.RangedAttacks,
+                Abilities: template.Abilities,
+                Modifiers: template.Modifiers);
 
             result.Add(new StartingPlacement(definition, position));
         }
-
         return result;
     }
 
