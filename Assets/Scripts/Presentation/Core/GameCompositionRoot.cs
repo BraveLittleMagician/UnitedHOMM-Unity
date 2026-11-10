@@ -65,6 +65,8 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private IMovementResolver _movementValidator = null!;
     private PieceTemplateRegistry _templateRegistry = null!;
     private Presenter _presenter = null!;
+    private IAttackTargetProvider _attackTargetProvider = null!;
+    private ICombatService _combatService = null!;
 
     private void Awake()
     {
@@ -142,22 +144,16 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
     private void CreateLogic()
     {
-        // --- Piece-registry и turn/match (P2) ---
         _pieceRegistry = new PieceRegistry();
         _gameEventBus = new PieceEventBus(_pieceRegistry);
         _matchState = new MatchState();
         _graveyard = new Graveyard(_pieceRegistry);
+        _combatService = new CombatService(_logger, _eventBus);
 
-        var playersInOrder = _placements
-            .Select(p => p.Definition.Owner)
-            .Distinct()
-            .ToList();
+        var playersInOrder = _placements.Select(p => p.Definition.Owner).Distinct().ToList();
+
         _turnManager = new TurnManager(playersInOrder);
-
-        // --- Modifier host (P2) ---
         _modifierHost = new ModifierHost(_pieceRegistry, _turnManager);
-
-        // --- House / rooms (P1) ---
         _seats = new Seats(_configOfBoard.NumberOfSides, _configOfBoard.NumberOfPlayersOnSide);
         _house = new House(_seats, _eventBus, _logger);
         _registry = new Registry(_house);
@@ -167,16 +163,12 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _house.AddRoom(_board);
         _house.AddRoom(new Decks(_seats, _eventBus, _logger));
 
-        // --- Movement (Phase 5) ---
         var shapeCatalog = new PieceShapeCatalog();
         RegisterShapes(shapeCatalog);
         var resolvers = BuildResolverDictionary(shapeCatalog, _pieceLibraryDto);
+        _attackTargetProvider = new AttackTargetProvider(resolvers, _pieceRegistry, _modifierHost);
         _movementValidator = new PieceMoveValidator(resolvers, _modifierHost);
-
-        // --- Ability service (P1) ---
         _abilityService = new AbilityService(_eventBus, _logger);
-
-        // --- Flow (P1 + Phase 5) ---
         _flow = new Flow(
             _house,
             _eventBus,
@@ -184,6 +176,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
             _movementValidator,
             _abilityService,
             _pieceRegistry,
+            _attackTargetProvider,
             () => new Vector3Int(_board.Size.X, _board.Size.Y, _board.Size.Z));
     }
 
@@ -242,14 +235,17 @@ public sealed class GameCompositionRoot : MonoBehaviour
     {
         _turnManager.TurnStarted += player =>
         {
-            foreach (var room in _house.Rooms.Values)
+            foreach (var model in _pieceRegistry.AllLiveModels)
             {
+                if (model.Player != player) continue;
+                model.ResetTurnState();
+                model.RestoreCombat(model.Hp, model.MaxAttackCharges);
+            }
+
+            foreach (var room in _house.Rooms.Values)
                 foreach (var piece in room.GetAllPieces())
-                {
                     if (piece.Owner.Equals(player))
                         piece.ResetTurnState();
-                }
-            }
         };
     }
 

@@ -11,6 +11,7 @@ public sealed class Flow : IFlow, IDisposable
     private readonly ILogger _logger;
     private readonly IMovementResolver _movementValidator;
     private readonly IAbilityService _abilityService;
+    private readonly IAttackTargetProvider _attackTargetProvider;
     private readonly PieceRegistry _pieceRegistry;
     private readonly Func<Vector3Int> _gridSizeProvider;
     private bool _disposed;
@@ -22,6 +23,7 @@ public sealed class Flow : IFlow, IDisposable
         IMovementResolver movementValidator,
         IAbilityService abilityService,
         PieceRegistry pieceRegistry,
+        IAttackTargetProvider attackTargetProvider,
         Func<Vector3Int> gridSizeProvider)
     {
         _house = house ?? throw new ArgumentNullException(nameof(house));
@@ -31,6 +33,7 @@ public sealed class Flow : IFlow, IDisposable
         _abilityService = abilityService ?? throw new ArgumentNullException(nameof(abilityService));
         _pieceRegistry = pieceRegistry ?? throw new ArgumentNullException(nameof(pieceRegistry));
         _gridSizeProvider = gridSizeProvider ?? throw new ArgumentNullException(nameof(gridSizeProvider));
+        _attackTargetProvider = attackTargetProvider ?? throw new ArgumentNullException(nameof(attackTargetProvider));
     }
 
     private IResult<TRoom> GetRoom<TRoom>() where TRoom : IRoom
@@ -39,7 +42,11 @@ public sealed class Flow : IFlow, IDisposable
             return Result<TRoom>.Failure($"Комната {typeof(TRoom).Name} не найдена");
         return Result<TRoom>.Success(room);
     }
-
+    private void SyncHp(IPiece piece)
+    {
+        var model = _pieceRegistry.GetByPieceId(piece.PieceId);
+        model?.SyncHp(piece.Health);
+    }
     private static Vector3Int ToV3(Square s) => new(s.X, s.Y, s.Z);
 
     private static bool PathsEqual(IReadOnlyList<Square> a, IReadOnlyList<Square> b)
@@ -122,7 +129,6 @@ public sealed class Flow : IFlow, IDisposable
         if (!piece.Owner.Equals(owner))
             return Result.Failure($"Фигура {piece} не принадлежит игроку {owner}");
 
-        // FIX 1: берём PieceModel из реестра, а не IPiece.
         if (_pieceRegistry.GetByPieceId(piece.PieceId) is not { } model)
             return Result.Failure($"PieceModel для {piece} не найден в PieceRegistry");
 
@@ -141,7 +147,6 @@ public sealed class Flow : IFlow, IDisposable
         piece.SetPosition(ToV3(end));
         _pieceRegistry.Move(model, ToV3(end));
 
-        // FIX 2 & 3: публикуем явно Square.
         _eventBus.Publish(new PieceMovedEvent<Square>(piece, start, end, room));
 
         _logger.Log($"Фигура {piece} перемещена с {start} на {end} в {room.Name}");
@@ -150,16 +155,64 @@ public sealed class Flow : IFlow, IDisposable
 
     public IResult MeleeAttack<TRoom, TPos>(IdOfPlayer attackerOwner, IPath<TPos> path)
         where TRoom : IRoom where TPos : struct
-    {
-        // Phase 6: AttackTargetProvider + IGameAction(AttackAction)
-        return Result.Failure("Ближняя атака будет реализована в фазе 6 через AttackTargetProvider.");
-    }
+        => PerformAttack<TRoom, TPos>(attackerOwner, path, AttackKind.Melee);
 
     public IResult RangedAttack<TRoom, TPos>(IdOfPlayer attackerOwner, IPath<TPos> path)
         where TRoom : IRoom where TPos : struct
+        => PerformAttack<TRoom, TPos>(attackerOwner, path, AttackKind.Ranged);
+
+    private IResult PerformAttack<TRoom, TPos>(IdOfPlayer attackerOwner, IPath<TPos> path, AttackKind kind) where TRoom : IRoom where TPos : struct
     {
-        // Phase 6: AttackTargetProvider + IGameAction(AttackAction)
-        return Result.Failure("Дальняя атака будет реализована в фазе 6 через AttackTargetProvider.");
+        if (path == null) return Result.Failure("Путь не может быть null");
+        if (path is not IPath<Square> typedPath)
+            return Result.Failure($"Путь должен быть в координатах Square (получен {typeof(TPos).Name})");
+        if (typedPath.Positions.Count < 2)
+            return Result.Failure("Путь должен содержать хотя бы 2 позиции");
+
+        var roomResult = GetRoom<TRoom>();
+        if (!roomResult.IsSuccess) return Result.Failure(roomResult.Error!);
+        var room = roomResult.Value!;
+
+        var start = typedPath.Positions[0];
+        var end = typedPath.Positions[^1];
+
+        if (!room.TryToGetPiece(start, out var attacker))
+            return Result.Failure($"На позиции {start} нет фигуры");
+        if (!attacker.Owner.Equals(attackerOwner))
+            return Result.Failure($"Фигура {attacker} не принадлежит игроку {attackerOwner}");
+        if (!room.TryToGetPiece(end, out var target))
+            return Result.Failure($"На позиции {end} нет фигуры-цели");
+        if (target.Owner.Equals(attackerOwner))
+            return Result.Failure($"Фигура {target} — союзник, нельзя атаковать");
+
+        var attackerModel = _pieceRegistry.GetByPieceId(attacker.PieceId);
+        if (attackerModel is null)
+            return Result.Failure($"PieceModel для {attacker} не найден в PieceRegistry");
+        var targetModel = _pieceRegistry.GetByPieceId(target.PieceId);
+        if (targetModel is null)
+            return Result.Failure($"PieceModel для {target} не найден в PieceRegistry");
+
+        if (!_attackTargetProvider.IsAttackTarget(attackerModel, ToV3(end), _gridSizeProvider()))
+            return Result.Failure($"Фигура {attacker} не может атаковать клетку {end}");
+
+        if (!attackerModel.TryConsumeAttackCharge())
+            return Result.Failure(
+                $"У {attacker} закончились атаки " +
+                $"(Charges={attackerModel.AttackCharges}/{attackerModel.MaxAttackCharges})");
+
+        attackerModel.MarkFirstActionOfGameTaken(new AttackActivity(ToV3(end)));
+
+        target.ApplyOperation(new SubtractOperation(attackerModel.AttackDamage));
+
+        SyncHp(target);
+        SyncHp(attacker);
+
+        _eventBus.Publish(new PieceAttackedEvent(attacker, target, room, kind));
+        _logger.Log(
+            $"{kind} атака: {attacker} → {target} в {room.Name} " +
+            $"(урон {attackerModel.AttackDamage}, у цели HP={target.Health})");
+
+        return Result.Success();
     }
 
     public IResult ChangeRoom<TRoomFrom, TRoomTo, TPosFrom, TPosTo>(

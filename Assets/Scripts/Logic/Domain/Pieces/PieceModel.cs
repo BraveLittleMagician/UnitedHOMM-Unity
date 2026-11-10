@@ -32,19 +32,19 @@ public sealed class PieceModel
     }
     public long PieceId { get; }
     public string Name { get; }
-    public IdOfPlayer Player { get; }
-    public Vector3Int PositionInGrid { get; internal set; }
     public int AttackDamage { get; }
     public int MaxHp { get; }
     public int Hp { get; private set; }
     public int MaxAttackCharges { get; }
     public int AttackCharges { get; private set; }
-    public FacingDirection Facing { get; private set; }
+    public int TotalRotationDegreesThisTurn { get; private set; }
     public bool HasTakenFirstActionOfGame { get; private set; }
     public bool HasMovedThisTurn { get; private set; }
-    public int TotalRotationDegreesThisTurn { get; private set; }
     public bool IsDead => Hp <= 0;
     public bool HasPromotedThisTurn { get; private set; }
+    public IdOfPlayer Player { get; }
+    public Vector3Int PositionInGrid { get; internal set; }
+    public FacingDirection Facing { get; private set; }
     
     public bool TryConsumeAttackCharge()
     {
@@ -60,6 +60,15 @@ public sealed class PieceModel
         Hp = Math.Max(0, Hp - amount);
         if (IsDead) DeadStateChanged?.Invoke(this, true);
         return IsDead;
+    }
+    public void SyncHp(int newHp)
+    {
+        if (newHp < 0) newHp = 0;
+        if (newHp > MaxHp) newHp = MaxHp;
+        bool wasDead = IsDead;
+        Hp = newHp;
+        if (wasDead != IsDead)
+            DeadStateChanged?.Invoke(this, IsDead);
     }
     public void MarkFirstActionOfGameTaken(Activity activity)
     {
