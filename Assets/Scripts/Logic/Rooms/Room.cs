@@ -32,10 +32,10 @@ public abstract class Room : IRoom, IDisposable
         PieceRemoved?.Invoke(piece.IndexInHouse, this);
     }
 
-
     public abstract bool Add<TPos>(IPiece piece, TPos pos, bool fromAnotherRoom, out string error) where TPos : struct;
     public abstract bool Displace<TPos>(IPath<TPos> path, IdOfPlayer player, out string error) where TPos : struct;
     public abstract bool TryToGetPiece<TPos>(TPos position, [NotNullWhen(true)] out IPiece? piece) where TPos : struct;
+    public abstract bool TryToGetPieceByIndex(BigInteger index, [NotNullWhen(true)] out IPiece? piece);
     public abstract bool TryToGetPiecesForPlayer(IdOfPlayer player, out IEnumerable<IPiece> pieces);
     public abstract bool Remove(BigInteger index);
     public abstract bool Remove<TPos>(TPos position, IdOfPlayer player) where TPos : struct;

@@ -67,6 +67,8 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private Presenter _presenter = null!;
     private IAttackTargetProvider _attackTargetProvider = null!;
     private ICombatService _combatService = null!;
+    private ActionPlan _actionPlan = null!;
+    private MatchEndChecker _matchEndChecker = null!;
 
     private void Awake()
     {
@@ -168,16 +170,10 @@ public sealed class GameCompositionRoot : MonoBehaviour
         var resolvers = BuildResolverDictionary(shapeCatalog, _pieceLibraryDto);
         _attackTargetProvider = new AttackTargetProvider(resolvers, _pieceRegistry, _modifierHost);
         _movementValidator = new PieceMoveValidator(resolvers, _modifierHost);
+        _matchEndChecker = new MatchEndChecker(_pieceRegistry, _turnManager, _matchState);
+        _actionPlan = new ActionPlan(_pieceRegistry, _house, _turnManager, syncAfterUndo: null, onCommitted: () => _matchEndChecker.CheckAfterCommit());
         _abilityService = new AbilityService(_eventBus, _logger);
-        _flow = new Flow(
-            _house,
-            _eventBus,
-            _logger,
-            _movementValidator,
-            _abilityService,
-            _pieceRegistry,
-            _attackTargetProvider,
-            () => new Vector3Int(_board.Size.X, _board.Size.Y, _board.Size.Z));
+        _flow = new Flow(_house, _eventBus, _logger, _movementValidator, _abilityService, _pieceRegistry, _attackTargetProvider, () => new Vector3Int(_board.Size.X, _board.Size.Y, _board.Size.Z));
     }
 
     private static void RegisterShapes(PieceShapeCatalog shapes)
@@ -280,7 +276,19 @@ public sealed class GameCompositionRoot : MonoBehaviour
             _deltaHub,
             _scrollHub);
 
-        _boardUI.Initialize(_flow, _eventBus, _selectionHub, _uiPointerProbe);
+        _boardUI.Initialize(
+            _flow,
+            _eventBus,
+            _selectionHub,
+            _uiPointerProbe,
+            _actionPlan,
+            _pieceRegistry,
+            _turnManager,
+            _house,
+            _movementValidator,
+            _attackTargetProvider,
+            _matchState,
+            () => new Vector3Int(_board.Size.X, _board.Size.Y, _board.Size.Z));
         _deselectOnEmptyClick.Initialize(_selectionHub, _clickLeftHub, _pointerHub, _uiPointerProbe, _camera);
 
         _mouseEventer.Run();

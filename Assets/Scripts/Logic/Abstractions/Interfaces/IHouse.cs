@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 public interface IHouse : IDisposable
@@ -12,6 +13,7 @@ public interface IHouse : IDisposable
     bool RemovePiece(BigInteger index);
     bool AddRoom<T>(T room) where T : IRoom;
     bool TryToGetRoom<T>(out T room) where T : IRoom;
+    public bool TryToFindPiece(BigInteger index, [NotNullWhen(true)] out IPiece? piece);
     IPiece CreatePiece(PieceDefinition definition);
 
     event Action<IRoom>? RoomAdded;

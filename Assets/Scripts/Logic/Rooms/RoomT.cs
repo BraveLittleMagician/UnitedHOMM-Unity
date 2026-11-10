@@ -135,6 +135,13 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         pieces = list;
         return list.Count > 0;
     }
+    public override bool TryToGetPieceByIndex(BigInteger index, [NotNullWhen(true)] out IPiece? piece)
+    {
+        foreach (var p in _pieces.Values)
+            if (p.IndexInHouse == index) { piece = p; return true; }
+        piece = null;
+        return false;
+    }
     public override void Dispose()
     {
         EventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied);

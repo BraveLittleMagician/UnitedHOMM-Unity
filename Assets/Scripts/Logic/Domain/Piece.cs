@@ -72,12 +72,19 @@ public sealed class Piece : IPiece
     public void SetFacing(FacingDirection facing) => Facing = facing;
     public void MarkMovedThisTurn() => HasMovedThisTurn = true;
     public void MarkPromotedThisTurn() => HasPromotedThisTurn = true;
-
     public void ResetTurnState()
     {
         HasMovedThisTurn = false;
         HasPromotedThisTurn = false;
     }
+
+    public void RestoreHealth(int hp)
+    {
+        if (hp < 0) hp = 0;
+        if (_properties.TryToGet<Health>(out var health)) health.Set(hp);
+    }
+    public void RestoreMovedThisTurn(bool value) => HasMovedThisTurn = value;
+    public void RestorePromotedThisTurn(bool value) => HasPromotedThisTurn = value;
 
     public void Dispose()
     {

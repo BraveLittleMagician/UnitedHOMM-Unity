@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 public sealed class House : IHouse
@@ -51,6 +52,13 @@ public sealed class House : IHouse
             return true;
         }
         room = default!;
+        return false;
+    }
+    public bool TryToFindPiece(BigInteger index, [NotNullWhen(true)] out IPiece? piece)
+    {
+        foreach (var room in _rooms.Values)
+            if (room.TryToGetPieceByIndex(index, out piece)) return true;
+        piece = null;
         return false;
     }
     public bool RemovePiece(BigInteger index)
