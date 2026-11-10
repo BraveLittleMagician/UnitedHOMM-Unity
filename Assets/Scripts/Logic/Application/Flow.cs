@@ -10,7 +10,7 @@ public sealed class Flow : IFlow, IDisposable
     private readonly IMovementValidator _movementValidator;
     private readonly IAbilityService _abilityService;
     private bool _disposed;
-
+     
     public Flow(
         IHouse house,
         IEventBus eventBus,
