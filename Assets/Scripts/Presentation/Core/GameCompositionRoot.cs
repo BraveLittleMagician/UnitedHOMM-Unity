@@ -61,6 +61,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private EnPassantService _enPassantService = null!;
     private AmbushService _ambushService = null!;
     private ReactiveActionRegistry _reactiveRegistry = null!;
+    private PieceTemplateRegistry _pieceTemplateRegistry = null!;
+    private PromotionService _promotionService = null!;
+    private Graveyard[] _graveyards = Array.Empty<Graveyard>();
 
     private void Awake()
     {
@@ -120,9 +123,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _deckSequences = new DeckSequenceProvider(_eventBus);
 
         var templates = StandardPieceTemplates.CreateAll(_deckSequences, _eventBus);
-        var templateRegistry = new PieceTemplateRegistry(templates);
+        _pieceTemplateRegistry = new PieceTemplateRegistry(templates);
 
-        var layoutResult = BoardLayoutLoader.Load(_boardLayoutJson.text, templateRegistry);
+        var layoutResult = BoardLayoutLoader.Load(_boardLayoutJson.text, _pieceTemplateRegistry);
         _configOfBoard = layoutResult.Config;
         _placements = layoutResult.Placements;
 
@@ -132,14 +135,26 @@ public sealed class GameCompositionRoot : MonoBehaviour
     {
         _seats = new Seats(_configOfBoard.NumberOfSides, _configOfBoard.NumberOfPlayersOnSide);
         _modifierHost = new ModifierHost(_eventBus, _logger);
-         
-        _house = new House(_seats, _eventBus, _logger, _modifierHost);
+
+        var pieceFactory = new PieceFactory(_eventBus, _modifierHost, _logger);
+        _house = new House(_seats, _eventBus, _logger, pieceFactory);
         _registry = new Registry(_house);
 
         var boardSize = BoardSizeFactory.FromConfig(_configOfBoard);
         _board = new Board(_seats, boardSize, _eventBus, _logger);
         _house.AddRoom(_board);
         _house.AddRoom(new Decks(_seats, _eventBus, _logger));
+
+        var players = new HashSet<IdOfPlayer>();
+        foreach (var placement in _placements) players.Add(placement.Definition.Owner);
+        var graveyards = new List<Graveyard>();
+        foreach (var player in players)
+        {
+            var graveyard = new Graveyard(player, _seats, _eventBus, _logger);
+            _house.AddRoom($"Graveyard_{player.IndexOfSide}_{player.IndexOfPlayerOnSide}", graveyard);
+            graveyards.Add(graveyard);
+        }
+        _graveyards = graveyards.ToArray();
 
         _movementValidator = new MovementValidator(_logger);
         _abilityService = new AbilityService(_eventBus, _logger);
@@ -157,6 +172,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _reactiveRegistry = new ReactiveActionRegistry();
         _reactiveRegistry.Register(_enPassantService);
         _reactiveRegistry.Register(_ambushService);
+        _promotionService = new PromotionService(_registry, _house, _pieceTemplateRegistry, pieceFactory, _modifierHost, _eventBus, _logger);
         _flow = new Flow(
             _house,
             _registry,

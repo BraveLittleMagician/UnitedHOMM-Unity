@@ -151,7 +151,9 @@ public static class BoardLayoutLoader
                 template.AttackCharges,
                 template.InitialFacing,
                 template.MovementFactories,
-                template.Abilities);
+                template.Abilities,
+                AttackEffect: null,
+                Modifiers: template.Modifiers);
 
             result.Add(new StartingPlacement(definition, position));
         }

@@ -19,6 +19,9 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
     protected IReadOnlyDictionary<TPosition, IPiece> Pieces => _pieces;
     public override int CountOfPieces => _pieces.Count;
     public override string Name => GetType().Name;
+    protected virtual bool AllowDeadPiece => false;
+    protected virtual bool IncludeDeadInLookup => false;
+    protected virtual bool FilterDeadInLookup => true;
 
     private void OnPieceDied(PieceDiedEvent e)
     {
@@ -26,13 +29,12 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
     }
     protected abstract bool ValidateAdd(IPiece piece, TPosition position, out string error);
     protected abstract bool ValidateDisplace(IPath<TPosition> path, IPiece piece, out string error);
-
     public override bool Add<TPos>(IPiece piece, TPos pos, bool fromAnotherRoom, out string error)
     {
         if (piece == null) throw new ArgumentNullException(nameof(piece));
-        if (piece.IsDead)
+        if (piece.IsDead && !AllowDeadPiece)
         {
-            error = $"{piece} мертв и не может быть добавлен в {Name}";
+            error = $"Piece {piece} is dead and cannot be added to {Name}";
             return false;
         }
         if (pos is not TPosition typedPos)
@@ -125,8 +127,9 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
     }
     public override bool TryToGetPiece<TPos>(TPos position, [NotNullWhen(true)] out IPiece? piece)
     {
-        if (position is TPosition typedPos && _pieces.TryGetValue(typedPos, out var p) && p != null && !p.IsDead)
+        if (position is TPosition typedPos && _pieces.TryGetValue(typedPos, out var p) && p != null)
         {
+            if (FilterDeadInLookup && p.IsDead) { piece = null; return false; }
             piece = p;
             return true;
         }
@@ -145,7 +148,13 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
     }
     public override bool TryToGetPiecesForPlayer(IdOfPlayer player, out IEnumerable<IPiece> pieces)
     {
-        var list = _pieces.Values.Where(p => p.Owner.Equals(player) && !p.IsDead).ToList();
+        var list = new List<IPiece>();
+        foreach (var p in _pieces.Values)
+        {
+            if (!p.Owner.Equals(player)) continue;
+            if (FilterDeadInLookup && p.IsDead) continue;
+            list.Add(p);
+        }
         pieces = list;
         return list.Count > 0;
     }

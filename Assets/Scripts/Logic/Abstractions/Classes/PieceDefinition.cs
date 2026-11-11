@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System.Collections.Generic;
 
 public sealed record PieceDefinition(
@@ -11,4 +10,5 @@ public sealed record PieceDefinition(
     FacingDirection InitialFacing,
     IReadOnlyList<IMovementFactory>? MovementFactories = null,
     IReadOnlyList<IAbility>? Abilities = null,
-    IAttackEffect? AttackEffect = null);
+    IAttackEffect? AttackEffect = null,
+    IReadOnlyList<ModifierDto>? Modifiers = null);

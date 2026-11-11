@@ -37,6 +37,9 @@ public sealed class PieceFactory
         if (definition.Abilities != null)
             foreach (var a in definition.Abilities) piece.AddAbility(a);
 
+        if (definition.Modifiers != null && definition.Modifiers.Count > 0)
+            _modifierHost.AttachModifiers(piece, definition.Modifiers);
+
         return piece;
     }
 }
