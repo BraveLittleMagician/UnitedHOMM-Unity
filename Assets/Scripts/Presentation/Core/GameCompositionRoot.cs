@@ -64,6 +64,13 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private PieceTemplateRegistry _pieceTemplateRegistry = null!;
     private PromotionService _promotionService = null!;
     private Graveyard[] _graveyards = Array.Empty<Graveyard>();
+    private CellActionHandler _cellActionHandler = null!;
+    private ModifierActivationHandler _modifierActivationHandler = null!;
+    private PromotionChoiceHandler _promotionChoiceHandler = null!;
+    private PendingModalManager _pendingModalManager = null!;
+    private IReadOnlyList<ICellActionProvider> _cellActionProviders = null!;
+    private IAttackTargetProvider _attackTargetProvider = null!;
+
 
     private void Awake()
     {
@@ -159,8 +166,8 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _movementValidator = new MovementValidator(_logger);
         _abilityService = new AbilityService(_eventBus, _logger);
 
-        var attackTargetProvider = new AttackTargetProvider(_modifierHost);
-        var combatService = new CombatService(_logger, _eventBus, attackTargetProvider, _modifierHost);
+        _attackTargetProvider = new AttackTargetProvider(_modifierHost);
+        var combatService = new CombatService(_logger, _eventBus, _attackTargetProvider, _modifierHost);
 
         _modifierHost.Registry = _registry;
 
@@ -189,6 +196,41 @@ public sealed class GameCompositionRoot : MonoBehaviour
                 bool gameOver = _matchEndChecker.CheckAfterCommit();
                 if (!gameOver) _turnManager.EndTurn();
             });
+
+        _pendingModalManager = new PendingModalManager();
+
+        var attackProvider = new AttackCellActionProvider(_flow, _attackTargetProvider, _registry, _modifierHost);
+        var enPassantProvider = new EnPassantActionProvider(_flow);
+        var ambushProvider = new AmbushActionProvider(_flow);
+        _cellActionProviders = new ICellActionProvider[] { attackProvider, enPassantProvider, ambushProvider };
+
+        _cellActionHandler = new CellActionHandler(new CellActionHandlerContext
+        {
+            Flow = _flow,
+            PendingModalManager = _pendingModalManager,
+            MatchState = _matchState,
+            CellActionProviders = _cellActionProviders,
+            Logger = _logger,
+        });
+
+        _modifierActivationHandler = new ModifierActivationHandler(new ModifierActivationHandlerContext
+        {
+            Flow = _flow,
+            PendingModalManager = _pendingModalManager,
+            MatchState = _matchState,
+            ModifierHost = _modifierHost,
+            Registry = _registry,
+            EventBus = _eventBus,
+            Logger = _logger,
+        });
+
+        _promotionChoiceHandler = new PromotionChoiceHandler(new PromotionChoiceHandlerContext
+        {
+            PendingModalManager = _pendingModalManager,
+            MatchState = _matchState,
+            PromotionService = _promotionService,
+            Logger = _logger,
+        });
     }
     private void CreatePresentation()
     {
