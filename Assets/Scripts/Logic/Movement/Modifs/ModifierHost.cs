@@ -30,8 +30,12 @@ public sealed class ModifierHost : IDisposable
 
     private void OnTurnStarted(TurnStartedEvent e)
     {
-        foreach (var bucket in _byIndex.Values)
+        if (Registry == null) return;
+        foreach (var (index, bucket) in _byIndex)
         {
+            if (!Registry.TryToGetPiece(index, out var piece) || piece == null) continue;
+            if (!piece.Owner.Equals(e.Player)) continue;
+
             var items = bucket.Items;
             for (int i = items.Count - 1; i >= 0; i--)
             {

@@ -49,6 +49,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private Board _board = null!;
     private IHouse _house = null!;
     private IRegistry _registry = null!;
+    private TurnManager _turnManager = null!;
+    private MatchState _matchState = null!;
+    private MatchEndChecker _matchEndChecker = null!;
     private IMovementValidator _movementValidator = null!;
     private IAbilityService _abilityService = null!;
     private IFlow _flow = null!;
@@ -139,8 +142,13 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
         var attackTargetProvider = new AttackTargetProvider(_modifierHost);
         var combatService = new CombatService(_logger, _eventBus, attackTargetProvider, _modifierHost);
+
         _modifierHost.Registry = _registry;
         _flow = new Flow(_house, _eventBus, _logger, _movementValidator, _abilityService, combatService);
+
+        _turnManager = new TurnManager(_placements, _eventBus);
+        _matchState = new MatchState();
+        _matchEndChecker = new MatchEndChecker(_registry, _turnManager, _matchState);
     }
     private void CreatePresentation()
     {
@@ -167,13 +175,12 @@ public sealed class GameCompositionRoot : MonoBehaviour
         foreach (var placement in _placements)
         {
             var result = _flow.AddPiece<Board, Square>(placement.Definition, placement.Position);
-
             if (result.IsSuccess)
                 continue;
-
             _logger.LogError($"Не удалось развернуть '{placement.Definition.Name}' в {placement.Position}: {result.Error}");
         }
-
         _logger.Log("Все фигуры развёрнуты");
+
+        _turnManager.Start();
     }
 }
