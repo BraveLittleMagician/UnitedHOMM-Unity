@@ -58,6 +58,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private DeckSequenceProvider _deckSequences = null!;
     private ModifierHost _modifierHost = null!;
     private Presenter _presenter = null!;
+    private EnPassantService _enPassantService = null!;
+    private AmbushService _ambushService = null!;
+    private ReactiveActionRegistry _reactiveRegistry = null!;
 
     private void Awake()
     {
@@ -75,6 +78,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private void OnDestroy()
     {
         _presenter?.Dispose();
+        _reactiveRegistry?.Dispose();
         _deckSequences?.Dispose();
         _abilityService?.Dispose();
         _modifierHost?.Dispose();
@@ -148,12 +152,27 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _turnManager = new TurnManager(_placements, _eventBus);
         _matchState = new MatchState();
         _matchEndChecker = new MatchEndChecker(_registry, _turnManager, _matchState);
-
-        _flow = new Flow(_house, _registry, _eventBus, _logger, _movementValidator, _abilityService, combatService, _modifierHost, onCommitted: () =>
-        {
-            bool gameOver = _matchEndChecker.CheckAfterCommit();
-            if (!gameOver) _turnManager.EndTurn();
-        });
+        _enPassantService = new EnPassantService(_registry, _turnManager, _eventBus, _modifierHost);
+        _ambushService = new AmbushService(_registry, _turnManager, _eventBus, _modifierHost);
+        _reactiveRegistry = new ReactiveActionRegistry();
+        _reactiveRegistry.Register(_enPassantService);
+        _reactiveRegistry.Register(_ambushService);
+        _flow = new Flow(
+            _house,
+            _registry,
+            _eventBus,
+            _logger,
+            _movementValidator,
+            _abilityService,
+            combatService,
+            _modifierHost,
+            _enPassantService,
+            _ambushService,
+            onCommitted: () =>
+            {
+                bool gameOver = _matchEndChecker.CheckAfterCommit();
+                if (!gameOver) _turnManager.EndTurn();
+            });
     }
     private void CreatePresentation()
     {

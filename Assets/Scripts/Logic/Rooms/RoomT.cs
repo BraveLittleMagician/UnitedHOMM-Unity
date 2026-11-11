@@ -22,8 +22,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
 
     private void OnPieceDied(PieceDiedEvent e)
     {
-        if (Remove(e.Piece.IndexInHouse)) Logger.Log($"Фигура {e.Piece} удалена из {Name} после смерти");
-        e.Piece.Dispose();
+        Logger.Log($"Фигура {e.Piece} удалена из {Name} после смерти");
     }
     protected abstract bool ValidateAdd(IPiece piece, TPosition position, out string error);
     protected abstract bool ValidateDisplace(IPath<TPosition> path, IPiece piece, out string error);
@@ -31,7 +30,11 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
     public override bool Add<TPos>(IPiece piece, TPos pos, bool fromAnotherRoom, out string error)
     {
         if (piece == null) throw new ArgumentNullException(nameof(piece));
-
+        if (piece.IsDead)
+        {
+            error = $"{piece} мертв и не может быть добавлен в {Name}";
+            return false;
+        }
         if (pos is not TPosition typedPos)
         {
             error = $"Неверный тип позиции: ожидается {typeof(TPosition).Name}, получен {typeof(TPos).Name}";
@@ -52,6 +55,44 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         _pieces[typedPos] = piece;
         _indexToPosition[piece.IndexInHouse] = typedPos;
         OnPieceAdded(piece, fromAnotherRoom);
+
+        error = "";
+        return true;
+    }
+    public override bool Displace<TPos>(IPath<TPos> path, IdOfPlayer player, out string error)
+    {
+        if (path is not IPath<TPosition> typedPath)
+        {
+            error = $"Неверный тип пути: ожидается {typeof(IPath<TPosition>).Name}";
+            return false;
+        }
+
+        var start = typedPath.Positions[0];
+        var end = typedPath.Positions[^1];
+
+        if (_pieces.ContainsKey(end))
+        {
+            error = $"Конечная позиция {end} занята";
+            return false;
+        }
+        if (!_pieces.TryGetValue(start, out var piece) || !piece.Owner.Equals(player) || piece.IsDead)
+        {
+            error = $"На стартовой позиции {start} нет фигуры игрока {player}";
+            return false;
+        }
+        for (int i = 1; i < typedPath.Positions.Count - 1; i++)
+        {
+            if (_pieces.ContainsKey(typedPath.Positions[i]))
+            {
+                error = $"Промежуточная позиция {typedPath.Positions[i]} занята";
+                return false;
+            }
+        }
+        if (!ValidateDisplace(typedPath, piece, out error)) return false;
+
+        _pieces.Remove(start);
+        _pieces[end] = piece;
+        _indexToPosition[piece.IndexInHouse] = end;
 
         error = "";
         return true;
@@ -82,51 +123,9 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         OnPieceRemoved(piece);
         return true;
     }
-    public override bool Displace<TPos>(IPath<TPos> path, IdOfPlayer player, out string error)
-    {
-        if (path is not IPath<TPosition> typedPath)
-        {
-            error = $"Неверный тип пути: ожидается {typeof(IPath<TPosition>).Name}";
-            return false;
-        }
-
-        var start = typedPath.Positions[0];
-        var end = typedPath.Positions[^1];
-
-        if (_pieces.ContainsKey(end))
-        {
-            error = $"Конечная позиция {end} занята";
-            return false;
-        }
-
-        if (!_pieces.TryGetValue(start, out var piece) || !piece.Owner.Equals(player))
-        {
-            error = $"На стартовой позиции {start} нет фигуры игрока {player}";
-            return false;
-        }
-
-        for (int i = 1; i < typedPath.Positions.Count - 1; i++)
-        {
-            if (_pieces.ContainsKey(typedPath.Positions[i]))
-            {
-                error = $"Промежуточная позиция {typedPath.Positions[i]} занята";
-                return false;
-            }
-        }
-
-        if (!ValidateDisplace(typedPath, piece, out error))
-            return false;
-
-        _pieces.Remove(start);
-        _pieces[end] = piece;
-        _indexToPosition[piece.IndexInHouse] = end;
-
-        error = "";
-        return true;
-    }
     public override bool TryToGetPiece<TPos>(TPos position, [NotNullWhen(true)] out IPiece? piece)
     {
-        if (position is TPosition typedPos && _pieces.TryGetValue(typedPos, out var p) && p != null)
+        if (position is TPosition typedPos && _pieces.TryGetValue(typedPos, out var p) && p != null && !p.IsDead)
         {
             piece = p;
             return true;
@@ -146,7 +145,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
     }
     public override bool TryToGetPiecesForPlayer(IdOfPlayer player, out IEnumerable<IPiece> pieces)
     {
-        var list = _pieces.Values.Where(p => p.Owner.Equals(player)).ToList();
+        var list = _pieces.Values.Where(p => p.Owner.Equals(player) && !p.IsDead).ToList();
         pieces = list;
         return list.Count > 0;
     }
