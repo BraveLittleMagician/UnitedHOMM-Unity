@@ -13,11 +13,11 @@ TagManager:
   - UI
   - 
   - 
+  - Layers
+  - ActiveLayer
   - Pieces
-  - 
-  - 
-  - 
-  - 
+  - MoveTargets
+  - LayerViewDecor
   - 
   - 
   - 
