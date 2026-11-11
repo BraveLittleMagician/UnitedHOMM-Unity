@@ -62,6 +62,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private LoaderOfBoard _loaderOfBoard = null!;
     private ViewState _viewState = null!;
     private CameraManipulationState _manipulationState = null!;
+    private HoverState _hoverState = null!;
+    private SelectionState _selectionState = null!;
+    private ScenePointer _scenePointer = null!;
     private LayerPresenter _layerPresenter = null!;
     private LayerCameraWork _layerCameraWork = null!;
 
@@ -246,6 +249,8 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private void CreatePresentation()
     {
         _manipulationState = new CameraManipulationState();
+        _hoverState = new HoverState();
+        _selectionState = new SelectionState();
         _pieceViewRegistry = new PieceViewRegistry();
         _pieceSpawner = new PieceSpawner(
             _piecesRoot,
@@ -296,7 +301,32 @@ public sealed class GameCompositionRoot : MonoBehaviour
         });
         _boardUI.Initialize(_flow, _eventBus, _selectionHub, _uiPointerProbe);
         _deselectOnEmptyClick.Initialize(_selectionHub, _clickLeftHub, _pointerHub, _uiPointerProbe, _camera);
+        var scenePointerGo = new GameObject("ScenePointer");
+        scenePointerGo.transform.SetParent(transform, false);
+        _scenePointer = scenePointerGo.AddComponent<ScenePointer>();
+        _scenePointer.Initialize(new ScenePointerContext
+        {
+            ClickLeftHub = _clickLeftHub,
+            PointerHub = _pointerHub,
+            UIPointerProbe = _uiPointerProbe,
+            Camera = _camera,
+            LayerCamera = _layerCamera,
+            ViewState = _viewState,
+            HoverState = _hoverState,
+            ManipulationState = _manipulationState,
+            PointerLayers = ~0,
+            MaxRayDistance = 1000f,
+            ClassifyOverride = null,
+            DispatchOverride = target =>
+            {
+                _logger.LogDebug($"[CLICK] Kind={target.Kind} Piece={target.Piece?.Name ?? "-"} " +
+                                 $"Move={target.MoveTarget?.Cell} Attack={target.AttackTarget?.Cell} " +
+                                 $"Target={target.TargetMarker?.Cell}");
+            },
+            BlockInteractionProvider = () => false,
+        });
         _mouseEventer.Run();
+        _scenePointer.Run();
         _cameraWork.Run();
         _layerPresenter.Run();
         _layerCameraWork.Run();
