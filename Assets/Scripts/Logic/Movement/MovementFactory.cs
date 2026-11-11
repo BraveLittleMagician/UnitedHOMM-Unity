@@ -1,14 +1,24 @@
 ﻿#nullable enable
 
-using System;
-
-public sealed class MovementFactory<TSequence, TPosition> : IMovementFactory where TSequence : notnull, ISequence<TPosition, TSequence> where TPosition : struct, ISquare<TPosition>
+public sealed class MovementFactory<TSequence> : IMovementFactory where TSequence : notnull, ISequence<Square, TSequence>
 {
-    private readonly TSequence _sequence;
+    private readonly TSequence _moveSequence;
+    private readonly TSequence? _attackSequence;
+    private readonly bool _hasAttackSequence;
 
-    public MovementFactory(TSequence sequence)
-        => _sequence = sequence ?? throw new ArgumentNullException(nameof(sequence));
+    public MovementFactory(TSequence moveSequence)
+        : this(moveSequence, default!, hasAttackSequence: false) { }
 
-    public IMovement CreateFor(IEventBus eventBus, IPiece owner)
-        => new Movement<TSequence, TPosition>(_sequence, eventBus, owner);
+    public MovementFactory(TSequence moveSequence, TSequence attackSequence)
+        : this(moveSequence, attackSequence, hasAttackSequence: true) { }
+
+    private MovementFactory(TSequence moveSequence, TSequence? attackSequence, bool hasAttackSequence)
+    {
+        _moveSequence = moveSequence;
+        _attackSequence = attackSequence;
+        _hasAttackSequence = hasAttackSequence;
+    }
+
+    public IMovement CreateFor(IEventBus eventBus, ModifierHost modifierHost, IPiece owner)
+        => new Movement<TSequence>(_moveSequence, _attackSequence, _hasAttackSequence, eventBus, modifierHost, owner);
 }

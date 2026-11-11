@@ -1,87 +1,180 @@
 ﻿#nullable enable
-
 using System;
 using System.Collections.Generic;
 
-public sealed class Movement<TSequence, TPosition> : IMovement where TSequence : notnull, ISequence<TPosition, TSequence> where TPosition : struct, ISquare<TPosition>
+public sealed class Movement<TSequence> : IMovement where TSequence : notnull, ISequence<Square, TSequence>
 {
+    private readonly TSequence _moveSequence;
+    private readonly TSequence? _attackSequence;
+    private readonly bool _hasAttackSequence;
     private readonly IEventBus _eventBus;
+    private readonly ModifierHost _modifierHost;
     private readonly IPiece _owner;
-    private readonly TSequence _baseSequence;
-    private TSequence _modifiedSequence;
     private bool _disposed;
 
-    public Movement(TSequence sequence, IEventBus eventBus, IPiece owner)
+    public Movement(TSequence moveSequence, TSequence? attackSequence, bool hasAttackSequence, IEventBus eventBus, ModifierHost modifierHost, IPiece owner)
     {
-        _baseSequence = sequence ?? throw new ArgumentNullException(nameof(sequence));
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _owner = owner ?? throw new ArgumentNullException(nameof(owner));
-
-        Modifiers = new ModifiersOfMovement<TSequence, TPosition>(_eventBus, _owner);
-        _eventBus.Subscribe<ModifiersUpdatedEvent>(OnModifiersUpdated);
-        _modifiedSequence = ApplyModifiers();
+        _moveSequence = moveSequence;
+        _attackSequence = attackSequence;
+        _hasAttackSequence = hasAttackSequence;
+        _eventBus = eventBus ?? throw new System.ArgumentNullException(nameof(eventBus));
+        _modifierHost = modifierHost ?? throw new System.ArgumentNullException(nameof(modifierHost));
+        _owner = owner ?? throw new System.ArgumentNullException(nameof(owner));
     }
 
-    public ModifiersOfMovement<TSequence, TPosition> Modifiers { get; }
-
-    private void OnModifiersUpdated(ModifiersUpdatedEvent e)
+    private ISequenceEnumerator<Square> CreateWorldEnumerator(IPiece piece, Square fromWorld)
     {
-        if (e.Piece == _owner && e.SequenceType == typeof(TSequence))
-            _modifiedSequence = ApplyModifiers();
+        var transforms = _modifierHost.GetShapeTransforms<TSequence, Square>(piece.IndexInHouse);
+
+        var move = _moveSequence;
+        foreach (var t in transforms)
+            if (t.Target.HasFlag(ShapeTarget.Movement))
+                move = t.Apply(move);
+
+        var startLocal = FacingRotation.Unrotate(fromWorld, piece.Facing);
+
+        if (!_hasAttackSequence)
+        {
+            var inner = move.GetEnumerator(startLocal);
+            return new FacingEnumerator(inner, piece.Facing, fromWorld);
+        }
+
+        var attack = _attackSequence!;
+        foreach (var t in transforms)
+            if (t.Target.HasFlag(ShapeTarget.Attack))
+                attack = t.Apply(attack);
+
+        var moveEnum = move.GetEnumerator(startLocal);
+        var attackEnum = attack.GetEnumerator(startLocal);
+        var combined = new CombinedEnumerator(moveEnum, attackEnum);
+        return new FacingEnumerator(combined, piece.Facing, fromWorld);
     }
 
-    private TSequence ApplyModifiers()
+    public bool IsApplicableToRoom(IReadOnlyRoom room) => room is ISquarePositionRoom;
+    public ISequenceEnumerator<Square>? CreateEnumeratorFor(IPiece piece, Square fromPosition) => CreateWorldEnumerator(piece, fromPosition);
+    public IReadOnlyList<ShapeCell> GetShape<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room, bool includeOccupied) where TPos : struct
     {
-        var result = _baseSequence;
-        foreach (var m in Modifiers.All)
-            result = m.Apply(result);
+        if (fromPosition is not Square fromSquare) return Array.Empty<ShapeCell>();
+
+        var enumerator = CreateWorldEnumerator(piece, fromSquare);
+        var positions = enumerator.PositionsAll;
+        var attackables = enumerator.PositionsAttackable;
+        var result = new List<ShapeCell>();
+
+        foreach (var (cell, stayable) in positions)
+        {
+            if (cell.Equals(fromSquare)) continue;
+            if (!includeOccupied && room.TryToGetPiece<Square>(cell, out _)) continue;
+            var attackable = attackables.TryGetValue(cell, out var a) ? a : Attackable.NotAttack;
+            result.Add(new ShapeCell(cell, stayable, attackable));
+        }
+        return result;
+    }
+    public IReadOnlyList<TPos> GetValidMoves<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room) where TPos : struct
+    {
+        if (fromPosition is not Square fromSquare) return Array.Empty<TPos>();
+
+        var enumerator = CreateWorldEnumerator(piece, fromSquare);
+        var positions = enumerator.PositionsAll;
+        var result = new List<TPos>();
+
+        foreach (var (cell, stayable) in positions)
+        {
+            if (cell.Equals(fromSquare)) continue;
+            if (stayable != Stayable.Stay) continue;
+            if (room.TryToGetPiece<Square>(cell, out _)) continue;
+            result.Add((TPos)(object)cell);
+        }
         return result;
     }
 
-    public bool CanMove<TPos>(IPath<TPos> path) where TPos : struct
+    public bool TryFindPath<TPos>(IPiece piece, TPos fromPosition, TPos target, IReadOnlyRoom room, out IPath<TPos>? path) where TPos : struct
     {
-        if (path is not IPath<TPosition> typedPath) return false;
+        path = null;
+        if (fromPosition is not Square fromSquare) return false;
+        if (target is not Square targetSquare) return false;
+        if (targetSquare.Equals(fromSquare)) return false;
+        if (room.TryToGetPiece<Square>(targetSquare, out _)) return false;
 
-        var enumerator = _modifiedSequence.GetEnumerator(typedPath.Positions[0]);
-        return enumerator.CanMoveTo(typedPath);
-    }
+        var enumerator = CreateWorldEnumerator(piece, fromSquare);
+        var positions = enumerator.PositionsAll;
+        if (!positions.TryGetValue(targetSquare, out var targetFlag)) return false;
+        if (targetFlag != Stayable.Stay) return false;
 
-    public bool IsApplicableToRoom(IReadOnlyRoom room)
-    {
-        if (typeof(TPosition) == typeof(int))
-            return room is IIntPositionRoom;
-
-        if (typeof(ISquarePosition).IsAssignableFrom(typeof(TPosition)))
-            return room is ISquarePositionRoom;
-
-        return false;
-    }
-
-    public List<TPos> GetStayables<TPos>(TPos position) where TPos : struct
-    {
-        if (position is TPosition typed)
+        var visited = new HashSet<Square> { fromSquare };
+        var parent = new Dictionary<Square, Square>();
+        var queue = new Queue<Square>();
+        queue.Enqueue(fromSquare);
+        bool found = false;
+        while (queue.Count > 0 && !found)
         {
-            var result = _modifiedSequence.GetEnumerator(typed).PositionsStayables;
-            if (result is List<TPos> typedResult) return typedResult;
+            var current = queue.Dequeue();
+            foreach (var neighbor in enumerator.GetNeighbors(current))
+            {
+                if (!visited.Add(neighbor)) continue;
+                if (!positions.ContainsKey(neighbor)) continue;
+                if (room.TryToGetPiece<Square>(neighbor, out _)) continue;
+                parent[neighbor] = current;
+                if (neighbor.Equals(targetSquare)) { found = true; break; }
+                queue.Enqueue(neighbor);
+            }
         }
-        return new List<TPos>();
+        if (!found) return false;
+
+        var pathPositions = new List<Square>();
+        var node = targetSquare;
+        while (!node.Equals(fromSquare))
+        {
+            pathPositions.Add(node);
+            node = parent[node];
+        }
+        pathPositions.Add(fromSquare);
+        pathPositions.Reverse();
+
+        var builtPath = new PathSequence<Square>(pathPositions.ToArray());
+        if (!enumerator.CanMoveTo(builtPath)) return false;
+        path = (IPath<TPos>)(object)builtPath;
+        return true;
     }
 
-    public Dictionary<TPos, Stayable> GetPositions<TPos>(TPos position) where TPos : struct
+    public bool CanMove<TPos>(IPiece piece, IPath<TPos> path, IReadOnlyRoom room, out string error) where TPos : struct
     {
-        if (position is TPosition typed)
+        if (path == null || path.Positions.Count < 2)
         {
-            var result = _modifiedSequence.GetEnumerator(typed).PositionsAll;
-            if (result is Dictionary<TPos, Stayable> typedResult) return typedResult;
+            error = "Path too short";
+            return false;
         }
-        return new Dictionary<TPos, Stayable>();
+        if (typeof(TPos) != typeof(Square))
+        {
+            error = "Path has wrong position type";
+            return false;
+        }
+
+        var fromRaw = (Square)(object)path.Positions[0];
+
+        if (!room.TryToGetPosition<Square>(piece.IndexInHouse, out var actualFrom))
+        {
+            error = "Piece has no position in room";
+            return false;
+        }
+        if (!actualFrom.Equals(fromRaw))
+        {
+            error = "Path does not start at piece's position";
+            return false;
+        }
+        var target = (Square)(object)path.Positions[^1];
+        if (!TryFindPath(piece, actualFrom, target, room, out _))
+        {
+            error = $"No valid path from {actualFrom} to {target}";
+            return false;
+        }
+        error = "";
+        return true;
     }
 
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
-        _eventBus.Unsubscribe<ModifiersUpdatedEvent>(OnModifiersUpdated);
-        Modifiers.Dispose();
     }
 }

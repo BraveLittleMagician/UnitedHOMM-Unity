@@ -49,7 +49,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private Board _board = null!;
     private IHouse _house = null!;
     private IRegistry _registry = null!;
-    private ICombatService _combatService = null!;
     private IMovementValidator _movementValidator = null!;
     private IAbilityService _abilityService = null!;
     private IFlow _flow = null!;
@@ -125,8 +124,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private void CreateLogic()
     {
         _seats = new Seats(_configOfBoard.NumberOfSides, _configOfBoard.NumberOfPlayersOnSide);
+        _modifierHost = new ModifierHost(_eventBus, _logger);
 
-        _house = new House(_seats, _eventBus, _logger);
+        _house = new House(_seats, _eventBus, _logger, _modifierHost);
         _registry = new Registry(_house);
 
         var boardSize = BoardSizeFactory.FromConfig(_configOfBoard);
@@ -136,8 +136,11 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
         _movementValidator = new MovementValidator(_logger);
         _abilityService = new AbilityService(_eventBus, _logger);
-        _modifierHost = new ModifierHost(_eventBus, _logger);
-        _flow = new Flow(_house, _eventBus, _logger, _movementValidator, _abilityService);
+
+        var attackTargetProvider = new AttackTargetProvider(_modifierHost);
+        var combatService = new CombatService(_logger, _eventBus, attackTargetProvider, _modifierHost);
+
+        _flow = new Flow(_house, _eventBus, _logger, _movementValidator, _abilityService, combatService);
     }
     private void CreatePresentation()
     {

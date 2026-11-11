@@ -9,6 +9,7 @@ using System.Numerics;
 public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition : struct
 {
     protected readonly Dictionary<TPosition, IPiece> _pieces = new();
+    private readonly Dictionary<BigInteger, TPosition> _indexToPosition = new();
 
     protected RoomT(Seats seats, IEventBus eventBus, ILogger logger) : base(seats, eventBus, logger)
     {
@@ -49,6 +50,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         if (!ValidateAdd(piece, typedPos, out error)) return false;
 
         _pieces[typedPos] = piece;
+        _indexToPosition[piece.IndexInHouse] = typedPos;
         OnPieceAdded(piece, fromAnotherRoom);
 
         error = "";
@@ -61,6 +63,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
             if (piece.IndexInHouse == index)
             {
                 _pieces.Remove(pos);
+                _indexToPosition.Remove(index);
                 OnPieceRemoved(piece);
                 return true;
             }
@@ -75,6 +78,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         if (!piece.Owner.Equals(player)) return false;
 
         _pieces.Remove(typedPos);
+        _indexToPosition.Remove(piece.IndexInHouse);
         OnPieceRemoved(piece);
         return true;
     }
@@ -115,6 +119,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
 
         _pieces.Remove(start);
         _pieces[end] = piece;
+        _indexToPosition[piece.IndexInHouse] = end;
 
         error = "";
         return true;
@@ -129,6 +134,16 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
         piece = null;
         return false;
     }
+    public override bool TryToGetPosition<TPos>(BigInteger index, out TPos position)
+    {
+        if (_indexToPosition.TryGetValue(index, out var typedPos) && typedPos is TPos result)
+        {
+            position = result;
+            return true;
+        }
+        position = default;
+        return false;
+    }
     public override bool TryToGetPiecesForPlayer(IdOfPlayer player, out IEnumerable<IPiece> pieces)
     {
         var list = _pieces.Values.Where(p => p.Owner.Equals(player)).ToList();
@@ -139,6 +154,7 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
     {
         EventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied);
         foreach (var piece in _pieces.Values) piece.Dispose();
+        _indexToPosition.Clear();
         _pieces.Clear();
         base.Dispose();
     }

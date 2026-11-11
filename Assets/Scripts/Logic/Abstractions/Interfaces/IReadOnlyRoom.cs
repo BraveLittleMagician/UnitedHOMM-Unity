@@ -3,13 +3,14 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 public interface IReadOnlyRoom : IPiecesGetter, IDisposable
 {
     public string Name { get; }
     public int CountOfPieces { get; }
     public Seats ActiveSeats { get; }
-
     public bool TryToGetPiece<TPos>(TPos position, [NotNullWhen(true)] out IPiece? piece) where TPos : struct;
+    public bool TryToGetPosition<TPos>(BigInteger index, out TPos position) where TPos : struct;
     public bool TryToGetPiecesForPlayer(IdOfPlayer player, out IEnumerable<IPiece> pieces);
 }

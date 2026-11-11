@@ -2,8 +2,6 @@
 
 public interface ICombatService
 {
-    IResult PerformMeleeAttack(IPiece attacker, IPiece target, IRoom room);
-    IResult PerformRangedAttack(IPiece attacker, IPiece target, IRoom room);
-
-    bool CanAttack(IPiece attacker, IPiece target, out string error);
+    bool CanAttack(IPiece attacker, IPiece target, IRoom room, out string error);
+    IResult PerformAttack(IPiece attacker, IPiece target, IRoom room, AttackKind kind);
 }

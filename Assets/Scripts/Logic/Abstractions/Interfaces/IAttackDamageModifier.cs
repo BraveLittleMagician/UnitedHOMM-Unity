@@ -1,5 +1,4 @@
-﻿
-#nullable enable
+﻿#nullable enable
 
 public interface IAttackDamageModifier
 {

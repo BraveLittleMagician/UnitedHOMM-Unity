@@ -10,7 +10,5 @@ public sealed record PieceDefinition(
     int AttackCharges,
     FacingDirection InitialFacing,
     IReadOnlyList<IMovementFactory>? MovementFactories = null,
-    IReadOnlyList<IMeleeAttack>? MeleeAttacks = null,
-    IReadOnlyList<IRangedAttack>? RangedAttacks = null,
     IReadOnlyList<IAbility>? Abilities = null,
     IAttackEffect? AttackEffect = null);

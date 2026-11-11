@@ -18,14 +18,13 @@ public sealed class MovementValidator : IMovementValidator
 
         foreach (var movement in piece.Movements)
         {
-            if (movement.IsApplicableToRoom(room) && movement.CanMove(path))
+            if (!movement.IsApplicableToRoom(room)) continue;
+            if (movement.CanMove(piece, path, room, out error))
             {
-                error = "";
                 _logger.LogDebug($"Движение {movement.GetType().Name} подходит для {piece} в {room.Name}");
                 return true;
             }
         }
-
         error = $"У {piece} нет подходящего движения по пути {path} в комнате {room.Name}";
         _logger.LogWarning(error);
         return false;
@@ -35,10 +34,8 @@ public sealed class MovementValidator : IMovementValidator
     {
         if (piece == null) throw new ArgumentNullException(nameof(piece));
         if (room == null) throw new ArgumentNullException(nameof(room));
-
         foreach (var movement in piece.Movements)
             if (movement.IsApplicableToRoom(room)) return true;
-
         return false;
     }
 }

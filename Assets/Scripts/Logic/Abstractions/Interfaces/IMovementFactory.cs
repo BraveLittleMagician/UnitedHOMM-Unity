@@ -2,5 +2,5 @@
 
 public interface IMovementFactory
 {
-    IMovement CreateFor(IEventBus eventBus, IPiece owner);
+    IMovement CreateFor(IEventBus eventBus, ModifierHost modifierHost, IPiece owner);
 }

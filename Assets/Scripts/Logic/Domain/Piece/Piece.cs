@@ -8,8 +8,6 @@ public sealed class Piece : IPiece
 {
     private readonly Properties _properties;
     private readonly List<IMovement> _movements = new();
-    private readonly List<IMeleeAttack> _meleeAttacks = new();
-    private readonly List<IRangedAttack> _rangedAttacks = new();
     private readonly List<IAbility> _abilities = new();
     private readonly IAttackEffect _attackEffect;
     private readonly IEventBus _eventBus;
@@ -60,8 +58,6 @@ public sealed class Piece : IPiece
     public Properties Properties => _properties;
 
     public IReadOnlyList<IMovement> Movements => _movements;
-    public IReadOnlyList<IMeleeAttack> MeleeAttacks => _meleeAttacks;
-    public IReadOnlyList<IRangedAttack> RangedAttacks => _rangedAttacks;
     public IReadOnlyList<IAbility> Abilities => _abilities;
 
     private void OnHealthChanged(Property property, int oldValue)
@@ -80,21 +76,8 @@ public sealed class Piece : IPiece
     }
 
     public void AddMovement(IMovement movement) => _movements.Add(movement);
-    public void AddMeleeAttack(IMeleeAttack attack) => _meleeAttacks.Add(attack);
-    public void AddRangedAttack(IRangedAttack attack) => _rangedAttacks.Add(attack);
     public void AddAbility(IAbility ability) => _abilities.Add(ability);
-
     public void ApplyOperation(IOperation operation) => _properties.Apply(operation);
-
-    public bool TakeDamage(int amount)
-    {
-        if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "Damage cannot be negative.");
-        if (amount == 0 || IsDead) return false;
-        if (!_properties.TryToGet<Health>(out var health)) return false;
-        health.Subtract(amount);
-        return IsDead;
-    }
-
     public void RecoverHp(int amount)
     {
         if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "Heal cannot be negative.");
@@ -102,13 +85,6 @@ public sealed class Piece : IPiece
         if (!_properties.TryToGet<Health>(out var health)) return;
         health.Recover(amount);
     }
-
-    public bool TryConsumeAttackCharge()
-    {
-        if (!_properties.TryToGet<AttackChargesProperty>(out var charges)) return false;
-        return charges.TryConsume();
-    }
-
     public void RestoreCombat(int hp, int attackCharges)
     {
         if (hp < 0 || hp > HealthNormal)
@@ -119,7 +95,6 @@ public sealed class Piece : IPiece
         if (_properties.TryToGet<Health>(out var health)) health.Set(hp);
         if (_properties.TryToGet<AttackChargesProperty>(out var charges)) charges.Restore(attackCharges);
     }
-
     public void RestoreFacing(FacingDirection facing)
     {
         if (Facing == facing) return;
@@ -127,24 +102,19 @@ public sealed class Piece : IPiece
         Facing = facing;
         _eventBus.Publish(new FacingChangedEvent(this, old, facing));
     }
-
     public void MarkFirstActionOfGameTaken(Activity activity)
     {
         if (HasTakenFirstActionOfGame) return;
         HasTakenFirstActionOfGame = true;
         _eventBus.Publish(new PieceStartedActionEvent(this, activity ?? EmptyActivity.Instance));
     }
-
     public void MarkMovedThisTurn() => HasMovedThisTurn = true;
-
     public void AddRotationDegreesThisTurn(int degrees)
     {
         if (degrees < 0) throw new ArgumentOutOfRangeException(nameof(degrees), "Degrees must be non-negative.");
         TotalRotationDegreesThisTurn += degrees;
     }
-
     public void MarkPromotedThisTurn() => HasPromotedThisTurn = true;
-
     public void ResetTurnState()
     {
         HasMovedThisTurn = false;
@@ -152,17 +122,14 @@ public sealed class Piece : IPiece
         HasPromotedThisTurn = false;
         // HasTakenFirstActionOfGame не сбрасывается: это «первое действие за игру».
     }
-
     public void RestoreFirstActionOfGameTaken(bool value) => HasTakenFirstActionOfGame = value;
     public void RestoreMovedThisTurn(bool value) => HasMovedThisTurn = value;
     public void RestorePromotedThisTurn(bool value) => HasPromotedThisTurn = value;
-
     public void RestoreTotalRotationDegrees(int value)
     {
         if (value < 0) throw new ArgumentOutOfRangeException(nameof(value), "Value must be non-negative.");
         TotalRotationDegreesThisTurn = value;
     }
-
     public void Dispose()
     {
         if (_disposed) return;
@@ -170,13 +137,22 @@ public sealed class Piece : IPiece
         _properties.Dispose();
         foreach (var mov in _movements) (mov as IDisposable)?.Dispose();
         foreach (var ab in _abilities) { ab.Deactivate(); ab.Dispose(); }
-        foreach (var ma in _meleeAttacks) (ma as IDisposable)?.Dispose();
-        foreach (var ra in _rangedAttacks) (ra as IDisposable)?.Dispose();
         _movements.Clear();
-        _meleeAttacks.Clear();
-        _rangedAttacks.Clear();
         _abilities.Clear();
         _logger.Log($"Фигура {this} уничтожена");
+    }
+    public bool TryConsumeAttackCharge()
+    {
+        if (!_properties.TryToGet<AttackChargesProperty>(out var charges)) return false;
+        return charges.TryConsume();
+    }
+    public bool TakeDamage(int amount)
+    {
+        if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "Damage cannot be negative.");
+        if (amount == 0 || IsDead) return false;
+        if (!_properties.TryToGet<Health>(out var health)) return false;
+        health.Subtract(amount);
+        return IsDead;
     }
 
     public override string ToString() =>

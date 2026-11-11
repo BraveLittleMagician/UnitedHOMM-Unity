@@ -14,13 +14,12 @@ public sealed class House : IHouse
     private readonly ILogger _logger;
     private bool _disposed;
 
-    public House(Seats seats, IEventBus eventBus, ILogger logger)
+    public House(Seats seats, IEventBus eventBus, ILogger logger, ModifierHost modifierHost)
     {
         ActiveSeats = seats;
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _pieceFactory = new PieceFactory(eventBus, logger);
-
+        _pieceFactory = new PieceFactory(eventBus, modifierHost, logger);
         _eventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
     }
 
