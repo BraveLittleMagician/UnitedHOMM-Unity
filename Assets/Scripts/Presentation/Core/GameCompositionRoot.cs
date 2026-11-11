@@ -128,7 +128,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     {
         _seats = new Seats(_configOfBoard.NumberOfSides, _configOfBoard.NumberOfPlayersOnSide);
         _modifierHost = new ModifierHost(_eventBus, _logger);
-
+         
         _house = new House(_seats, _eventBus, _logger, _modifierHost);
         _registry = new Registry(_house);
 
@@ -144,11 +144,16 @@ public sealed class GameCompositionRoot : MonoBehaviour
         var combatService = new CombatService(_logger, _eventBus, attackTargetProvider, _modifierHost);
 
         _modifierHost.Registry = _registry;
-        _flow = new Flow(_house, _eventBus, _logger, _movementValidator, _abilityService, combatService);
 
         _turnManager = new TurnManager(_placements, _eventBus);
         _matchState = new MatchState();
         _matchEndChecker = new MatchEndChecker(_registry, _turnManager, _matchState);
+
+        _flow = new Flow(_house, _eventBus, _logger, _movementValidator, _abilityService, combatService, onCommitted: () =>
+        {
+            bool gameOver = _matchEndChecker.CheckAfterCommit();
+            if (!gameOver) _turnManager.EndTurn();
+        });
     }
     private void CreatePresentation()
     {

@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Collections.Generic;
 
 public sealed class Flow : IFlow, IDisposable
 {
@@ -10,10 +11,13 @@ public sealed class Flow : IFlow, IDisposable
     private readonly IMovementValidator _movementValidator;
     private readonly IAbilityService _abilityService;
     private readonly ICombatService _combatService;
+    private readonly Action? _onCommitted;
 
+    private readonly Stack<IUndoableOperation> _undoStack = new();
+    private readonly Stack<IUndoableOperation> _redoStack = new();
     private bool _disposed;
 
-    public Flow(IHouse house, IEventBus eventBus, ILogger logger, IMovementValidator movementValidator, IAbilityService abilityService, ICombatService combatService)
+    public Flow(IHouse house, IEventBus eventBus, ILogger logger, IMovementValidator movementValidator, IAbilityService abilityService, ICombatService combatService, Action? onCommitted = null)
     {
         _house = house ?? throw new ArgumentNullException(nameof(house));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
@@ -21,7 +25,11 @@ public sealed class Flow : IFlow, IDisposable
         _movementValidator = movementValidator ?? throw new ArgumentNullException(nameof(movementValidator));
         _abilityService = abilityService ?? throw new ArgumentNullException(nameof(abilityService));
         _combatService = combatService ?? throw new ArgumentNullException(nameof(combatService));
+        _onCommitted = onCommitted;
     }
+
+    public int UndoCount => _undoStack.Count;
+    public int RedoCount => _redoStack.Count;
 
     private IResult<TRoom> GetRoom<TRoom>() where TRoom : IRoom
     {
@@ -34,16 +42,17 @@ public sealed class Flow : IFlow, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        _undoStack.Clear();
+        _redoStack.Clear();
         _logger.Log("Flow уничтожен");
     }
-
     public IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position)
         where TRoom : IRoom where TPos : struct
     {
         var roomResult = GetRoom<TRoom>();
         if (!roomResult.IsSuccess) return Result<IPiece>.Failure(roomResult.Error!);
-
         var room = roomResult.Value!;
+
         var piece = _house.CreatePiece(definition);
 
         if (!room.Add(piece, position, false, out var error))
@@ -56,12 +65,12 @@ public sealed class Flow : IFlow, IDisposable
         _abilityService.ActivateAbilities(piece);
         _eventBus.Publish(new PieceDeployedEvent<TPos>(piece, position, room));
         _logger.Log($"Фигура {piece} добавлена в {room.Name} на позицию {position}");
-
         return Result<IPiece>.Success(piece);
     }
     public IResult MovePiece(IPiece piece, Square target)
     {
         if (piece == null) return Result.Failure("Piece is null");
+
         var roomResult = GetRoom<Board>();
         if (!roomResult.IsSuccess) return Result.Failure(roomResult.Error!);
         var room = roomResult.Value!;
@@ -81,11 +90,19 @@ public sealed class Flow : IFlow, IDisposable
         if (path == null)
             return Result.Failure($"No valid path from {fromPos} to {target} for {piece}");
 
+        var flagsBefore = new PieceActionFlags(piece.HasMovedThisTurn, piece.HasTakenFirstActionOfGame);
+
         if (!room.Displace(path, piece.Owner, out var displaceError))
             return Result.Failure($"Move failed: {displaceError}");
 
         piece.MarkMovedThisTurn();
         piece.MarkFirstActionOfGameTaken(new MoveActivity(fromPos, target));
+
+        var flagsAfter = new PieceActionFlags(piece.HasMovedThisTurn, piece.HasTakenFirstActionOfGame);
+
+        var undo = new MoveUndo(piece, room, path, fromPos, target, flagsBefore, flagsAfter, _eventBus);
+        _undoStack.Push(undo);
+        _redoStack.Clear();
 
         _eventBus.Publish(new PieceMovedEvent<Square>(piece, fromPos, target, room));
         _logger.Log($"Piece {piece} moved from {fromPos} to {target}");
@@ -104,12 +121,12 @@ public sealed class Flow : IFlow, IDisposable
         var result = _combatService.PerformAttack(attacker, targetPiece, room, AttackKind.Melee);
         if (!result.IsSuccess) return result;
 
-        // Если цель умерла — прыжок на её клетку (как в P2 AttackAction)
+        // Jump на клетку убитой цели (как в P2 AttackAction). Undo для этого пока нет —
+        // добавим в фазе 11 вместе с полным AttackUndo.
         if (targetPiece.IsDead && !room.TryToGetPiece(target, out _))
         {
             if (room.TryToGetPosition<Square>(attacker.IndexInHouse, out var fromPos))
             {
-                // Простой Jump: удалить из from, поставить в target
                 if (room.Remove(fromPos, attacker.Owner))
                 {
                     if (room.Add(attacker, target, true, out var err))
@@ -132,11 +149,10 @@ public sealed class Flow : IFlow, IDisposable
     {
         var fromResult = GetRoom<TRoomFrom>();
         if (!fromResult.IsSuccess) return Result.Failure(fromResult.Error!);
-
         var fromRoom = fromResult.Value!;
+
         var toResult = GetRoom<TRoomTo>();
         if (!toResult.IsSuccess) return Result.Failure(toResult.Error!);
-
         var toRoom = toResult.Value!;
 
         if (ReferenceEquals(fromRoom, toRoom))
@@ -165,6 +181,50 @@ public sealed class Flow : IFlow, IDisposable
 
         _abilityService.ActivateAbilities(piece);
         _logger.Log($"Фигура {piece} перемещена из {fromRoom.Name}:{fromPosition} в {toRoom.Name}:{toPosition}");
+        return Result.Success();
+    }
+    public IResult Undo()
+    {
+        if (_undoStack.Count == 0) return Result.Failure("Nothing to undo");
+        var top = _undoStack.Peek();
+        if (!top.Undo(this)) return Result.Failure("Undo failed");
+        _undoStack.Pop();
+        _redoStack.Push(top);
+        _logger.LogDebug($"Undo applied, undo={_undoStack.Count}, redo={_redoStack.Count}");
+        return Result.Success();
+    }
+    public IResult Redo()
+    {
+        if (_redoStack.Count == 0) return Result.Failure("Nothing to redo");
+        var top = _redoStack.Peek();
+        if (!top.Redo(this)) return Result.Failure("Redo failed");
+        _redoStack.Pop();
+        _undoStack.Push(top);
+        _logger.LogDebug($"Redo applied, undo={_undoStack.Count}, redo={_redoStack.Count}");
+        return Result.Success();
+    }
+    public IResult UndoAll()
+    {
+        if (_undoStack.Count == 0) return Result.Failure("Nothing to undo");
+        while (_undoStack.Count > 0)
+        {
+            var top = _undoStack.Pop();
+            if (!top.Undo(this))
+            {
+                _undoStack.Push(top);
+                return Result.Failure("UndoAll failed mid-way");
+            }
+            _redoStack.Push(top);
+        }
+        _logger.LogDebug($"UndoAll applied, undo=0, redo={_redoStack.Count}");
+        return Result.Success();
+    }
+    public IResult Commit()
+    {
+        _undoStack.Clear();
+        _redoStack.Clear();
+        _logger.Log("Plan committed");
+        _onCommitted?.Invoke();
         return Result.Success();
     }
 }
