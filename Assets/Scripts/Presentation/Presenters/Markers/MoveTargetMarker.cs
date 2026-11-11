@@ -1,0 +1,37 @@
+﻿#nullable enable
+
+using UnityEngine;
+
+public class MoveTargetMarker : MonoBehaviour, IHoverable
+{
+    private MaterialPropertyBlock _block = null!;
+
+    public bool IsStay { get; private set; }
+    public bool IsHovered { get; private set; }
+    public Square Cell { get; private set; }
+
+    public void Initialize(Square cell, Stayable stayable, MaterialPropertyBlock block)
+    {
+        Cell = cell;
+        IsStay = stayable == Stayable.Stay;
+        _block = block;
+        ApplyBlock();
+    }
+
+    public void SetHovered(bool value)
+    {
+        if (IsHovered == value) return;
+        IsHovered = value;
+        ApplyBlock();
+    }
+
+    private void ApplyBlock()
+    {
+        if (_block == null) return;
+        _block.SetFloat("_IsHovered", IsHovered ? 1f : 0f);
+        _block.SetFloat("_IsStay", IsStay ? 1f : 0f);
+        _block.SetFloat("_IsAttack", 0f);
+        foreach (var r in GetComponentsInChildren<Renderer>())
+            r.SetPropertyBlock(_block);
+    }
+}
