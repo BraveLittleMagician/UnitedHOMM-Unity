@@ -50,44 +50,11 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
         return new FacingEnumerator(combined, piece.Facing, fromWorld);
     }
 
-    public bool IsApplicableToRoom(IReadOnlyRoom room) => room is ISquarePositionRoom;
-    public ISequenceEnumerator<Square>? CreateEnumeratorFor(IPiece piece, Square fromPosition) => CreateWorldEnumerator(piece, fromPosition);
-    public IReadOnlyList<ShapeCell> GetShape<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room, bool includeOccupied) where TPos : struct
+    public void Dispose()
     {
-        if (fromPosition is not Square fromSquare) return Array.Empty<ShapeCell>();
-
-        var enumerator = CreateWorldEnumerator(piece, fromSquare);
-        var positions = enumerator.PositionsAll;
-        var attackables = enumerator.PositionsAttackable;
-        var result = new List<ShapeCell>();
-
-        foreach (var (cell, stayable) in positions)
-        {
-            if (cell.Equals(fromSquare)) continue;
-            if (!includeOccupied && room.TryToGetPiece<Square>(cell, out _)) continue;
-            var attackable = attackables.TryGetValue(cell, out var a) ? a : Attackable.NotAttack;
-            result.Add(new ShapeCell(cell, stayable, attackable));
-        }
-        return result;
+        if (_disposed) return;
+        _disposed = true;
     }
-    public IReadOnlyList<TPos> GetValidMoves<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room) where TPos : struct
-    {
-        if (fromPosition is not Square fromSquare) return Array.Empty<TPos>();
-
-        var enumerator = CreateWorldEnumerator(piece, fromSquare);
-        var positions = enumerator.PositionsAll;
-        var result = new List<TPos>();
-
-        foreach (var (cell, stayable) in positions)
-        {
-            if (cell.Equals(fromSquare)) continue;
-            if (stayable != Stayable.Stay) continue;
-            if (room.TryToGetPiece<Square>(cell, out _)) continue;
-            result.Add((TPos)(object)cell);
-        }
-        return result;
-    }
-
     public bool TryFindPath<TPos>(IPiece piece, TPos fromPosition, TPos target, IReadOnlyRoom room, out IPath<TPos>? path) where TPos : struct
     {
         path = null;
@@ -136,7 +103,6 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
         path = (IPath<TPos>)(object)builtPath;
         return true;
     }
-
     public bool CanMove<TPos>(IPiece piece, IPath<TPos> path, IReadOnlyRoom room, out string error) where TPos : struct
     {
         if (path == null || path.Positions.Count < 2)
@@ -171,10 +137,41 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
         error = "";
         return true;
     }
-
-    public void Dispose()
+    public bool IsApplicableToRoom(IReadOnlyRoom room) => room is ISquarePositionRoom;
+    public ISequenceEnumerator<Square>? CreateEnumeratorFor(IPiece piece, Square fromPosition) => CreateWorldEnumerator(piece, fromPosition);
+    public IReadOnlyList<ShapeCell> GetShape<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room, bool includeOccupied) where TPos : struct
     {
-        if (_disposed) return;
-        _disposed = true;
+        if (fromPosition is not Square fromSquare) return Array.Empty<ShapeCell>();
+
+        var enumerator = CreateWorldEnumerator(piece, fromSquare);
+        var positions = enumerator.PositionsAll;
+        var attackables = enumerator.PositionsAttackable;
+        var result = new List<ShapeCell>();
+
+        foreach (var (cell, stayable) in positions)
+        {
+            if (cell.Equals(fromSquare)) continue;
+            if (!includeOccupied && room.TryToGetPiece<Square>(cell, out _)) continue;
+            var attackable = attackables.TryGetValue(cell, out var a) ? a : Attackable.NotAttack;
+            result.Add(new ShapeCell(cell, stayable, attackable));
+        }
+        return result;
+    }
+    public IReadOnlyList<TPos> GetValidMoves<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room) where TPos : struct
+    {
+        if (fromPosition is not Square fromSquare) return Array.Empty<TPos>();
+
+        var enumerator = CreateWorldEnumerator(piece, fromSquare);
+        var positions = enumerator.PositionsAll;
+        var result = new List<TPos>();
+
+        foreach (var (cell, stayable) in positions)
+        {
+            if (cell.Equals(fromSquare)) continue;
+            if (stayable != Stayable.Stay) continue;
+            if (room.TryToGetPiece<Square>(cell, out _)) continue;
+            result.Add((TPos)(object)cell);
+        }
+        return result;
     }
 }

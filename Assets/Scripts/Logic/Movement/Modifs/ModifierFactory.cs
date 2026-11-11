@@ -8,7 +8,6 @@ public static class ModifierFactory
 {
     public static IModifier Create(string name, JObject? args = null) => name switch
     {
-        // Activation
         "DoubleMove" => new OpeningDoubleMoveModifier(),
         "SelfHeal" => new SelfHealModifier(),
         "RotateRight" => new RotateModifier(isRight: true),
@@ -24,7 +23,6 @@ public static class ModifierFactory
         "Ambush" => new AmbushModifier(),
         "EnPassant" => new EnPassantModifier(),
 
-        // Shape (Stayable)
         "AdderStayableOfArea" => new AdderStayableOfArea<Square>(args?["Index"]?.Value<int>() ?? 0),
         "RemoverStayableOfArea" => new RemoverStayableOfArea<Square>(args?["Index"]?.Value<int>() ?? 0),
         "IncreaserRadiusOfArea" => new IncreaserRadiusOfArea<Square>(),
@@ -34,6 +32,12 @@ public static class ModifierFactory
         "DecreaserOfPattern" => new DecreaserOfPattern<Square>(ParseSquaresArray(args?["Squares"])),
         "IncreaserNotStayableOfPattern" => new IncreaserNotStayableOfPattern<Square>(ParseSquaresArray(args?["Squares"])),
         "IncreaserStayableOfPattern" => new IncreaserStayableOfPattern<Square>(ParseSquaresArray(args?["Squares"])),
+        "AdderAttackableOfPattern" => new AdderAttackableOfPattern<Square>(ParseSquaresArray(args?["Squares"])),
+        "RemoverAttackableOfPattern" => new RemoverAttackableOfPattern<Square>(ParseSquaresArray(args?["Squares"])),
+        "AdderAttackableOfPathSet" => new AdderAttackableOfPathSet(ParseSquaresArray(args?["Squares"])),
+        "RemoverAttackableOfPathSet" => new RemoverAttackableOfPathSet(ParseSquaresArray(args?["Squares"])),
+        "AdderAttackableOfStepBudget" => new AdderAttackableOfStepBudget(ParseSquaresArray(args?["Squares"])),
+        "RemoverAttackableOfStepBudget" => new RemoverAttackableOfStepBudget(ParseSquaresArray(args?["Squares"])),
         "DecreaserOfGraph" => new DecreaserOfGraph<Square>(ParseSquaresArray(args?["Positions"])),
         "SetStayableOfGraph" => new SetStayableOfGraph<Square>(ParseStayableTuples(args?["Cells"])),
         "IncreaserOfGraph" => new IncreaserOfGraph<Square>(ParseGraphNodes(args?["Nodes"])),
