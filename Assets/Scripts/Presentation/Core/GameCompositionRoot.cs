@@ -57,7 +57,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private IFlow _flow = null!;
     private DeckSequenceProvider _deckSequences = null!;
     private ModifierHost _modifierHost = null!;
-    private Presenter _presenter = null!;
+    private LoaderOfBoard _loaderOfBoard = null!;
+    private PieceSpawner _pieceSpawner = null!;
+    private PieceViewRegistry _pieceViewRegistry = null!;
     private EnPassantService _enPassantService = null!;
     private AmbushService _ambushService = null!;
     private ReactiveActionRegistry _reactiveRegistry = null!;
@@ -87,7 +89,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     }
     private void OnDestroy()
     {
-        _presenter?.Dispose();
+        _loaderOfBoard?.Dispose();
         _reactiveRegistry?.Dispose();
         _deckSequences?.Dispose();
         _abilityService?.Dispose();
@@ -234,8 +236,18 @@ public sealed class GameCompositionRoot : MonoBehaviour
     }
     private void CreatePresentation()
     {
-        _presenter = new Presenter(_eventBus, _logger, _selectionHub, _uiPointerProbe, _piecePrefabs, _cameraWork, _seats, _piecesRoot);
-        _presenter.SetMaterial(_pieceMaterial);
+        _pieceViewRegistry = new PieceViewRegistry();
+        _pieceSpawner = new PieceSpawner(
+            _piecesRoot,
+            _pieceMaterial,
+            _piecePrefabs,
+            _seats.CountOfSides,
+            _seats.CountOfPlayersOnSide);
+
+        var boardSize = BoardSizeFactory.FromConfig(_configOfBoard);
+        _loaderOfBoard = gameObject.AddComponent<LoaderOfBoard>();
+        _loaderOfBoard.Initialize(_pieceSpawner, _pieceViewRegistry, _eventBus, _logger, boardSize);
+        _loaderOfBoard.Run();
     }
     private void InitializeSceneComponents()
     {

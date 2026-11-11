@@ -2,6 +2,6 @@
 
 public interface IHoverable
 {
-    void OnHoverEnter();
-    void OnHoverExit();
+    bool IsHovered { get; }
+    void SetHovered(bool value);
 }

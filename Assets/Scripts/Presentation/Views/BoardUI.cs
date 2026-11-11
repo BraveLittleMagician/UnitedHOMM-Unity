@@ -104,7 +104,7 @@ public class BoardUI : EventSubscriberBehaviour, IRunnable
         GUILayout.Label($"Индекс: {_selectedInfo.IndexInHouse}");
 
         var pos = _selectedInfo.PositionInGrid;
-        GUILayout.Label($"Позиция: ({pos.x}, {pos.y}, {pos.z})");
+        GUILayout.Label($"Позиция: ({pos.X}, {pos.Y}, {pos.Z}, {pos.W})");
     }
     private void DrawActionsSection()
     {
