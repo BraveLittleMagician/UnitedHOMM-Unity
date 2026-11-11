@@ -1,9 +1,9 @@
 #nullable enable
-
 using System;
 using UnityEngine;
 
-public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscriber, IHoldMiddleSubscriber, IDeltaSubscriber, IScrollSubscriber
+public class CameraWork : EventSubscriberBehaviour, IRunnable,
+    IHoldRightSubscriber, IHoldMiddleSubscriber, IDeltaSubscriber, IScrollSubscriber
 {
     [SerializeField] private float _distance = 15f;
     [SerializeField] private float _rotationSpeed = 5f;
@@ -14,162 +14,127 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable, IHoldRightSubscri
     [SerializeField] private float _snapDistance = 5f;
 
     private Camera _camera = null!;
+    private LoaderOfBoard _boardLoader = null!;
     private HoldRight _holdRightHub = null!;
     private HoldMiddle _holdMiddleHub = null!;
     private Delta _deltaHub = null!;
     private Scroll _scrollHub = null!;
-    private WorldToScreenMarker _cubeCenterMarker = null!;
-    private WorldToScreenMarker _rotationCenterMarker = null!;
-    private Vector3 _boardCenter = Vector3.zero;
+    private CameraManipulationState _manipulationState = null!;
+    private CameraManipulationModel _model = null!;
+    private CameraMarkerPresenter _markers = null!;
 
-    private float _x = 0f;
-    private float _y = 0f;
-    private bool _rightHolding = false;
-    private bool _middleHolding = false;
-    private Vector3 _targetOffset = Vector3.zero;
+    private bool _rightHolding;
+    private bool _middleHolding;
 
-    public bool IsManipulating => _rightHolding || _middleHolding;
-    public Vector3 RotationCenter => _boardCenter + _targetOffset;
+    private Vector3 RotationCenter => _boardLoader.transform.position + _model.TargetOffset;
 
-    private void UpdatePosition()
+    public void Initialize(CameraWorkContext context)
     {
-        Quaternion rotation = Quaternion.Euler(_y, _x, 0);
-        Vector3 negDistance = new(0, 0, -_distance);
-        Vector3 position = rotation * negDistance + RotationCenter;
+        if (context == null) throw new ArgumentNullException(nameof(context));
+        _boardLoader = context.BoardLoader ?? throw new ArgumentNullException(nameof(context.BoardLoader));
+        _camera = context.Camera ?? throw new ArgumentNullException(nameof(context.Camera));
+        _holdRightHub = context.HoldRightHub ?? throw new ArgumentNullException(nameof(context.HoldRightHub));
+        _holdMiddleHub = context.HoldMiddleHub ?? throw new ArgumentNullException(nameof(context.HoldMiddleHub));
+        _deltaHub = context.DeltaHub ?? throw new ArgumentNullException(nameof(context.DeltaHub));
+        _scrollHub = context.ScrollHub ?? throw new ArgumentNullException(nameof(context.ScrollHub));
+        _manipulationState = context.ManipulationState ?? throw new ArgumentNullException(nameof(context.ManipulationState));
 
-        transform.SetPositionAndRotation(position, rotation);
-
-        UpdateMarkers();
-    }
-    private void UpdateMarkers()
-    {
-        _cubeCenterMarker.SetWorldPosition(_boardCenter);
-        _rotationCenterMarker.SetWorldPosition(RotationCenter);
-
-        _cubeCenterMarker.Refresh();
-        _rotationCenterMarker.Refresh();
-    }
-    private void SetMarkersVisible(bool visible)
-    {
-        _cubeCenterMarker.gameObject.SetActive(visible);
-        _rotationCenterMarker.gameObject.SetActive(visible);
-    }
-    private bool IsCloseToCenterOnScreen()
-    {
-        Vector3 centerWorld = _boardCenter;
-        Vector3 rotationCenterWorld = RotationCenter;
-
-        Vector3 screenCenter = _camera.WorldToScreenPoint(centerWorld);
-        Vector3 screenRotation = _camera.WorldToScreenPoint(rotationCenterWorld);
-
-        if (screenCenter.z < 0 || screenRotation.z < 0) return false;
-
-        Vector2 diff = new(screenCenter.x - screenRotation.x, screenCenter.y - screenRotation.y);
-        return diff.magnitude <= _snapDistance;
+        _model = new CameraManipulationModel(_rotationSpeed, _panSpeed, _zoomSpeed, _minDistance, _maxDistance);
+        _markers = new CameraMarkerPresenter(
+            _camera, context.CubeCenterMarker, context.RotationCenterMarker, _snapDistance);
+        _markers.Initialize();
     }
 
-    public void Delta(Vector2 delta)
+    public void Run()
     {
-        if (_middleHolding)
-        {
-            Vector3 right = transform.right;
-            Vector3 up = transform.up;
-            _targetOffset -= _panSpeed * 0.02f * (right * delta.x + up * delta.y);
+        if (_camera == null) throw new InvalidOperationException("CameraWork не инициализирован.");
 
-            if (IsCloseToCenterOnScreen()) _targetOffset = Vector3.zero;
+        _camera.rect = new Rect(0f, 0f, ViewportLayout.LeftCameraWidthFraction, 1f);
+        int decorLayer = LayerMask.NameToLayer("LayerViewDecor");
+        if (decorLayer >= 0) _camera.cullingMask &= ~(1 << decorLayer);
 
-            UpdatePosition();
-        }
-        else if (_rightHolding)
-        {
-            _x += delta.x * _rotationSpeed * 0.02f;
-            _y -= delta.y * _rotationSpeed * 0.02f;
-            _y = Mathf.Clamp(_y, -90f, 90f);
-
-            UpdatePosition();
-        }
-    }
-    public void Scroll(float scrollDelta)
-    {
-        _distance -= scrollDelta * _zoomSpeed;
-        _distance = Mathf.Clamp(_distance, _minDistance, _maxDistance);
-        UpdatePosition();
-    }
-    public void TriggerHoldRightStarted()
-    {
-        if (_rightHolding) return;
-        _rightHolding = true;
-        SetMarkersVisible(true);
-        ManipulationChanged?.Invoke(true);
-    }
-    public void TriggerHoldRightCanceled()
-    {
-        if (!_rightHolding) return;
-        _rightHolding = false;
-        SetMarkersVisible(false);
-        ManipulationChanged?.Invoke(true);
-    }
-    public void TriggerHoldMiddleStarted()
-    {
-        if (_middleHolding) return;
-        _middleHolding = true;
-        SetMarkersVisible(true);
-    }
-    public void TriggerHoldMiddleCanceled()
-    {
-        if (!_middleHolding) return;
-        _middleHolding = false;
-        SetMarkersVisible(false);
-        ManipulationChanged?.Invoke(true);
-    }
-    public void Initialize(Vector3 boardCenter, Camera camera, WorldToScreenMarker cubeCenterMarker, WorldToScreenMarker rotationCenterMarker, HoldRight holdRightHub, HoldMiddle holdMiddleHub, Delta deltaHub, Scroll scrollHub)
-    {
-        _boardCenter = boardCenter;
-        _camera = camera != null ? camera : throw new ArgumentNullException(nameof(camera));
-        _cubeCenterMarker = cubeCenterMarker != null ? cubeCenterMarker : throw new ArgumentNullException(nameof(cubeCenterMarker));
-        _rotationCenterMarker = rotationCenterMarker != null ? rotationCenterMarker : throw new ArgumentNullException(nameof(rotationCenterMarker));
-        _holdRightHub = holdRightHub != null ? holdRightHub : throw new ArgumentNullException(nameof(holdRightHub));
-        _holdMiddleHub = holdMiddleHub != null ? holdMiddleHub : throw new ArgumentNullException(nameof(holdMiddleHub));
-        _deltaHub = deltaHub != null ? deltaHub : throw new ArgumentNullException(nameof(deltaHub));
-        _scrollHub = scrollHub != null ? scrollHub : throw new ArgumentNullException(nameof(scrollHub));
-        _cubeCenterMarker.Initialize(_camera);
-        _rotationCenterMarker.Initialize(_camera);
-    }
-    public void Run() 
-    {
         Vector3 angles = transform.eulerAngles;
-        _x = angles.y;
-
-        _y = angles.x;
-        if (_y > 180f)
-            _y -= 360f;
-        _y = Mathf.Clamp(_y, -90f, 90f);
-
-        float initialDistance = Vector3.Distance(transform.position, RotationCenter);
-        if (initialDistance > 0.01f)
-            _distance = Mathf.Clamp(initialDistance, _minDistance, _maxDistance);
+        _model.Initialize(angles.y, angles.x, angles.z, _distance);
 
         _holdRightHub.RegisterSubscriber(this);
         AddSubscription(() => _holdRightHub.UnregisterSubscriber(this));
-
         _holdMiddleHub.RegisterSubscriber(this);
         AddSubscription(() => _holdMiddleHub.UnregisterSubscriber(this));
-
         _deltaHub.RegisterSubscriber(this);
         AddSubscription(() => _deltaHub.UnregisterSubscriber(this));
-
         _scrollHub.RegisterSubscriber(this);
         AddSubscription(() => _scrollHub.UnregisterSubscriber(this));
 
         SetMarkersVisible(false);
         UpdateMarkers();
     }
-    public void SetBoardCenter(Vector3 center)
+
+    private void UpdatePosition()
     {
-        _boardCenter = center;
-        _targetOffset = Vector3.zero;
+        Quaternion rotation = _model.Rotation;
+        Vector3 position = _model.GetPosition(RotationCenter);
+        transform.SetPositionAndRotation(position, rotation);
+        UpdateMarkers();
+    }
+
+    private void UpdateMarkers() => _markers.Update(_boardLoader.transform.position, RotationCenter);
+    private void SetMarkersVisible(bool visible) => _markers.SetVisible(visible);
+
+    private void UpdateHoldState()
+    {
+        bool anyHolding = _rightHolding || _middleHolding;
+        SetMarkersVisible(anyHolding);
+        _manipulationState.SetActive(anyHolding);
+    }
+
+    public void Delta(Vector2 delta)
+    {
+        if (_middleHolding)
+        {
+            _model.ApplyPanDelta(delta, transform.right, transform.up);
+            if (_markers.IsCloseToCenterOnScreen(_boardLoader.transform.position, RotationCenter))
+                _model.SnapPanToZero();
+            UpdatePosition();
+        }
+        else if (_rightHolding)
+        {
+            _model.ApplyOrbitDelta(delta);
+            UpdatePosition();
+        }
+    }
+
+    public void Scroll(float scrollDelta)
+    {
+        _model.ApplyZoom(scrollDelta);
         UpdatePosition();
     }
 
-    public event Action<bool>? ManipulationChanged;
+    public void TriggerHoldRightStarted()
+    {
+        _rightHolding = true;
+        UpdateHoldState();
+    }
+
+    public void TriggerHoldRightCanceled()
+    {
+        _rightHolding = false;
+        UpdateHoldState();
+    }
+
+    public void TriggerHoldMiddleStarted()
+    {
+        _middleHolding = true;
+        UpdateHoldState();
+    }
+
+    public void TriggerHoldMiddleCanceled()
+    {
+        _middleHolding = false;
+        UpdateHoldState();
+    }
+
+    protected override void OnCleanup()
+    {
+        _manipulationState?.SetActive(false);
+    }
 }

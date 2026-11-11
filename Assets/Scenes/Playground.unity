@@ -755,7 +755,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1591855949}
   - component: {fileID: 1591855952}
-  - component: {fileID: 1591855951}
   - component: {fileID: 1591855950}
   - component: {fileID: 1591855953}
   m_Layer: 0
@@ -919,14 +918,6 @@ MonoBehaviour:
       data1: 0
       data2: 0
   defaultFrameSettings: 0
---- !u!81 &1591855951
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1591855948}
-  m_Enabled: 1
 --- !u!20 &1591855952
 Camera:
   m_ObjectHideFlags: 0

@@ -61,6 +61,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private ModifierHost _modifierHost = null!;
     private LoaderOfBoard _loaderOfBoard = null!;
     private ViewState _viewState = null!;
+    private CameraManipulationState _manipulationState = null!;
     private LayerPresenter _layerPresenter = null!;
     private LayerCameraWork _layerCameraWork = null!;
 
@@ -244,6 +245,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     }
     private void CreatePresentation()
     {
+        _manipulationState = new CameraManipulationState();
         _pieceViewRegistry = new PieceViewRegistry();
         _pieceSpawner = new PieceSpawner(
             _piecesRoot,
@@ -280,8 +282,18 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private void InitializeSceneComponents()
     {
         _mouseEventer.Initialize(_inputActions, _clickLeftHub, _clickRightHub, _holdRightHub, _holdMiddleHub, _scrollHub, _pointerHub, _deltaHub);
-        var boardSize = BoardSizeFactory.FromConfig(_configOfBoard);
-        _cameraWork.Initialize(boardSize.ToWorldCenter(), _camera, _cubeCenterMarker, _rotationCenterMarker, _holdRightHub, _holdMiddleHub, _deltaHub, _scrollHub);
+        _cameraWork.Initialize(new CameraWorkContext
+        {
+            BoardLoader = _loaderOfBoard,
+            Camera = _camera,
+            CubeCenterMarker = _cubeCenterMarker,
+            RotationCenterMarker = _rotationCenterMarker,
+            HoldRightHub = _holdRightHub,
+            HoldMiddleHub = _holdMiddleHub,
+            DeltaHub = _deltaHub,
+            ScrollHub = _scrollHub,
+            ManipulationState = _manipulationState,
+        });
         _boardUI.Initialize(_flow, _eventBus, _selectionHub, _uiPointerProbe);
         _deselectOnEmptyClick.Initialize(_selectionHub, _clickLeftHub, _pointerHub, _uiPointerProbe, _camera);
         _mouseEventer.Run();
