@@ -149,7 +149,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _matchState = new MatchState();
         _matchEndChecker = new MatchEndChecker(_registry, _turnManager, _matchState);
 
-        _flow = new Flow(_house, _eventBus, _logger, _movementValidator, _abilityService, combatService, onCommitted: () =>
+        _flow = new Flow(_house, _registry, _eventBus, _logger, _movementValidator, _abilityService, combatService, _modifierHost, onCommitted: () =>
         {
             bool gameOver = _matchEndChecker.CheckAfterCommit();
             if (!gameOver) _turnManager.EndTurn();

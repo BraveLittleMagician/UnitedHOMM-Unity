@@ -1,6 +1,6 @@
 #nullable enable
-
 using System;
+using System.Collections.Generic;
 
 internal sealed class MoveUndo : IUndoableOperation
 {
@@ -13,47 +13,16 @@ internal sealed class MoveUndo : IUndoableOperation
     private readonly PieceActionFlags _flagsAfter;
     private readonly IEventBus _eventBus;
 
-    public MoveUndo(
-        IPiece piece,
-        IRoom room,
-        IPath<Square> path,
-        Square fromPos,
-        Square toPos,
-        PieceActionFlags flagsBefore,
-        PieceActionFlags flagsAfter,
-        IEventBus eventBus)
+    public MoveUndo(IPiece piece, IRoom room, IPath<Square> path, Square fromPos, Square toPos, PieceActionFlags flagsBefore, PieceActionFlags flagsAfter, IEventBus eventBus)
     {
-        _piece = piece ?? throw new ArgumentNullException(nameof(piece));
-        _room = room ?? throw new ArgumentNullException(nameof(room));
-        _path = path ?? throw new ArgumentNullException(nameof(path));
+        _piece = piece;
+        _room = room;
+        _path = path;
         _fromPos = fromPos;
         _toPos = toPos;
         _flagsBefore = flagsBefore;
         _flagsAfter = flagsAfter;
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-    }
-
-    public bool Undo(Flow flow)
-    {
-        var reversePath = BuildReversePath();
-        if (!_room.Displace(reversePath, _piece.Owner, out _)) return false;
-
-        _piece.RestoreMovedThisTurn(_flagsBefore.HasMovedThisTurn);
-        _piece.RestoreFirstActionOfGameTaken(_flagsBefore.HasTakenFirstActionOfGame);
-
-        _eventBus.Publish(new PieceMovedEvent<Square>(_piece, _toPos, _fromPos, _room));
-        return true;
-    }
-
-    public bool Redo(Flow flow)
-    {
-        if (!_room.Displace(_path, _piece.Owner, out _)) return false;
-
-        _piece.RestoreMovedThisTurn(_flagsAfter.HasMovedThisTurn);
-        _piece.RestoreFirstActionOfGameTaken(_flagsAfter.HasTakenFirstActionOfGame);
-
-        _eventBus.Publish(new PieceMovedEvent<Square>(_piece, _fromPos, _toPos, _room));
-        return true;
+        _eventBus = eventBus;
     }
 
     private IPath<Square> BuildReversePath()
@@ -62,5 +31,23 @@ internal sealed class MoveUndo : IUndoableOperation
         for (int i = 0; i < _path.Positions.Count; i++)
             positions[i] = _path.Positions[_path.Positions.Count - 1 - i];
         return new PathSequence<Square>(positions);
+    }
+
+    public bool Undo()
+    {
+        var reversePath = BuildReversePath();
+        if (!_room.Displace(reversePath, _piece.Owner, out _)) return false;
+        _piece.RestoreMovedThisTurn(_flagsBefore.HasMovedThisTurn);
+        _piece.RestoreFirstActionOfGameTaken(_flagsBefore.HasTakenFirstActionOfGame);
+        _eventBus.Publish(new PieceMovedEvent<Square>(_piece, _toPos, _fromPos, _room));
+        return true;
+    }
+    public bool Redo()
+    {
+        if (!_room.Displace(_path, _piece.Owner, out _)) return false;
+        _piece.RestoreMovedThisTurn(_flagsAfter.HasMovedThisTurn);
+        _piece.RestoreFirstActionOfGameTaken(_flagsAfter.HasTakenFirstActionOfGame);
+        _eventBus.Publish(new PieceMovedEvent<Square>(_piece, _fromPos, _toPos, _room));
+        return true;
     }
 }

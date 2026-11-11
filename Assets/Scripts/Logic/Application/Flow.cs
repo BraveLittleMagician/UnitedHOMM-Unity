@@ -1,30 +1,42 @@
 ﻿#nullable enable
-
 using System;
 using System.Collections.Generic;
 
 public sealed class Flow : IFlow, IDisposable
 {
     private readonly IHouse _house;
+    private readonly IRegistry _registry;
     private readonly IEventBus _eventBus;
     private readonly ILogger _logger;
     private readonly IMovementValidator _movementValidator;
     private readonly IAbilityService _abilityService;
     private readonly ICombatService _combatService;
+    private readonly ModifierHost _modifierHost;
     private readonly Action? _onCommitted;
 
     private readonly Stack<IUndoableOperation> _undoStack = new();
     private readonly Stack<IUndoableOperation> _redoStack = new();
     private bool _disposed;
 
-    public Flow(IHouse house, IEventBus eventBus, ILogger logger, IMovementValidator movementValidator, IAbilityService abilityService, ICombatService combatService, Action? onCommitted = null)
+    public Flow(
+        IHouse house,
+        IRegistry registry,
+        IEventBus eventBus,
+        ILogger logger,
+        IMovementValidator movementValidator,
+        IAbilityService abilityService,
+        ICombatService combatService,
+        ModifierHost modifierHost,
+        Action? onCommitted = null)
     {
         _house = house ?? throw new ArgumentNullException(nameof(house));
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _movementValidator = movementValidator ?? throw new ArgumentNullException(nameof(movementValidator));
         _abilityService = abilityService ?? throw new ArgumentNullException(nameof(abilityService));
         _combatService = combatService ?? throw new ArgumentNullException(nameof(combatService));
+        _modifierHost = modifierHost ?? throw new ArgumentNullException(nameof(modifierHost));
         _onCommitted = onCommitted;
     }
 
@@ -38,14 +50,6 @@ public sealed class Flow : IFlow, IDisposable
         return Result<TRoom>.Success(room);
     }
 
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-        _undoStack.Clear();
-        _redoStack.Clear();
-        _logger.Log("Flow уничтожен");
-    }
     public IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position)
         where TRoom : IRoom where TPos : struct
     {
@@ -67,6 +71,7 @@ public sealed class Flow : IFlow, IDisposable
         _logger.Log($"Фигура {piece} добавлена в {room.Name} на позицию {position}");
         return Result<IPiece>.Success(piece);
     }
+
     public IResult MovePiece(IPiece piece, Square target)
     {
         if (piece == null) return Result.Failure("Piece is null");
@@ -100,14 +105,14 @@ public sealed class Flow : IFlow, IDisposable
 
         var flagsAfter = new PieceActionFlags(piece.HasMovedThisTurn, piece.HasTakenFirstActionOfGame);
 
-        var undo = new MoveUndo(piece, room, path, fromPos, target, flagsBefore, flagsAfter, _eventBus);
-        _undoStack.Push(undo);
+        _undoStack.Push(new MoveUndo(piece, room, path, fromPos, target, flagsBefore, flagsAfter, _eventBus));
         _redoStack.Clear();
 
         _eventBus.Publish(new PieceMovedEvent<Square>(piece, fromPos, target, room));
         _logger.Log($"Piece {piece} moved from {fromPos} to {target}");
         return Result.Success();
     }
+
     public IResult MeleeAttack(IPiece attacker, Square target)
     {
         if (attacker == null) return Result.Failure("Attacker is null");
@@ -118,32 +123,100 @@ public sealed class Flow : IFlow, IDisposable
         if (!room.TryToGetPiece(target, out var targetPiece) || targetPiece == null)
             return Result.Failure($"No piece at {target}");
 
+        var before = WorldState.Capture(_registry, _modifierHost);
+
         var result = _combatService.PerformAttack(attacker, targetPiece, room, AttackKind.Melee);
         if (!result.IsSuccess) return result;
 
-        // Jump на клетку убитой цели (как в P2 AttackAction). Undo для этого пока нет —
-        // добавим в фазе 11 вместе с полным AttackUndo.
+        // Jump на клетку убитой цели (как в P2 AttackAction)
         if (targetPiece.IsDead && !room.TryToGetPiece(target, out _))
         {
             if (room.TryToGetPosition<Square>(attacker.IndexInHouse, out var fromPos))
             {
                 if (room.Remove(fromPos, attacker.Owner))
                 {
-                    if (room.Add(attacker, target, true, out var err))
-                    {
-                        _eventBus.Publish(new PieceMovedEvent<Square>(attacker, fromPos, target, room));
-                    }
-                    else
-                    {
-                        _logger.LogError($"Jump failed: {err}");
-                    }
+                    if (!room.Add(attacker, target, true, out var jumpErr))
+                        _logger.LogError($"Jump failed: {jumpErr}");
                 }
             }
         }
 
+        var after = WorldState.Capture(_registry, _modifierHost);
+        if (before.HasChanges(after))
+        {
+            _undoStack.Push(new WorldDelta(before, after, _registry, _modifierHost, _eventBus, _logger));
+            _redoStack.Clear();
+        }
+
         return Result.Success();
     }
-    public IResult ChangeRoom<TRoomFrom, TRoomTo, TPosFrom, TPosTo>(IdOfPlayer owner, TPosFrom fromPosition, TPosTo toPosition)
+
+    public IResult ActivateModifier(IPiece piece, IActiveModifier modifier)
+    {
+        if (piece == null || modifier == null) return Result.Failure("Null argument");
+        var ctx = new ModifierActivationContext(piece, _eventBus, _modifierHost, _registry);
+
+        if (!modifier.CanActivate(ctx))
+            return Result.Failure($"Cannot activate '{modifier.ModifierName}'");
+        if (modifier.CurrentCharges == 0)
+            return Result.Failure($"No charges for '{modifier.ModifierName}'");
+
+        var before = WorldState.Capture(_registry, _modifierHost);
+        if (!modifier.TryConsumeCharge())
+            return Result.Failure($"Failed to consume charge of '{modifier.ModifierName}'");
+        modifier.Activate(ctx);
+        if (modifier.TriggersStartedAction)
+            piece.MarkFirstActionOfGameTaken(new ModifierActivity(modifier.ModifierName));
+
+        var after = WorldState.Capture(_registry, _modifierHost);
+        if (before.HasChanges(after))
+        {
+            _undoStack.Push(new WorldDelta(before, after, _registry, _modifierHost, _eventBus, _logger));
+            _redoStack.Clear();
+        }
+        return Result.Success();
+    }
+
+    public IResult ActivateTargetedModifier(IPiece piece, ITargetedModifier modifier, Square targetCell)
+    {
+        if (piece == null || modifier == null) return Result.Failure("Null argument");
+        var ctx = new ModifierActivationContext(piece, _eventBus, _modifierHost, _registry);
+
+        if (!modifier.CanActivate(ctx))
+            return Result.Failure($"Cannot activate '{modifier.ModifierName}'");
+        if (modifier.CurrentCharges == 0)
+            return Result.Failure($"No charges for '{modifier.ModifierName}'");
+
+        if (!_registry.TryToGetRoom(piece.IndexInHouse, out var room) || !(room is ISquarePositionRoom sqRoom))
+            return Result.Failure("Piece is not on a square-position room");
+        if (!sqRoom.TryToGetPosition<Square>(piece.IndexInHouse, out var ownerPos))
+            return Result.Failure("Piece has no position");
+
+        var gridSize = sqRoom is Board b ? b.Size : new Square { X = int.MaxValue, Y = int.MaxValue, Z = int.MaxValue, W = int.MaxValue };
+
+        var cells = modifier.GetTargetCells(piece, ownerPos, gridSize);
+        bool valid = false;
+        for (int i = 0; i < cells.Count; i++) if (cells[i].Equals(targetCell)) { valid = true; break; }
+        if (!valid) return Result.Failure($"Cell {targetCell} is not a valid target for '{modifier.ModifierName}'");
+
+        var before = WorldState.Capture(_registry, _modifierHost);
+        if (!modifier.TryConsumeCharge())
+            return Result.Failure($"Failed to consume charge of '{modifier.ModifierName}'");
+        modifier.Activate(ctx, targetCell);
+        if (modifier.TriggersStartedAction)
+            piece.MarkFirstActionOfGameTaken(new ModifierActivity(modifier.ModifierName));
+
+        var after = WorldState.Capture(_registry, _modifierHost);
+        if (before.HasChanges(after))
+        {
+            _undoStack.Push(new WorldDelta(before, after, _registry, _modifierHost, _eventBus, _logger));
+            _redoStack.Clear();
+        }
+        return Result.Success();
+    }
+
+    public IResult ChangeRoom<TRoomFrom, TRoomTo, TPosFrom, TPosTo>(
+        IdOfPlayer owner, TPosFrom fromPosition, TPosTo toPosition)
         where TRoomFrom : IRoom where TRoomTo : IRoom
         where TPosFrom : struct where TPosTo : struct
     {
@@ -183,33 +256,36 @@ public sealed class Flow : IFlow, IDisposable
         _logger.Log($"Фигура {piece} перемещена из {fromRoom.Name}:{fromPosition} в {toRoom.Name}:{toPosition}");
         return Result.Success();
     }
+
     public IResult Undo()
     {
         if (_undoStack.Count == 0) return Result.Failure("Nothing to undo");
         var top = _undoStack.Peek();
-        if (!top.Undo(this)) return Result.Failure("Undo failed");
+        if (!top.Undo()) return Result.Failure("Undo failed");
         _undoStack.Pop();
         _redoStack.Push(top);
         _logger.LogDebug($"Undo applied, undo={_undoStack.Count}, redo={_redoStack.Count}");
         return Result.Success();
     }
+
     public IResult Redo()
     {
         if (_redoStack.Count == 0) return Result.Failure("Nothing to redo");
         var top = _redoStack.Peek();
-        if (!top.Redo(this)) return Result.Failure("Redo failed");
+        if (!top.Redo()) return Result.Failure("Redo failed");
         _redoStack.Pop();
         _undoStack.Push(top);
         _logger.LogDebug($"Redo applied, undo={_undoStack.Count}, redo={_redoStack.Count}");
         return Result.Success();
     }
+
     public IResult UndoAll()
     {
         if (_undoStack.Count == 0) return Result.Failure("Nothing to undo");
         while (_undoStack.Count > 0)
         {
             var top = _undoStack.Pop();
-            if (!top.Undo(this))
+            if (!top.Undo())
             {
                 _undoStack.Push(top);
                 return Result.Failure("UndoAll failed mid-way");
@@ -219,6 +295,7 @@ public sealed class Flow : IFlow, IDisposable
         _logger.LogDebug($"UndoAll applied, undo=0, redo={_redoStack.Count}");
         return Result.Success();
     }
+
     public IResult Commit()
     {
         _undoStack.Clear();
@@ -226,5 +303,14 @@ public sealed class Flow : IFlow, IDisposable
         _logger.Log("Plan committed");
         _onCommitted?.Invoke();
         return Result.Success();
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _undoStack.Clear();
+        _redoStack.Clear();
+        _logger.Log("Flow уничтожен");
     }
 }

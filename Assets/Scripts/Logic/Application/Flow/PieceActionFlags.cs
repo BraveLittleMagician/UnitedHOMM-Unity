@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 
 internal readonly struct PieceActionFlags : IEquatable<PieceActionFlags>
 {

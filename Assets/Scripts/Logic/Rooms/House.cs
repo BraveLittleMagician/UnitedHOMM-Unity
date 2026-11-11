@@ -20,17 +20,10 @@ public sealed class House : IHouse
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _pieceFactory = new PieceFactory(eventBus, modifierHost, logger);
-        _eventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
     }
 
     public Seats ActiveSeats { get; }
     public IReadOnlyDictionary<Type, IRoom> Rooms => new ReadOnlyDictionary<Type, IRoom>(_rooms);
-
-    private void OnPieceDied(PieceDiedEvent e)
-    {
-        RemovePiece(e.Piece.IndexInHouse);
-        _logger.Log($"Индекс {e.Piece.IndexInHouse} фигуры {e.Piece} освобождён");
-    }
 
     public bool AddRoom<T>(T room) where T : IRoom
     {
@@ -64,8 +57,6 @@ public sealed class House : IHouse
     {
         if (_disposed) return;
         _disposed = true;
-
-        _eventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied);
 
         foreach (var room in _rooms.Values) room.Dispose();
         _rooms.Clear();
