@@ -1,13 +1,30 @@
 ﻿#nullable enable
 
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 public static class ModifierFactory
 {
     public static IModifier Create(string name, JObject? args = null) => name switch
     {
+        // Activation
+        "DoubleMove" => new OpeningDoubleMoveModifier(),
+        "SelfHeal" => new SelfHealModifier(),
+        "RotateRight" => new RotateModifier(isRight: true),
+        "RotateLeft" => new RotateModifier(isRight: false),
+        "AttackBoost" => new AttackBoostModifier(),
+        "AttackBoostBuff" => new AttackBoostBuffModifier(),
+        "Blind" => new BlindModifier(),
+        "BlindBuff" => new BlindBuffModifier(),
+        "Stun" => new StunModifier(),
+        "StunBuff" => new StunBuffModifier(),
+        "Fireball" => new FireballModifier(),
+        "CounterAttack" => new CounterAttackModifier(),
+        "Ambush" => new AmbushModifier(),
+        "EnPassant" => new EnPassantModifier(),
+
+        // Shape (Stayable)
         "AdderStayableOfArea" => new AdderStayableOfArea<Square>(args?["Index"]?.Value<int>() ?? 0),
         "RemoverStayableOfArea" => new RemoverStayableOfArea<Square>(args?["Index"]?.Value<int>() ?? 0),
         "IncreaserRadiusOfArea" => new IncreaserRadiusOfArea<Square>(),
@@ -20,6 +37,7 @@ public static class ModifierFactory
         "DecreaserOfGraph" => new DecreaserOfGraph<Square>(ParseSquaresArray(args?["Positions"])),
         "SetStayableOfGraph" => new SetStayableOfGraph<Square>(ParseStayableTuples(args?["Cells"])),
         "IncreaserOfGraph" => new IncreaserOfGraph<Square>(ParseGraphNodes(args?["Nodes"])),
+
         _ => throw new InvalidOperationException($"Unknown modifier '{name}'."),
     };
 

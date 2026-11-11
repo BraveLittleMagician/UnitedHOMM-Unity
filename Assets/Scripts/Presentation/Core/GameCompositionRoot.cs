@@ -139,7 +139,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
         var attackTargetProvider = new AttackTargetProvider(_modifierHost);
         var combatService = new CombatService(_logger, _eventBus, attackTargetProvider, _modifierHost);
-
+        _modifierHost.Registry = _registry;
         _flow = new Flow(_house, _eventBus, _logger, _movementValidator, _abilityService, combatService);
     }
     private void CreatePresentation()

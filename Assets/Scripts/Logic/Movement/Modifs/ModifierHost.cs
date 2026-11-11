@@ -22,6 +22,7 @@ public sealed class ModifierHost : IDisposable
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
+        _eventBus.Subscribe<PieceDiedEvent>(OnPieceDied);
     }
 
     public ICombatService? CombatService { get; set; }
@@ -49,7 +50,25 @@ public sealed class ModifierHost : IDisposable
             }
         }
     }
+    private void OnPieceDied(PieceDiedEvent e)
+    {
+        RemoveAll(e.Piece.IndexInHouse);
+    }
 
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _eventBus.Unsubscribe<PieceDiedEvent>(OnPieceDied);
+        _eventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
+        foreach (var bucket in _byIndex.Values)
+        {
+            foreach (var modifier in bucket.Items)
+                modifier.Detach();
+            bucket.Items.Clear();
+        }
+        _byIndex.Clear();
+    }
     public void AddModifier(BigInteger index, IModifier modifier, ModifierContext context)
     {
         if (modifier == null) throw new ArgumentNullException(nameof(modifier));
@@ -62,7 +81,6 @@ public sealed class ModifierHost : IDisposable
         bucket.Items.Add(modifier);
         modifier.Attach(context);
     }
-
     public void RemoveAll(BigInteger index)
     {
         if (!_byIndex.TryGetValue(index, out var bucket)) return;
@@ -71,7 +89,6 @@ public sealed class ModifierHost : IDisposable
         bucket.Items.Clear();
         _byIndex.Remove(index);
     }
-
     public void AttachModifiers(IPiece piece, IReadOnlyList<ModifierDto>? dtos)
     {
         if (piece == null) throw new ArgumentNullException(nameof(piece));
@@ -89,12 +106,8 @@ public sealed class ModifierHost : IDisposable
                 continue;
             }
             int resolvedCharges = dto.Charges ?? -1;
-            if (resolvedCharges == 0)
-                throw new InvalidOperationException(
-                    $"Modifier '{dto.Name}' on {piece.Name}#{piece.IndexInHouse} cannot have Charges=0.");
-            if (resolvedCharges < -1)
-                throw new InvalidOperationException(
-                    $"Modifier '{dto.Name}' on {piece.Name}#{piece.IndexInHouse} has invalid Charges={resolvedCharges}.");
+            if (resolvedCharges == 0) throw new InvalidOperationException($"Modifier '{dto.Name}' on {piece.Name}#{piece.IndexInHouse} cannot have Charges=0.");
+            if (resolvedCharges < -1) throw new InvalidOperationException($"Modifier '{dto.Name}' on {piece.Name}#{piece.IndexInHouse} has invalid Charges={resolvedCharges}.");
 
             IModifier modifier;
             try
@@ -107,13 +120,14 @@ public sealed class ModifierHost : IDisposable
                 continue;
             }
 
-            if (modifier is IActiveModifier && dto.Charges == null)
+            if (modifier is IActiveModifier && dto.Charges == null) throw new InvalidOperationException($"Active modifier '{dto.Name}' on {piece.Name}#{piece.IndexInHouse} must have Charges specified.");
+
+            if (modifier is OpeningDoubleMoveModifier && resolvedCharges < 1)
                 throw new InvalidOperationException(
-                    $"Active modifier '{dto.Name}' on {piece.Name}#{piece.IndexInHouse} must have Charges specified.");
+                    $"DoubleMove on {piece.Name}#{piece.IndexInHouse}: Charges must be >= 1 (got {resolvedCharges}).");
 
             parsed.Add((modifier, dto));
         }
-
         foreach (var (modifier, dto) in parsed)
         {
             if (!ModifierCompatibility.IsCompatibleWithPiece(modifier, piece))
@@ -136,7 +150,6 @@ public sealed class ModifierHost : IDisposable
             AddModifier(piece.IndexInHouse, modifier, ctx);
         }
     }
-
     public bool HasModifier<T>(BigInteger index) where T : IModifier
     {
         if (!_byIndex.TryGetValue(index, out var bucket)) return false;
@@ -145,7 +158,6 @@ public sealed class ModifierHost : IDisposable
             if (items[i] is T) return true;
         return false;
     }
-
     public bool RemoveModifier(BigInteger index, IModifier modifier)
     {
         if (modifier == null) throw new ArgumentNullException(nameof(modifier));
@@ -154,7 +166,6 @@ public sealed class ModifierHost : IDisposable
         modifier.Detach();
         return true;
     }
-
     public bool TryGetModifier<T>(BigInteger index, [NotNullWhen(true)] out T? modifier) where T : class, IModifier
     {
         modifier = null;
@@ -170,7 +181,24 @@ public sealed class ModifierHost : IDisposable
         }
         return false;
     }
-
+    public bool IsMovementBlocked(IPiece piece)
+    {
+        if (piece == null) return false;
+        if (!_byIndex.TryGetValue(piece.IndexInHouse, out var bucket)) return false;
+        var items = bucket.Items;
+        for (int i = 0; i < items.Count; i++)
+            if (items[i] is IMovementModifier mv && !mv.CanMove(piece)) return true;
+        return false;
+    }
+    public bool IsAttackBlocked(IPiece piece)
+    {
+        if (piece == null) return false;
+        if (!_byIndex.TryGetValue(piece.IndexInHouse, out var bucket)) return false;
+        var items = bucket.Items;
+        for (int i = 0; i < items.Count; i++)
+            if (items[i] is IAttackBlocker blocker && !blocker.CanAttack(piece)) return true;
+        return false;
+    }
     public int GetEffectiveDamageBonus(IPiece piece)
     {
         if (piece == null) return 0;
@@ -183,33 +211,12 @@ public sealed class ModifierHost : IDisposable
         return bonus;
     }
 
-    public bool IsMovementBlocked(IPiece piece)
-    {
-        if (piece == null) return false;
-        if (!_byIndex.TryGetValue(piece.IndexInHouse, out var bucket)) return false;
-        var items = bucket.Items;
-        for (int i = 0; i < items.Count; i++)
-            if (items[i] is IMovementModifier mv && !mv.CanMove(piece)) return true;
-        return false;
-    }
-
-    public bool IsAttackBlocked(IPiece piece)
-    {
-        if (piece == null) return false;
-        if (!_byIndex.TryGetValue(piece.IndexInHouse, out var bucket)) return false;
-        var items = bucket.Items;
-        for (int i = 0; i < items.Count; i++)
-            if (items[i] is IAttackBlocker blocker && !blocker.CanAttack(piece)) return true;
-        return false;
-    }
-
     public IReadOnlyList<IModifier> GetModifiers(BigInteger index)
     {
         if (_byIndex.TryGetValue(index, out var bucket))
             return bucket.Items;
         return Array.Empty<IModifier>();
     }
-
     public IReadOnlyList<IShapeTransformModifier> GetShapeTransforms(BigInteger index)
     {
         if (!_byIndex.TryGetValue(index, out var bucket))
@@ -221,7 +228,6 @@ public sealed class ModifierHost : IDisposable
                 result.Add(shape);
         return result;
     }
-
     public IReadOnlyList<IShapeTransformModifier<TSequence, TPosition>> GetShapeTransforms<TSequence, TPosition>(BigInteger index)
         where TPosition : struct, ISquare<TPosition>
         where TSequence : notnull, ISequence<TPosition, TSequence>
@@ -234,19 +240,5 @@ public sealed class ModifierHost : IDisposable
             if (items[i] is IShapeTransformModifier<TSequence, TPosition> shape)
                 result.Add(shape);
         return result;
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-        _eventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
-        foreach (var bucket in _byIndex.Values)
-        {
-            foreach (var modifier in bucket.Items)
-                modifier.Detach();
-            bucket.Items.Clear();
-        }
-        _byIndex.Clear();
     }
 }
