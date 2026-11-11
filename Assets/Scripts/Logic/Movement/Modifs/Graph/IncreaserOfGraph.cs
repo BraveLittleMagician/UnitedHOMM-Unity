@@ -8,8 +8,9 @@ public class IncreaserOfGraph<TSquare> : ModificatorOfGraph<TSquare> where TSqua
     public IncreaserOfGraph(IEnumerable<(TSquare, int, IEnumerable<int>)> nodes) => Nodes = nodes;
     public override RelativeGraph<TSquare> Apply(RelativeGraph<TSquare> sequence)
     {
+        var copy = sequence.Copy();
         foreach (var (pos, length, indices) in Nodes)
-            sequence.Add(pos, length, indices);
-        return sequence;
+            copy.Add(pos, length, indices);
+        return copy;
     }
 }

@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-public sealed class Movement<TSequence, TPosition> : IMovement where TSequence : notnull, ISequence<TPosition, TSequence> where TPosition : struct
+public sealed class Movement<TSequence, TPosition> : IMovement where TSequence : notnull, ISequence<TPosition, TSequence> where TPosition : struct, ISquare<TPosition>
 {
     private readonly IEventBus _eventBus;
     private readonly IPiece _owner;

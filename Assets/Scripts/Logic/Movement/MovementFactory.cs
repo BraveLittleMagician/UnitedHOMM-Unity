@@ -2,7 +2,7 @@
 
 using System;
 
-public sealed class MovementFactory<TSequence, TPosition> : IMovementFactory where TSequence : notnull, ISequence<TPosition, TSequence> where TPosition : struct
+public sealed class MovementFactory<TSequence, TPosition> : IMovementFactory where TSequence : notnull, ISequence<TPosition, TSequence> where TPosition : struct, ISquare<TPosition>
 {
     private readonly TSequence _sequence;
 

@@ -8,8 +8,9 @@ public class SetStayableOfGraph<TSquare> : ModificatorOfGraph<TSquare> where TSq
     public SetStayableOfGraph(IEnumerable<(TSquare, Stayable)> cells) => Cells = cells;
     public override RelativeGraph<TSquare> Apply(RelativeGraph<TSquare> sequence)
     {
+        var copy = sequence.Copy();
         foreach (var (position, stayable) in Cells)
-            sequence.SetStayable(position, stayable);
-        return sequence;
+            copy.SetStayable(position, stayable);
+        return copy;
     }
 }

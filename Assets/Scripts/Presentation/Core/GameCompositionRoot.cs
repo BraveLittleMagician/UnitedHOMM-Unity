@@ -40,16 +40,11 @@ public sealed class GameCompositionRoot : MonoBehaviour
     [SerializeField] private TextAsset _boardLayoutJson = null!;
     [SerializeField] private TextAsset _pieceLibraryJson = null!;
 
-    // Infrastructure
     private ILogger _logger = null!;
     private IEventBus _eventBus = null!;
-
-    // Data (из JSON)
     private PiecePrefabRegistry _piecePrefabs = null!;
     private ConfigOfBoard _configOfBoard = null!;
     private IReadOnlyList<StartingPlacement> _placements = null!;
-
-    // Logic
     private Seats _seats;
     private Board _board = null!;
     private IHouse _house = null!;
@@ -58,8 +53,8 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private IMovementValidator _movementValidator = null!;
     private IAbilityService _abilityService = null!;
     private IFlow _flow = null!;
-
     private DeckSequenceProvider _deckSequences = null!;
+    private ModifierHost _modifierHost = null!;
     private Presenter _presenter = null!;
 
     private void Awake()
@@ -80,6 +75,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _presenter?.Dispose();
         _deckSequences?.Dispose();
         _abilityService?.Dispose();
+        _modifierHost?.Dispose();
         _house?.Dispose();
     }
 
@@ -140,7 +136,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
         _movementValidator = new MovementValidator(_logger);
         _abilityService = new AbilityService(_eventBus, _logger);
-
+        _modifierHost = new ModifierHost(_eventBus, _logger);
         _flow = new Flow(_house, _eventBus, _logger, _movementValidator, _abilityService);
     }
     private void CreatePresentation()

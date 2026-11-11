@@ -8,8 +8,9 @@ public class DecreaserOfGraph<TSquare> : ModificatorOfGraph<TSquare> where TSqua
     public DecreaserOfGraph(IEnumerable<TSquare> positions) => Positions = positions;
     public override RelativeGraph<TSquare> Apply(RelativeGraph<TSquare> sequence)
     {
+        var copy = sequence.Copy();
         foreach (var square in Positions)
-            sequence.Remove(square);
-        return sequence;
+            copy.Remove(square);
+        return copy;
     }
 }
