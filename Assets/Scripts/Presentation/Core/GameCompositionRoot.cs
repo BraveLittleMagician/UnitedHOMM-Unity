@@ -24,6 +24,8 @@ public sealed class GameCompositionRoot : MonoBehaviour
     [SerializeField] private CameraWork _cameraWork = null!;
     [SerializeField] private WorldToScreenMarker _cubeCenterMarker = null!;
     [SerializeField] private WorldToScreenMarker _rotationCenterMarker = null!;
+    [SerializeField] private Camera _layerCamera = null!;
+    [SerializeField] private Material _layerMaterial = null!;
 
     [Header("Input")]
     [SerializeField] private InputActionAsset _inputActions = null!;
@@ -58,6 +60,10 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private DeckSequenceProvider _deckSequences = null!;
     private ModifierHost _modifierHost = null!;
     private LoaderOfBoard _loaderOfBoard = null!;
+    private ViewState _viewState = null!;
+    private LayerPresenter _layerPresenter = null!;
+    private LayerCameraWork _layerCameraWork = null!;
+
     private PieceSpawner _pieceSpawner = null!;
     private PieceViewRegistry _pieceViewRegistry = null!;
     private EnPassantService _enPassantService = null!;
@@ -72,7 +78,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private PendingModalManager _pendingModalManager = null!;
     private IReadOnlyList<ICellActionProvider> _cellActionProviders = null!;
     private IAttackTargetProvider _attackTargetProvider = null!;
-
 
     private void Awake()
     {
@@ -89,6 +94,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     }
     private void OnDestroy()
     {
+        _layerCameraWork?.Dispose();
         _loaderOfBoard?.Dispose();
         _reactiveRegistry?.Dispose();
         _deckSequences?.Dispose();
@@ -120,6 +126,8 @@ public sealed class GameCompositionRoot : MonoBehaviour
         if (_deltaHub == null) throw new ArgumentNullException(nameof(_deltaHub));
         if (_boardLayoutJson == null) throw new ArgumentNullException(nameof(_boardLayoutJson));
         if (_pieceLibraryJson == null) throw new ArgumentNullException(nameof(_pieceLibraryJson));
+        if (_layerCamera == null) throw new ArgumentNullException(nameof(_layerCamera));
+        if (_layerMaterial == null) throw new ArgumentNullException(nameof(_layerMaterial));
     }
     private void CreateInfrastructure()
     {
@@ -248,19 +256,38 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _loaderOfBoard = gameObject.AddComponent<LoaderOfBoard>();
         _loaderOfBoard.Initialize(_pieceSpawner, _pieceViewRegistry, _eventBus, _logger, boardSize);
         _loaderOfBoard.Run();
+
+        _viewState = new ViewState();
+        int initialAxis;
+        if (boardSize.W > 1) initialAxis = GridAxes.W;
+        else if (boardSize.Z > 1) initialAxis = GridAxes.Z;
+        else if (boardSize.Y > 1) initialAxis = GridAxes.Y;
+        else initialAxis = GridAxes.X;
+        int maxLayer = GridAxes.GetGridSize(initialAxis, boardSize) - 1;
+        int initialLayer = Mathf.Clamp(ViewState.GetDefaultLayerFor(initialAxis, false), 0, maxLayer);
+        _viewState.Initialize(initialAxis, initialLayer);
+
+        var layerPresenterGo = new GameObject("LayerPresenter");
+        layerPresenterGo.transform.SetParent(transform, false);
+        _layerPresenter = layerPresenterGo.AddComponent<LayerPresenter>();
+        _layerPresenter.Initialize(_loaderOfBoard, _viewState, _pieceViewRegistry, _layerMaterial, _eventBus, _logger);
+
+        _layerCameraWork = _layerCamera.gameObject.GetComponent<LayerCameraWork>();
+        if (_layerCameraWork == null)
+            _layerCameraWork = _layerCamera.gameObject.AddComponent<LayerCameraWork>();
+        _layerCameraWork.Initialize(_layerPresenter, _loaderOfBoard, _viewState, _layerCamera);
     }
     private void InitializeSceneComponents()
     {
         _mouseEventer.Initialize(_inputActions, _clickLeftHub, _clickRightHub, _holdRightHub, _holdMiddleHub, _scrollHub, _pointerHub, _deltaHub);
         var boardSize = BoardSizeFactory.FromConfig(_configOfBoard);
         _cameraWork.Initialize(boardSize.ToWorldCenter(), _camera, _cubeCenterMarker, _rotationCenterMarker, _holdRightHub, _holdMiddleHub, _deltaHub, _scrollHub);
-
         _boardUI.Initialize(_flow, _eventBus, _selectionHub, _uiPointerProbe);
-
         _deselectOnEmptyClick.Initialize(_selectionHub, _clickLeftHub, _pointerHub, _uiPointerProbe, _camera);
-
         _mouseEventer.Run();
         _cameraWork.Run();
+        _layerPresenter.Run();
+        _layerCameraWork.Run();
         _boardUI.Run();
         _deselectOnEmptyClick.Run();
     }

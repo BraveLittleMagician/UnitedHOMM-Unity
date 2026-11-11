@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using System.Collections.Generic;
 using UnityEngine;
 
 public static class LayerLayout
