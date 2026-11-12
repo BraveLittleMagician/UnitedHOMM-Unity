@@ -468,17 +468,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameCompositionRoot
   _piecesRoot: {fileID: 1446525816}
-  _pieceMaterial: {fileID: 2100000, guid: ff62a0f7a8b671a4b9e0bd7d497ab399, type: 2}
+  _pieceMaterial: {fileID: 2100000, guid: 60c31304465f9794799682a2ec2d220b, type: 2}
   _boardUI: {fileID: 526232271}
   _uiPointerProbe: {fileID: 2137650709}
   _selectionHub: {fileID: 526232270}
-  _deselectOnEmptyClick: {fileID: 526232283}
   _camera: {fileID: 1823688466}
   _cameraWork: {fileID: 1823688470}
   _cubeCenterMarker: {fileID: 540639274}
   _rotationCenterMarker: {fileID: 1790386481}
   _layerCamera: {fileID: 1591855952}
   _layerMaterial: {fileID: 2100000, guid: b5d47536ff2440543ad9dc3db72c600f, type: 2}
+  _markerMaterial: {fileID: 2100000, guid: c76a2281ec297d141a686020cd31f37a, type: 2}
   _inputActions: {fileID: -944628639613478452, guid: 26a82c6068b2d6e4999ee75d711d1002, type: 3}
   _mouseEventer: {fileID: 526232282}
   _clickLeftHub: {fileID: 526232281}
@@ -622,10 +622,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f03cecda3d840047a51475d453e4006, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeselectOnEmptyClick
+  _cleanedUp: 0
+  _uiPointerProbe: {fileID: 0}
+  _camera: {fileID: 0}
   _clickableLayers:
-    serializedVersion: 2
     m_Bits: 4294967295
   _maxRayDistance: 1000
+  _lastPointerPosition: {x: 0, y: 0}
 --- !u!1 &540639270
 GameObject:
   m_ObjectHideFlags: 0

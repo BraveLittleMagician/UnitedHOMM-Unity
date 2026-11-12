@@ -17,7 +17,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
     [Header("Selection")]
     [SerializeField] private SelectionHub _selectionHub = null!;
-    [SerializeField] private DeselectOnEmptyClick _deselectOnEmptyClick = null!;
 
     [Header("Camera")]
     [SerializeField] private Camera _camera = null!;
@@ -26,6 +25,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     [SerializeField] private WorldToScreenMarker _rotationCenterMarker = null!;
     [SerializeField] private Camera _layerCamera = null!;
     [SerializeField] private Material _layerMaterial = null!;
+    [SerializeField] private Material _markerMaterial = null!;
 
     [Header("Input")]
     [SerializeField] private InputActionAsset _inputActions = null!;
@@ -67,7 +67,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private ScenePointer _scenePointer = null!;
     private LayerPresenter _layerPresenter = null!;
     private LayerCameraWork _layerCameraWork = null!;
-
     private PieceSpawner _pieceSpawner = null!;
     private PieceViewRegistry _pieceViewRegistry = null!;
     private EnPassantService _enPassantService = null!;
@@ -82,6 +81,10 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private PendingModalManager _pendingModalManager = null!;
     private IReadOnlyList<ICellActionProvider> _cellActionProviders = null!;
     private IAttackTargetProvider _attackTargetProvider = null!;
+    private SelectionController _selectionController = null!;
+    private TargetSelectionController _targetSelectionController = null!;
+    private SceneClickDispatcher _sceneClickDispatcher = null!;
+    private SelectionMarkerCoordinator _selectionMarkerCoordinator = null!;
 
     private void Awake()
     {
@@ -114,7 +117,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
         if (_boardUI == null) throw new ArgumentNullException(nameof(_boardUI));
         if (_uiPointerProbe == null) throw new ArgumentNullException(nameof(_uiPointerProbe));
         if (_selectionHub == null) throw new ArgumentNullException(nameof(_selectionHub));
-        if (_deselectOnEmptyClick == null) throw new ArgumentNullException(nameof(_deselectOnEmptyClick));
         if (_camera == null) throw new ArgumentNullException(nameof(_camera));
         if (_cameraWork == null) throw new ArgumentNullException(nameof(_cameraWork));
         if (_cubeCenterMarker == null) throw new ArgumentNullException(nameof(_cubeCenterMarker));
@@ -132,6 +134,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
         if (_pieceLibraryJson == null) throw new ArgumentNullException(nameof(_pieceLibraryJson));
         if (_layerCamera == null) throw new ArgumentNullException(nameof(_layerCamera));
         if (_layerMaterial == null) throw new ArgumentNullException(nameof(_layerMaterial));
+        if (_markerMaterial == null) throw new ArgumentNullException(nameof(_markerMaterial));
     }
     private void CreateInfrastructure()
     {
@@ -300,7 +303,58 @@ public sealed class GameCompositionRoot : MonoBehaviour
             ManipulationState = _manipulationState,
         });
         _boardUI.Initialize(_flow, _eventBus, _selectionHub, _uiPointerProbe);
-        _deselectOnEmptyClick.Initialize(_selectionHub, _clickLeftHub, _pointerHub, _uiPointerProbe, _camera);
+
+        // === Interaction ===
+        _selectionMarkerCoordinator = new SelectionMarkerCoordinator(new SelectionMarkerCoordinatorContext
+        {
+            ViewState = _viewState,
+            LayerPresenter = _layerPresenter,
+            BoardLoader = _loaderOfBoard,
+            SelectionState = _selectionState,
+            Registry = _registry,
+            PendingModalManager = _pendingModalManager,
+            MatchState = _matchState,
+            MarkerMaterial = _markerMaterial,
+            CellActionProviders = _cellActionProviders,
+        });
+
+        _selectionController = gameObject.AddComponent<SelectionController>();
+        _selectionController.Initialize(new SelectionControllerContext
+        {
+            Flow = _flow,
+            Registry = _registry,
+            BoardLoader = _loaderOfBoard,
+            ViewState = _viewState,
+            LayerPresenter = _layerPresenter,
+            SelectionState = _selectionState,
+            HoverState = _hoverState,
+            SelectionHub = _selectionHub,
+            MatchState = _matchState,
+            TurnManager = _turnManager,
+            PendingModalManager = _pendingModalManager,
+            MarkerCoordinator = _selectionMarkerCoordinator,
+            Logger = _logger,
+        });
+
+        _targetSelectionController = gameObject.AddComponent<TargetSelectionController>();
+        _targetSelectionController.Initialize(new TargetSelectionContext
+        {
+            Flow = _flow,
+            ModifierHost = _modifierHost,
+            SelectionState = _selectionState,
+            SelectionHub = _selectionHub,
+            MatchState = _matchState,
+            BoardLoader = _loaderOfBoard,
+            LayerPresenter = _layerPresenter,
+            ViewState = _viewState,
+            PendingModalManager = _pendingModalManager,
+            MarkerMaterial = _markerMaterial,
+            Logger = _logger,
+        });
+
+        _sceneClickDispatcher = new SceneClickDispatcher(
+            _selectionController, _targetSelectionController, _cellActionHandler, _selectionState);
+
         var scenePointerGo = new GameObject("ScenePointer");
         scenePointerGo.transform.SetParent(transform, false);
         _scenePointer = scenePointerGo.AddComponent<ScenePointer>();
@@ -317,21 +371,18 @@ public sealed class GameCompositionRoot : MonoBehaviour
             PointerLayers = ~0,
             MaxRayDistance = 1000f,
             ClassifyOverride = null,
-            DispatchOverride = target =>
-            {
-                _logger.LogDebug($"[CLICK] Kind={target.Kind} Piece={target.Piece?.Name ?? "-"} " +
-                                 $"Move={target.MoveTarget?.Cell} Attack={target.AttackTarget?.Cell} " +
-                                 $"Target={target.TargetMarker?.Cell}");
-            },
-            BlockInteractionProvider = () => false,
+            DispatchOverride = target => _sceneClickDispatcher.Dispatch(target),
+            BlockInteractionProvider = () => _pendingModalManager.HasPending,
         });
+
         _mouseEventer.Run();
-        _scenePointer.Run();
         _cameraWork.Run();
         _layerPresenter.Run();
         _layerCameraWork.Run();
         _boardUI.Run();
-        _deselectOnEmptyClick.Run();
+        _scenePointer.Run();
+        _selectionController.Run();
+        _targetSelectionController.Run();
     }
     private void StartGame()
     {
