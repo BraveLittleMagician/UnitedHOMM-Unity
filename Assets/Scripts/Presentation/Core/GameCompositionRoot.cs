@@ -14,6 +14,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
     [Header("UI")]
     [SerializeField] private BoardUI _boardUI = null!;
     [SerializeField] private LayerPanelUI _layerPanelUI = null!;
+    [SerializeField] private PlanUI _planUI = null!;
+    [SerializeField] private PromotionUI _promotionUI = null!;
+    [SerializeField] private ActionChoiceUI _actionChoiceUI = null!;
     [SerializeField] private UIPointerProbe _uiPointerProbe = null!;
 
     [Header("Selection")]
@@ -138,6 +141,9 @@ public sealed class GameCompositionRoot : MonoBehaviour
         if (_layerMaterial == null) throw new ArgumentNullException(nameof(_layerMaterial));
         if (_markerMaterial == null) throw new ArgumentNullException(nameof(_markerMaterial));
         if (_layerPanelUI == null) throw new ArgumentNullException(nameof(_layerPanelUI));
+        if (_planUI == null) throw new ArgumentNullException(nameof(_planUI));
+        if (_promotionUI == null) throw new ArgumentNullException(nameof(_promotionUI));
+        if (_actionChoiceUI == null) throw new ArgumentNullException(nameof(_actionChoiceUI));
     }
     private void CreateInfrastructure()
     {
@@ -355,7 +361,21 @@ public sealed class GameCompositionRoot : MonoBehaviour
             MarkerMaterial = _markerMaterial,
             Logger = _logger,
         });
+        _planUI.Initialize(
+            _flow,
+            _turnManager,
+            _selectionState,
+            _selectionController,
+            _targetSelectionController,
+            _modifierActivationHandler,
+            _pendingModalManager,
+            _uiPointerProbe,
+            _matchState,
+            _modifierHost,
+            _logger);
 
+        _promotionUI.Initialize(_promotionChoiceHandler, _pendingModalManager, _uiPointerProbe);
+        _actionChoiceUI.Initialize(_cellActionHandler, _pendingModalManager, _uiPointerProbe);
         _sceneClickDispatcher = new SceneClickDispatcher(
             _selectionController, _targetSelectionController, _cellActionHandler, _selectionState);
 
@@ -385,6 +405,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _layerCameraWork.Run();
         _boardUI.Run();
         _layerPanelUI.Run();
+        _planUI.Run();
         _scenePointer.Run();
         _selectionController.Run();
         _targetSelectionController.Run();

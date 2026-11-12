@@ -419,6 +419,9 @@ GameObject:
   - component: {fileID: 526232268}
   - component: {fileID: 526232271}
   - component: {fileID: 526232283}
+  - component: {fileID: 526232286}
+  - component: {fileID: 526232285}
+  - component: {fileID: 526232284}
   - component: {fileID: 526232270}
   - component: {fileID: 526232282}
   - component: {fileID: 526232281}
@@ -471,6 +474,9 @@ MonoBehaviour:
   _pieceMaterial: {fileID: 2100000, guid: 60c31304465f9794799682a2ec2d220b, type: 2}
   _boardUI: {fileID: 526232271}
   _layerPanelUI: {fileID: 526232283}
+  _planUI: {fileID: 526232286}
+  _promotionUI: {fileID: 526232285}
+  _actionChoiceUI: {fileID: 526232284}
   _uiPointerProbe: {fileID: 2137650709}
   _selectionHub: {fileID: 526232270}
   _camera: {fileID: 1823688466}
@@ -628,6 +634,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LayerPanelUI
   _panelWidth: 400
   _panelHeight: 160
+--- !u!114 &526232284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d05332a4813ef244a8d55028bff01ec0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ActionChoiceUI
+--- !u!114 &526232285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b570a4e94961a7846ad177a9825832cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PromotionUI
+--- !u!114 &526232286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526232266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34054c626ac0836409582cfcfd9e3223, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlanUI
+  _panelWidth: 460
+  _panelHeight: 420
+  _panelMargin: 10
 --- !u!1 &540639270
 GameObject:
   m_ObjectHideFlags: 0
