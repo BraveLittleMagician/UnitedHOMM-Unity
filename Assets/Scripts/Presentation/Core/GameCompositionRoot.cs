@@ -46,6 +46,10 @@ public sealed class GameCompositionRoot : MonoBehaviour
     [SerializeField] private TextAsset _boardLayoutJson = null!;
     [SerializeField] private TextAsset _pieceLibraryJson = null!;
 
+    [Header("Debug")]
+    [SerializeField] private PieceDebugLogger _pieceDebugLogger = null!;
+    [SerializeField] private BoardDebugDumper _boardDebugDumper = null!;
+
     private ILogger _logger = null!;
     private IEventBus _eventBus = null!;
     private PiecePrefabRegistry _piecePrefabs = null!;
@@ -416,6 +420,29 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _scenePointer.Run();
         _selectionController.Run();
         _targetSelectionController.Run();
+
+        if (_pieceDebugLogger != null)
+        {
+            _pieceDebugLogger.Initialize(
+                _selectionController,
+                _selectionHub,
+                _modifierActivationHandler,
+                _promotionChoiceHandler,
+                _eventBus,
+                _logger);
+            _pieceDebugLogger.Run();
+        }
+
+        if (_boardDebugDumper != null)
+        {
+            _boardDebugDumper.Initialize(
+                _loaderOfBoard,
+                _layerPresenter,
+                _camera,
+                _layerCamera,
+                _viewState,
+                _selectionState);
+        }
     }
     private void StartGame()
     {
