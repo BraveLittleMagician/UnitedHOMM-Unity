@@ -13,6 +13,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private BoardUI _boardUI = null!;
+    [SerializeField] private LayerPanelUI _layerPanelUI = null!;
     [SerializeField] private UIPointerProbe _uiPointerProbe = null!;
 
     [Header("Selection")]
@@ -85,6 +86,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private TargetSelectionController _targetSelectionController = null!;
     private SceneClickDispatcher _sceneClickDispatcher = null!;
     private SelectionMarkerCoordinator _selectionMarkerCoordinator = null!;
+    private BoardCommands _boardCommands = null!;
 
     private void Awake()
     {
@@ -135,6 +137,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
         if (_layerCamera == null) throw new ArgumentNullException(nameof(_layerCamera));
         if (_layerMaterial == null) throw new ArgumentNullException(nameof(_layerMaterial));
         if (_markerMaterial == null) throw new ArgumentNullException(nameof(_markerMaterial));
+        if (_layerPanelUI == null) throw new ArgumentNullException(nameof(_layerPanelUI));
     }
     private void CreateInfrastructure()
     {
@@ -302,9 +305,10 @@ public sealed class GameCompositionRoot : MonoBehaviour
             ScrollHub = _scrollHub,
             ManipulationState = _manipulationState,
         });
-        _boardUI.Initialize(_flow, _eventBus, _selectionHub, _uiPointerProbe);
+        _boardCommands = new BoardCommands(_loaderOfBoard, _layerPresenter, _viewState);
+        _boardUI.Initialize(_loaderOfBoard, _viewState, _selectionState, _boardCommands, _uiPointerProbe);
+        _layerPanelUI.Initialize(_viewState, _boardCommands, _uiPointerProbe);
 
-        // === Interaction ===
         _selectionMarkerCoordinator = new SelectionMarkerCoordinator(new SelectionMarkerCoordinatorContext
         {
             ViewState = _viewState,
@@ -380,6 +384,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
         _layerPresenter.Run();
         _layerCameraWork.Run();
         _boardUI.Run();
+        _layerPanelUI.Run();
         _scenePointer.Run();
         _selectionController.Run();
         _targetSelectionController.Run();

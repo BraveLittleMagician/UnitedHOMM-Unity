@@ -418,6 +418,7 @@ GameObject:
   - component: {fileID: 526232267}
   - component: {fileID: 526232268}
   - component: {fileID: 526232271}
+  - component: {fileID: 526232283}
   - component: {fileID: 526232270}
   - component: {fileID: 526232282}
   - component: {fileID: 526232281}
@@ -427,7 +428,6 @@ GameObject:
   - component: {fileID: 526232277}
   - component: {fileID: 526232276}
   - component: {fileID: 526232275}
-  - component: {fileID: 526232283}
   m_Layer: 0
   m_Name: Holder
   m_TagString: Untagged
@@ -470,6 +470,7 @@ MonoBehaviour:
   _piecesRoot: {fileID: 1446525816}
   _pieceMaterial: {fileID: 2100000, guid: 60c31304465f9794799682a2ec2d220b, type: 2}
   _boardUI: {fileID: 526232271}
+  _layerPanelUI: {fileID: 526232283}
   _uiPointerProbe: {fileID: 2137650709}
   _selectionHub: {fileID: 526232270}
   _camera: {fileID: 1823688466}
@@ -514,6 +515,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13681ddf1e483b34aba0d7b1801bf2da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoardUI
+  _panelWidth: 340
+  _panelHeight: 460
+  _panelMargin: 10
 --- !u!114 &526232275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -619,16 +623,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 526232266}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f03cecda3d840047a51475d453e4006, type: 3}
+  m_Script: {fileID: 11500000, guid: 1df85c7c95ec28a44b086307017e0ebb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeselectOnEmptyClick
-  _cleanedUp: 0
-  _uiPointerProbe: {fileID: 0}
-  _camera: {fileID: 0}
-  _clickableLayers:
-    m_Bits: 4294967295
-  _maxRayDistance: 1000
-  _lastPointerPosition: {x: 0, y: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::LayerPanelUI
+  _panelWidth: 400
+  _panelHeight: 160
 --- !u!1 &540639270
 GameObject:
   m_ObjectHideFlags: 0
@@ -1560,6 +1559,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13681ddf1e483b34aba0d7b1801bf2da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridUI
+  _panelWidth: 340
+  _panelHeight: 460
+  _panelMargin: 10
 --- !u!114 &2137650709
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,9 +1,8 @@
 ﻿#nullable enable
-
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UIPointerProbe : MonoBehaviour
+public sealed class UIPointerProbe : MonoBehaviour
 {
     private readonly List<Rect> _regions = new();
 
@@ -14,10 +13,23 @@ public class UIPointerProbe : MonoBehaviour
         _regions.Add(guiRect);
     }
 
-    public void UnregisterRegion(Rect guiRect)
+    public bool UnregisterRegion(Rect guiRect)
     {
         for (int i = _regions.Count - 1; i >= 0; i--)
-            if (_regions[i] == guiRect) _regions.RemoveAt(i);
+        {
+            if (_regions[i] != guiRect) continue;
+            _regions.RemoveAt(i);
+            return true;
+        }
+        return false;
+    }
+
+    public bool TryReplaceRegion(Rect oldRect, Rect newRect)
+    {
+        if (oldRect == newRect) return false;
+        UnregisterRegion(oldRect);
+        RegisterRegion(newRect);
+        return true;
     }
 
     public void ClearRegions() => _regions.Clear();
@@ -26,10 +38,8 @@ public class UIPointerProbe : MonoBehaviour
     {
         float guiY = Screen.height - screenPosition.y;
         Vector2 guiPos = new(screenPosition.x, guiY);
-
         for (int i = 0; i < _regions.Count; i++)
             if (_regions[i].Contains(guiPos)) return true;
-
         return false;
     }
 }
