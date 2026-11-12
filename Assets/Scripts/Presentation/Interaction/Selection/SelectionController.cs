@@ -17,6 +17,7 @@ public sealed class SelectionController : EventSubscriberBehaviour, IRunnable
     private PendingModalManager _modalManager = null!;
     private IMarkerCoordinator _markerCoordinator = null!;
     private ILogger _logger = null!;
+    private MoveAnimator? _moveAnimator;
     private bool _initialized;
 
     public void Initialize(SelectionControllerContext context)
@@ -35,6 +36,7 @@ public sealed class SelectionController : EventSubscriberBehaviour, IRunnable
         _modalManager = context.PendingModalManager;
         _markerCoordinator = context.MarkerCoordinator;
         _logger = context.Logger;
+        _moveAnimator = context.MoveAnimator;
     }
 
     public void Run()
@@ -89,7 +91,7 @@ public sealed class SelectionController : EventSubscriberBehaviour, IRunnable
 
         var piece = selected.Piece;
         if (!_registry.TryToGetRoom(piece.IndexInHouse, out var room) || room == null) return;
-        if (!(room is ISquarePositionRoom sqRoom)) return;
+        if (room is not ISquarePositionRoom sqRoom) return;
         if (!sqRoom.TryToGetPosition<Square>(piece.IndexInHouse, out var fromPos)) return;
 
         IPath<Square>? path = null;
@@ -118,6 +120,8 @@ public sealed class SelectionController : EventSubscriberBehaviour, IRunnable
             MoveFailed?.Invoke(selected, marker.Cell);
             return;
         }
+
+        if (_moveAnimator != null) _moveAnimator.Play(selected, path);
 
         MoveCompleted?.Invoke(selected, path);
     }

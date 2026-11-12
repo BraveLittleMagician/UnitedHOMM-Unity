@@ -9,10 +9,11 @@ public sealed class SelectionControllerContext
     public LayerPresenter LayerPresenter { get; init; } = null!;
     public SelectionState SelectionState { get; init; } = null!;
     public HoverState HoverState { get; init; } = null!;
+    public ISelectionHub SelectionHub { get; init; } = null!;
     public MatchState MatchState { get; init; } = null!;
     public TurnManager TurnManager { get; init; } = null!;
     public PendingModalManager PendingModalManager { get; init; } = null!;
-    public ISelectionHub SelectionHub { get; init; } = null!;
     public IMarkerCoordinator MarkerCoordinator { get; init; } = null!;
     public ILogger Logger { get; init; } = null!;
+    public MoveAnimator? MoveAnimator { get; init; }
 }

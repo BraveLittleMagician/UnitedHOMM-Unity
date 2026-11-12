@@ -64,6 +64,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
     private DeckSequenceProvider _deckSequences = null!;
     private ModifierHost _modifierHost = null!;
     private LoaderOfBoard _loaderOfBoard = null!;
+    private MoveAnimator _moveAnimator = null!;
     private ViewState _viewState = null!;
     private CameraManipulationState _manipulationState = null!;
     private HoverState _hoverState = null!;
@@ -295,6 +296,11 @@ public sealed class GameCompositionRoot : MonoBehaviour
         if (_layerCameraWork == null)
             _layerCameraWork = _layerCamera.gameObject.AddComponent<LayerCameraWork>();
         _layerCameraWork.Initialize(_layerPresenter, _loaderOfBoard, _viewState, _layerCamera);
+
+        var moveAnimatorGo = new GameObject("MoveAnimator");
+        moveAnimatorGo.transform.SetParent(transform, false);
+        _moveAnimator = moveAnimatorGo.AddComponent<MoveAnimator>();
+        _moveAnimator.Initialize(_layerPresenter, _loaderOfBoard, _viewState);
     }
     private void InitializeSceneComponents()
     {
@@ -344,6 +350,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
             PendingModalManager = _pendingModalManager,
             MarkerCoordinator = _selectionMarkerCoordinator,
             Logger = _logger,
+            MoveAnimator = _moveAnimator,
         });
 
         _targetSelectionController = gameObject.AddComponent<TargetSelectionController>();
@@ -396,7 +403,7 @@ public sealed class GameCompositionRoot : MonoBehaviour
             MaxRayDistance = 1000f,
             ClassifyOverride = null,
             DispatchOverride = target => _sceneClickDispatcher.Dispatch(target),
-            BlockInteractionProvider = () => _pendingModalManager.HasPending,
+            BlockInteractionProvider = () => _pendingModalManager.HasPending || _moveAnimator.IsAnimating,
         });
 
         _mouseEventer.Run();
