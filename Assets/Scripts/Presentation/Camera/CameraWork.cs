@@ -15,10 +15,10 @@ public class CameraWork : EventSubscriberBehaviour, IRunnable,
 
     private Camera _camera = null!;
     private LoaderOfBoard _boardLoader = null!;
-    private HoldRight _holdRightHub = null!;
-    private HoldMiddle _holdMiddleHub = null!;
-    private Delta _deltaHub = null!;
-    private Scroll _scrollHub = null!;
+    private IHoldRightHub _holdRightHub = null!;
+    private IHoldMiddleHub _holdMiddleHub = null!;
+    private IDeltaHub _deltaHub = null!;
+    private IScrollHub _scrollHub = null!;
     private CameraManipulationState _manipulationState = null!;
     private CameraManipulationModel _model = null!;
     private CameraMarkerPresenter _markers = null!;
