@@ -30,37 +30,44 @@ internal sealed class WorldDelta : IUndoableOperation
     private bool Restore(WorldState target)
     {
         var targetEntries = target.Entries;
-
-        // Phase 1: remove all changed pieces from their current rooms.
-        foreach (var (index, entry) in targetEntries)
+        var savedPieces = new Dictionary<BigInteger, IPiece>(targetEntries.Count);
+        foreach (var (index, _) in targetEntries)
         {
-            if (!_registry.TryToGetPiece(index, out var piece) || piece == null) continue;
-            if (NeedsRoomChange(piece, index, entry))
-            {
-                if (_registry.TryToGetRoom(index, out var currentRoom) && currentRoom != null)
-                    currentRoom.Remove(index);
-            }
+            if (_registry.TryToGetPiece(index, out var piece) && piece != null)
+                savedPieces[index] = piece;
         }
 
-        // Phase 2: restore state (HP, charges, facing, flags, modifiers).
         foreach (var (index, entry) in targetEntries)
         {
-            if (!_registry.TryToGetPiece(index, out var piece) || piece == null) continue;
+            if (!savedPieces.ContainsKey(index)) continue;
+            if (!NeedsRoomChange(index, entry)) continue;
+            if (_registry.TryToGetRoom(index, out var currentRoom) && currentRoom != null)
+                currentRoom.Remove(index);
+        }
+
+        foreach (var (index, entry) in targetEntries)
+        {
+            if (!savedPieces.TryGetValue(index, out var piece)) continue;
             RestorePiece(piece, entry);
         }
 
-        // Phase 3: add pieces back to their target rooms.
         bool ok = true;
         foreach (var (index, entry) in targetEntries)
         {
             if (entry.Room == null || !entry.Position.HasValue) continue;
-            if (!_registry.TryToGetPiece(index, out var piece) || piece == null) continue;
+            if (!savedPieces.TryGetValue(index, out var piece)) continue;
 
             var room = entry.Room;
             var pos = entry.Position.Value;
 
-            if (_registry.TryToGetRoom(index, out var currentRoom) && ReferenceEquals(currentRoom, room))
-                continue; // already there
+            if (_registry.TryToGetRoom(index, out var currentRoom)
+                && ReferenceEquals(currentRoom, room)
+                && currentRoom is ISquarePositionRoom sq
+                && sq.TryToGetPosition<Square>(index, out var currentPos)
+                && currentPos.Equals(pos))
+            {
+                continue;
+            }
 
             if (!room.Add(piece, pos, true, out var err))
             {
@@ -71,27 +78,24 @@ internal sealed class WorldDelta : IUndoableOperation
             _eventBus.Publish(new PieceDeployedEvent<Square>(piece, pos, room));
         }
 
-        // Fire a single Moved event isn't meaningful here — events already fired via Add/Remove.
         _logger.LogDebug($"[UNDO] World restored, {(ok ? "OK" : "with errors")}");
         return ok;
     }
 
-    private bool NeedsRoomChange(IPiece piece, BigInteger index, PieceStateEntry target)
+
+    private bool NeedsRoomChange(BigInteger index, PieceStateEntry target)
     {
         if (target.Room == null || !target.Position.HasValue)
-        {
-            // Target position is "no room" — remove if currently in one.
             return _registry.TryToGetRoom(index, out _);
-        }
 
         if (!_registry.TryToGetRoom(index, out var currentRoom) || currentRoom == null)
-            return false; // currently not in any room; nothing to remove
+            return false;
 
         if (!ReferenceEquals(currentRoom, target.Room))
             return true;
 
-        if (currentRoom is ISquarePositionRoom sqRoom &&
-            sqRoom.TryToGetPosition<Square>(index, out var currentPos))
+        if (currentRoom is ISquarePositionRoom sqRoom
+            && sqRoom.TryToGetPosition<Square>(index, out var currentPos))
         {
             return !currentPos.Equals(target.Position.Value);
         }
