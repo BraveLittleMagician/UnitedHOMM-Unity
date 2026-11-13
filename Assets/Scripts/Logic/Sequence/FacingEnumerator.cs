@@ -57,10 +57,15 @@ public sealed class FacingEnumerator : ISequenceEnumerator<Square>
         _facing = facing;
         StartPosition = startWorld;
 
-        _positionsWorld = new Dictionary<Square, Stayable>(inner.PositionsAll.Count);
-        foreach (var (local, stay) in inner.PositionsAll)
-            _positionsWorld[FacingRotation.Rotate(local, facing)] = stay;
+        var innerStart = inner.StartPosition;
 
+        _positionsWorld = new Dictionary<Square, Stayable>(inner.PositionsAll.Count);
+        foreach (var (localAbs, stay) in inner.PositionsAll)
+        {
+            var offset = localAbs.Subtract(innerStart);
+            var worldAbs = startWorld.Add(FacingRotation.Rotate(offset, facing));
+            _positionsWorld[worldAbs] = stay;
+        }
         _stayWorld = _positionsWorld
             .Where(kv => kv.Value == Stayable.Stay)
             .Select(kv => kv.Key)
@@ -68,9 +73,14 @@ public sealed class FacingEnumerator : ISequenceEnumerator<Square>
 
         var innerAttackable = inner.PositionsAttackable;
         _attackableWorld = new Dictionary<Square, Attackable>(innerAttackable.Count);
-        foreach (var (local, attack) in innerAttackable)
-            _attackableWorld[FacingRotation.Rotate(local, facing)] = attack;
+        foreach (var (localAbs, attack) in innerAttackable)
+        {
+            var offset = localAbs.Subtract(innerStart);
+            var worldAbs = startWorld.Add(FacingRotation.Rotate(offset, facing));
+            _attackableWorld[worldAbs] = attack;
+        }
     }
+
     public bool SupportsExplicitAttackable => _inner.SupportsExplicitAttackable;
     public int MaxDepth => _inner.MaxDepth;
     public Square StartPosition { get; }
@@ -80,25 +90,37 @@ public sealed class FacingEnumerator : ISequenceEnumerator<Square>
 
     public IEnumerable<Square> GetNeighbors(Square cellWorld)
     {
-        var local = FacingRotation.Unrotate(cellWorld, _facing);
-        foreach (var nLocal in _inner.GetNeighbors(local))
-            yield return FacingRotation.Rotate(nLocal, _facing);
+        var offset = cellWorld.Subtract(StartPosition);
+        var localAbs = _inner.StartPosition.Add(FacingRotation.Unrotate(offset, _facing));
+
+        foreach (var nLocalAbs in _inner.GetNeighbors(localAbs))
+        {
+            var nOffset = nLocalAbs.Subtract(_inner.StartPosition);
+            yield return StartPosition.Add(FacingRotation.Rotate(nOffset, _facing));
+        }
     }
 
-    public IPath<Square> CombinePositionsIntoPath(Square[] positions)
-        => new PathSequence<Square>(positions);
+    public IPath<Square> CombinePositionsIntoPath(Square[] positions) => new PathSequence<Square>(positions);
 
     public bool CanMoveTo(Square targetWorld)
-        => _inner.CanMoveTo(FacingRotation.Unrotate(targetWorld, _facing));
+    {
+        var offset = targetWorld.Subtract(StartPosition);
+        var localAbs = _inner.StartPosition.Add(FacingRotation.Unrotate(offset, _facing));
+        return _inner.CanMoveTo(localAbs);
+    }
 
     public bool CanMoveTo(IPath<Square> pathWorld)
     {
         var positions = pathWorld.Positions;
         if (positions.Count == 0) return false;
         if (!positions[0].Equals(StartPosition)) return false;
+
         var local = new Square[positions.Count];
         for (int i = 0; i < positions.Count; i++)
-            local[i] = FacingRotation.Unrotate(positions[i], _facing);
+        {
+            var offset = positions[i].Subtract(StartPosition);
+            local[i] = _inner.StartPosition.Add(FacingRotation.Unrotate(offset, _facing));
+        }
         return _inner.CanMoveTo(new PathSequence<Square>(local));
     }
 }

@@ -35,7 +35,7 @@ public static class DomainModule
         var registry = new Registry(house);
 
         var boardSize = BoardSizeFactory.FromConfig(configOfBoard);
-        var board = new Board(seats, boardSize, eventBus, logger);
+        var board = new Board(seats, boardSize, configOfBoard.WWOffset, eventBus, logger);
         house.AddRoom(board);
         house.AddRoom(new Decks(seats, eventBus, logger));
 

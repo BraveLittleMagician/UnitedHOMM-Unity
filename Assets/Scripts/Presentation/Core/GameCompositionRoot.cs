@@ -98,7 +98,6 @@ public sealed class GameCompositionRoot : MonoBehaviour
             _camera, _layerCamera,
             _eventBus, _logger);
 
-        // Run
         _input.Run();
         _presentation.Run();
         _ui.Run();

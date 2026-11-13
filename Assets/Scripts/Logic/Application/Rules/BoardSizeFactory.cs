@@ -7,8 +7,7 @@ public static class BoardSizeFactory
     public static Square FromConfig(ConfigOfBoard config)
     {
         int n = config.FieldSize;
-        int wLayers = 1 + (config.WDown ? 1 : 0) + (config.WUp ? 1 : 0);
-
+        int wLayers = Math.Max(1, config.W);
         return config.Axes switch
         {
             MultipleAxesFromTwo.Two => new Square { X = n, Y = n, Z = 1, W = 1 },

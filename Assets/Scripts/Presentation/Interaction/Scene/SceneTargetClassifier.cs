@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System;
 using UnityEngine;
 
@@ -10,6 +9,7 @@ public sealed class SceneTargetClassifier
     private readonly ViewState _viewState;
     private readonly LayerMask _pointerLayers;
     private readonly float _maxRayDistance;
+    private readonly int _wwOffset;
     private readonly RaycastHit[] _hits = new RaycastHit[32];
 
     public SceneTargetClassifier(
@@ -17,13 +17,15 @@ public sealed class SceneTargetClassifier
         Camera layerCamera,
         ViewState viewState,
         LayerMask pointerLayers,
-        float maxRayDistance)
+        float maxRayDistance,
+        int wwOffset)
     {
         _camera = camera ?? throw new ArgumentNullException(nameof(camera));
         _layerCamera = layerCamera ?? throw new ArgumentNullException(nameof(layerCamera));
         _viewState = viewState ?? throw new ArgumentNullException(nameof(viewState));
         _pointerLayers = pointerLayers;
         _maxRayDistance = maxRayDistance;
+        _wwOffset = wwOffset;
     }
 
     public SceneTargetInfo Classify(Vector2 screenPosition)
@@ -85,7 +87,7 @@ public sealed class SceneTargetClassifier
 
     private bool IsOnActiveLayer(Square cell)
     {
-        int layerIndex = GridAxes.GetGridCoordinate(_viewState.AxisIndex, cell);
+        int layerIndex = GridAxes.GetLayerIndex(_viewState.AxisIndex, cell, _wwOffset);
         return layerIndex == _viewState.ActiveLayerIndex;
     }
 

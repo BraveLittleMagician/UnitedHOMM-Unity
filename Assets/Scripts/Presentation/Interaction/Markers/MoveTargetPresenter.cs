@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -39,7 +38,7 @@ public sealed class MoveTargetPresenter : IMarkerPresenter
         foreach (var shapeCell in shape)
         {
             var cell = shapeCell.Cell;
-            int layerIndex = GridAxes.GetGridCoordinate(axisIndex, cell);
+            int layerIndex = GridAxes.GetLayerIndex(axisIndex, cell, _boardLoader.WWOffset);
             var parentLayer = _layerPresenter.GetMoveTargetLayer(layerIndex);
             if (parentLayer == null) continue;
 
@@ -98,11 +97,12 @@ public sealed class MoveTargetPresenter : IMarkerPresenter
     private Vector3 ComputeLocalPosition(Square cell, Vector3 containerLocalPos, int axisIndex)
     {
         Vector3 worldLocal = GridAxes.GridToWorldLocal(
-            cell, _boardLoader.GridSize, _boardLoader.Step, _boardLoader.WSpread);
+            cell,
+            _boardLoader.GridSize,
+            _boardLoader.Step,
+            _boardLoader.WSpread,
+            _boardLoader.WWOffset);
         Vector3 local = worldLocal - containerLocalPos;
-
-        // Для не-W осей обнуляем компоненту вдоль оси слоя —
-        // иначе маркер «уедет» на двойной offset.
         if (axisIndex != GridAxes.W)
         {
             int worldComp = GridAxes.GetWorldComponent(axisIndex);

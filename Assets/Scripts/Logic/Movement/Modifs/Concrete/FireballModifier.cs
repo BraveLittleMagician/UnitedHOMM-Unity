@@ -70,7 +70,6 @@ public sealed class FireballModifier : ITargetedModifier
                     if (cell.X < 0 || cell.X >= gridSize.X) continue;
                     if (cell.Y < 0 || cell.Y >= gridSize.Y) continue;
                     if (cell.Z < 0 || cell.Z >= gridSize.Z) continue;
-                    if (cell.W < 0 || cell.W >= gridSize.W) continue;
                     result.Add(cell);
                 }
         return result;

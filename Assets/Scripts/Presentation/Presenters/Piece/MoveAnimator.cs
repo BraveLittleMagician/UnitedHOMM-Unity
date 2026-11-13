@@ -37,7 +37,7 @@ public sealed class MoveAnimator : MonoBehaviour
             var positions = path.Positions;
 
             AttachToPiece(piece, positions[0]);
-            _viewState.SetActiveLayer(GridAxes.GetGridCoordinate(_viewState.AxisIndex, positions[0]));
+            _viewState.SetActiveLayer(GridAxes.GetLayerIndex(_viewState.AxisIndex, positions[0], _boardLoader.WWOffset));
             yield return null;
 
             var wait = new WaitForSeconds(_stepDelay);
@@ -46,7 +46,7 @@ public sealed class MoveAnimator : MonoBehaviour
             {
                 var cell = positions[i];
                 AttachToPiece(piece, cell);
-                _viewState.SetActiveLayer(GridAxes.GetGridCoordinate(_viewState.AxisIndex, cell));
+                _viewState.SetActiveLayer(GridAxes.GetLayerIndex(_viewState.AxisIndex, cell, _boardLoader.WWOffset));
                 yield return wait;
             }
         }
@@ -59,7 +59,7 @@ public sealed class MoveAnimator : MonoBehaviour
     private void AttachToPiece(InfoOfPiece piece, Square cell)
     {
         int axis = _viewState.AxisIndex;
-        int layerIndex = GridAxes.GetGridCoordinate(axis, cell);
+        int layerIndex = GridAxes.GetLayerIndex(axis, cell, _boardLoader.WWOffset);
 
         LayerContainer? container = null;
         foreach (var c in _layerPresenter.Containers)
@@ -75,7 +75,11 @@ public sealed class MoveAnimator : MonoBehaviour
         piece.transform.SetParent(container.transform, false);
 
         Vector3 worldLocal = GridAxes.GridToWorldLocal(
-            cell, _boardLoader.GridSize, _boardLoader.Step, _boardLoader.WSpread);
+            cell,
+            _boardLoader.GridSize,
+            _boardLoader.Step,
+            _boardLoader.WSpread,
+            _boardLoader.WWOffset);
         Vector3 local = worldLocal - container.TargetLocalPosition;
 
         if (axis != GridAxes.W)

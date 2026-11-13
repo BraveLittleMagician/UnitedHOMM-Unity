@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System;
 using UnityEngine;
 
@@ -10,7 +9,6 @@ public sealed class ScenePointer : EventSubscriberBehaviour, IRunnable, IClickLe
     private UIPointerProbe _uiPointerProbe = null!;
     private HoverState _hoverState = null!;
     private CameraManipulationState _manipulationState = null!;
-
     private Func<Vector2, SceneTargetInfo> _classifyFunc = null!;
     private Action<SceneTargetInfo> _dispatchFunc = null!;
     private Func<bool> _blockFunc = null!;
@@ -35,8 +33,12 @@ public sealed class ScenePointer : EventSubscriberBehaviour, IRunnable, IClickLe
         else
         {
             var classifier = new SceneTargetClassifier(
-                context.Camera, context.LayerCamera, context.ViewState,
-                context.PointerLayers, context.MaxRayDistance);
+                context.Camera,
+                context.LayerCamera,
+                context.ViewState,
+                context.PointerLayers,
+                context.MaxRayDistance,
+                context.WWOffset);
             _classifyFunc = classifier.Classify;
         }
 
@@ -53,6 +55,7 @@ public sealed class ScenePointer : EventSubscriberBehaviour, IRunnable, IClickLe
         AddSubscription(() => _clickLeftHub.UnregisterSubscriber(this));
         _pointerHub.RegisterSubscriber(this);
         AddSubscription(() => _pointerHub.UnregisterSubscriber(this));
+
         _manipulationState.Changed += OnManipulationChanged;
         AddSubscription(() => _manipulationState.Changed -= OnManipulationChanged);
 

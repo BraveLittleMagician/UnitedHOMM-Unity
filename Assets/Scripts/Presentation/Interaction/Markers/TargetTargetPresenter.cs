@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -39,7 +38,7 @@ public sealed class TargetTargetPresenter : IMarkerPresenter
 
         foreach (var cell in cells)
         {
-            int layerIndex = GridAxes.GetGridCoordinate(axisIndex, cell);
+            int layerIndex = GridAxes.GetLayerIndex(axisIndex, cell, _boardLoader.WWOffset);
             var parentLayer = _layerPresenter.GetMoveTargetLayer(layerIndex);
             if (parentLayer == null) continue;
 
@@ -98,7 +97,11 @@ public sealed class TargetTargetPresenter : IMarkerPresenter
     private Vector3 ComputeLocalPosition(Square cell, Vector3 containerLocalPos, int axisIndex)
     {
         Vector3 worldLocal = GridAxes.GridToWorldLocal(
-            cell, _boardLoader.GridSize, _boardLoader.Step, _boardLoader.WSpread);
+            cell,
+            _boardLoader.GridSize,
+            _boardLoader.Step,
+            _boardLoader.WSpread,
+            _boardLoader.WWOffset);
         Vector3 local = worldLocal - containerLocalPos;
         if (axisIndex != GridAxes.W)
         {

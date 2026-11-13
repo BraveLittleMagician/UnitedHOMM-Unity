@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -25,7 +24,7 @@ public sealed class PieceDistributor
         foreach (var view in _viewRegistry.AllLiveViews)
         {
             if (view == null) continue;
-            int layerIndex = GridAxes.GetGridCoordinate(axis, view.PositionInGrid);
+            int layerIndex = GridAxes.GetLayerIndex(axis, view.PositionInGrid, _boardLoader.WWOffset);
             if (layerIndex < 0 || layerIndex >= _containers.Count) continue;
             var container = _containers[layerIndex];
             container.AddPiece(view.gameObject);
@@ -61,7 +60,7 @@ public sealed class PieceDistributor
     public void DistributeView(InfoOfPiece view, int axis)
     {
         if (view == null || view.IsDead) return;
-        int layerIndex = GridAxes.GetGridCoordinate(axis, view.PositionInGrid);
+        int layerIndex = GridAxes.GetLayerIndex(axis, view.PositionInGrid, _boardLoader.WWOffset);
         if (layerIndex < 0 || layerIndex >= _containers.Count) return;
         var container = _containers[layerIndex];
         container.AddPiece(view.gameObject);
@@ -71,9 +70,12 @@ public sealed class PieceDistributor
     public void PositionPieceInContainer(InfoOfPiece info, LayerContainer container)
     {
         Vector3 worldLocal = GridAxes.GridToWorldLocal(
-            info.PositionInGrid, _boardLoader.GridSize, _boardLoader.Step, _boardLoader.WSpread);
+            info.PositionInGrid,
+            _boardLoader.GridSize,
+            _boardLoader.Step,
+            _boardLoader.WSpread,
+            _boardLoader.WWOffset);
         Vector3 local = worldLocal - container.TargetLocalPosition;
-
         info.transform.SetParent(container.transform, false);
         info.transform.localPosition = local;
     }

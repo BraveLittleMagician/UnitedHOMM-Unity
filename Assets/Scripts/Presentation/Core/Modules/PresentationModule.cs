@@ -30,7 +30,8 @@ public static class PresentationModule
         if (domain == null) throw new ArgumentNullException(nameof(domain));
         if (host == null) throw new ArgumentNullException(nameof(host));
 
-        // --- Piece spawner ---
+        int wwOffset = domain.Board.WWOffset;
+
         var pieceViewRegistry = new PieceViewRegistry();
         var pieceSpawner = new PieceSpawner(
             piecesRoot,
@@ -42,13 +43,13 @@ public static class PresentationModule
         Square boardSize = domain.Board.Size;
 
         var loaderOfBoard = host.AddComponent<LoaderOfBoard>();
-        loaderOfBoard.Initialize(pieceSpawner, pieceViewRegistry, eventBus, logger, boardSize);
+        loaderOfBoard.Initialize(pieceSpawner, pieceViewRegistry, eventBus, logger, boardSize, wwOffset);
         loaderOfBoard.Run();
 
-        // --- View state ---
         var viewState = new ViewState();
         int initialAxis;
         if (boardSize.W > 1) initialAxis = GridAxes.W;
+        else if (boardSize.Z == 1 && boardSize.Y > 1 && boardSize.X > 1) initialAxis = GridAxes.W;
         else if (boardSize.Z > 1) initialAxis = GridAxes.Z;
         else if (boardSize.Y > 1) initialAxis = GridAxes.Y;
         else initialAxis = GridAxes.X;
@@ -56,30 +57,25 @@ public static class PresentationModule
         int initialLayer = Mathf.Clamp(ViewState.GetDefaultLayerFor(initialAxis, false), 0, maxLayer);
         viewState.Initialize(initialAxis, initialLayer);
 
-        // --- State ---
         var selectionState = new SelectionState();
         var hoverState = new HoverState();
         var manipulationState = new CameraManipulationState();
 
-        // --- Layer presenter ---
         var layerPresenterGo = new GameObject("LayerPresenter");
         layerPresenterGo.transform.SetParent(host.transform, false);
         var layerPresenter = layerPresenterGo.AddComponent<LayerPresenter>();
         layerPresenter.Initialize(loaderOfBoard, viewState, pieceViewRegistry, layerMaterial, eventBus, logger);
 
-        // --- Layer camera ---
         var layerCameraWork = layerCamera.gameObject.GetComponent<LayerCameraWork>();
         if (layerCameraWork == null)
             layerCameraWork = layerCamera.gameObject.AddComponent<LayerCameraWork>();
         layerCameraWork.Initialize(layerPresenter, loaderOfBoard, viewState, layerCamera);
 
-        // --- Move animator ---
         var moveAnimatorGo = new GameObject("MoveAnimator");
         moveAnimatorGo.transform.SetParent(host.transform, false);
         var moveAnimator = moveAnimatorGo.AddComponent<MoveAnimator>();
         moveAnimator.Initialize(layerPresenter, loaderOfBoard, viewState);
 
-        // --- Marker coordinator ---
         var selectionMarkerCoordinator = new SelectionMarkerCoordinator(new SelectionMarkerCoordinatorContext
         {
             ViewState = viewState,
@@ -93,7 +89,6 @@ public static class PresentationModule
             CellActionProviders = domain.CellActionProviders,
         });
 
-        // --- Selection controller ---
         var selectionController = host.AddComponent<SelectionController>();
         selectionController.Initialize(new SelectionControllerContext
         {
@@ -113,7 +108,6 @@ public static class PresentationModule
             MoveAnimator = moveAnimator,
         });
 
-        // --- Target selection controller ---
         var targetSelectionController = host.AddComponent<TargetSelectionController>();
         targetSelectionController.Initialize(new TargetSelectionContext
         {
@@ -130,9 +124,7 @@ public static class PresentationModule
             Logger = logger,
         });
 
-        // --- Scene click dispatcher & pointer ---
-        var sceneClickDispatcher = new SceneClickDispatcher(
-            selectionController, targetSelectionController, domain.CellActionHandler, selectionState);
+        var sceneClickDispatcher = new SceneClickDispatcher(selectionController, targetSelectionController, domain.CellActionHandler, selectionState);
 
         var scenePointerGo = new GameObject("ScenePointer");
         scenePointerGo.transform.SetParent(host.transform, false);
@@ -149,12 +141,12 @@ public static class PresentationModule
             ManipulationState = manipulationState,
             PointerLayers = ~0,
             MaxRayDistance = 1000f,
+            WWOffset = wwOffset,
             ClassifyOverride = null,
             DispatchOverride = target => sceneClickDispatcher.Dispatch(target),
             BlockInteractionProvider = () => domain.PendingModalManager.HasPending || moveAnimator.IsAnimating,
         });
 
-        // --- Camera work ---
         cameraWork.Initialize(new CameraWorkContext
         {
             BoardLoader = loaderOfBoard,

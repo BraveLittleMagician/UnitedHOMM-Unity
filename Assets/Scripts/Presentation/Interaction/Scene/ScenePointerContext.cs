@@ -20,4 +20,5 @@ public sealed class ScenePointerContext
     public Action<SceneTargetInfo>? DispatchOverride { get; init; }
 
     public Func<bool>? BlockInteractionProvider { get; init; }
+    public int WWOffset { get; init; }
 }

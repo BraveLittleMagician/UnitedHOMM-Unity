@@ -17,13 +17,15 @@ public sealed class LoaderOfBoard : MonoBehaviour, IRunnable, IDisposable
     private bool _subscribed;
     private bool _disposed;
 
-    public Square GridSize => _gridSize;
+    public int WWOffset { get; private set; }
     public float Step => 1f + _spacing;
     public float Spacing => _spacing;
     public float WSpread => _wSpread;
+    public Square GridSize => _gridSize;
     public PieceViewRegistry ViewRegistry => _viewRegistry;
     public IReadOnlyCollection<InfoOfPiece> AllPieceViews => _viewRegistry.AllViews;
 
+    private void OnDestroy() => Dispose();
     private int GetPiecesLayer()
     {
         int layer = LayerMask.NameToLayer(_piecesLayerName);
@@ -65,7 +67,7 @@ public sealed class LoaderOfBoard : MonoBehaviour, IRunnable, IDisposable
         if (!_viewRegistry.TryGetByIndex(e.Piece.IndexInHouse, out var view) || view == null) return;
         view.SetFacing(e.NewFacing);
     }
-    private Vector3 ComputeWorldLocal(Square pos) => GridAxes.GridToWorldLocal(pos, _gridSize, Step, _wSpread);
+    private Vector3 ComputeWorldLocal(Square pos) => GridAxes.GridToWorldLocal(pos, _gridSize, Step, _wSpread, WWOffset);
 
     public void Dispose()
     {
@@ -105,15 +107,15 @@ public sealed class LoaderOfBoard : MonoBehaviour, IRunnable, IDisposable
         if (layer < 0) throw new InvalidOperationException($"Слой '{_piecesLayerName}' не найден.");
     }
     public void SetSpacing(float spacing) => _spacing = Mathf.Max(0f, spacing);
-    public void Initialize(PieceSpawner spawner, PieceViewRegistry viewRegistry, IEventBus eventBus, ILogger logger, Square gridSize)
+    public void Initialize(PieceSpawner spawner, PieceViewRegistry viewRegistry, IEventBus eventBus, ILogger logger, Square gridSize, int wwOffset)
     {
         _spawner = spawner ?? throw new ArgumentNullException(nameof(spawner));
         _viewRegistry = viewRegistry ?? throw new ArgumentNullException(nameof(viewRegistry));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _gridSize = gridSize;
+        WWOffset = wwOffset;
     }
     public void SetGridSize(Square gridSize) => _gridSize = gridSize;
-
-    private void OnDestroy() => Dispose();
+    public void SetWWOffset(int wwOffset) => WWOffset = wwOffset;
 }

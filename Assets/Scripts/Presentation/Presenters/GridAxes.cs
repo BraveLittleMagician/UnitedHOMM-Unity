@@ -60,7 +60,14 @@ public static class GridAxes
         W => new Vector3(1f, 1f, 1f).normalized,
         _ => throw new ArgumentOutOfRangeException(nameof(axis)),
     };
-
+    public static int GetLayerIndex(int axis, Square pos, int wwOffset) => axis switch
+    {
+        X => pos.X,
+        Y => pos.Y,
+        Z => pos.Z,
+        W => pos.W - wwOffset,
+        _ => throw new ArgumentOutOfRangeException(nameof(axis)),
+    };
     public static int GetWorldComponent(int axis) => axis switch
     {
         X => 0,
@@ -81,7 +88,7 @@ public static class GridAxes
         }
         return world;
     }
-    public static Vector3 GridToWorldLocal(Square gridPos, Square gridSize, float step, float wSpread = 1f)
+    public static Vector3 GridToWorldLocal(Square gridPos, Square gridSize, float step, float wSpread = 1f, int wwOffset = 0)
     {
         Vector3 world = default;
         for (int i = 0; i < 3; i++)
@@ -91,8 +98,9 @@ public static class GridAxes
             float size = GetSquareComponent(gridSize, info.GridComponent);
             world[info.WorldComponent] = (g - (size - 1) * 0.5f) * step;
         }
-        int wCenter = (gridSize.W - 1) / 2;
-        float wOffset = (gridPos.W - wCenter) * step * wSpread;
+
+        float worldCenter = wwOffset + (gridSize.W - 1) * 0.5f;
+        float wOffset = (gridPos.W - worldCenter) * step * wSpread;
         world += new Vector3(wOffset, wOffset, wOffset);
         return world;
     }

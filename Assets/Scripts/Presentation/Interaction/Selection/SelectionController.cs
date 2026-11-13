@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System;
 
 public sealed class SelectionController : EventSubscriberBehaviour, IRunnable
@@ -70,7 +69,7 @@ public sealed class SelectionController : EventSubscriberBehaviour, IRunnable
 
         if (ReferenceEquals(_selectionState.SelectedInfo, info)) return;
 
-        int layerIndex = GridAxes.GetGridCoordinate(_viewState.AxisIndex, info.PositionInGrid);
+        int layerIndex = GridAxes.GetLayerIndex(_viewState.AxisIndex, info.PositionInGrid, _boardLoader.WWOffset);
         _viewState.SetActiveLayer(layerIndex);
 
         _hoverState.Clear();
@@ -122,7 +121,6 @@ public sealed class SelectionController : EventSubscriberBehaviour, IRunnable
         }
 
         if (_moveAnimator != null) _moveAnimator.Play(selected, path);
-
         MoveCompleted?.Invoke(selected, path);
     }
 

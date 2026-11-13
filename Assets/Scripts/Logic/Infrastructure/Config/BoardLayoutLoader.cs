@@ -38,12 +38,46 @@ public static class BoardLayoutLoader
         if (grid.Y <= 0) errors.Add($"GridSize.y должен быть > 0, получено {grid.Y}");
         if (grid.Z <= 0) errors.Add($"GridSize.z должен быть > 0, получено {grid.Z}");
 
-        if (!IsValidBool($"{grid.WUp}"))
-            errors.Add($"GridSize.wUp должен быть \"t\"/\"f\" или \"true\"/\"false\", получено '{grid.WUp}'");
-
-        if (!IsValidBool($"{grid.WDown}"))
-            errors.Add($"GridSize.wDown должен быть \"t\"/\"f\" или \"true\"/\"false\", получено '{grid.WDown}'");
+        if (grid.W.HasValue)
+        {
+            if (grid.W.Value < 1 || grid.W.Value > 3)
+                errors.Add($"GridSize.w должен быть в [1..3], получено {grid.W.Value}");
+            if (grid.W.Value == 2 && !IsValidBoolOrNull(grid.SignWNegative))
+                errors.Add("GridSize.signWNegative должен быть \"t\"/\"f\"/\"true\"/\"false\" при w=2");
+            if (grid.W.Value != 2 && !string.IsNullOrEmpty(grid.SignWNegative))
+                errors.Add("GridSize.signWNegative допустим только при w=2");
+        }
     }
+
+    private static ConfigOfBoard BuildConfig(BoardSizeJson grid)
+    {
+        int fieldSize = Math.Max(grid.X, Math.Max(grid.Y, grid.Z));
+
+        int w = 1;
+        bool? signWNegative = null;
+
+        if (grid.W.HasValue)
+        {
+            w = grid.W.Value;
+            signWNegative = w == 2 ? ParseBool($"{grid.SignWNegative}") : null;
+        }
+
+        var axes = w > 1
+            ? MultipleAxesFromTwo.Four
+            : (grid.Z > 1 ? MultipleAxesFromTwo.Three : MultipleAxesFromTwo.Two);
+
+        return new ConfigOfBoard
+        {
+            Axes = axes,
+            FieldSize = fieldSize,
+            W = w,
+            SignWNegative = signWNegative,
+            NumberOfSides = 2,
+            NumberOfPlayersOnSide = 1,
+        };
+    }
+
+    private static bool IsValidBoolOrNull(string? value) => value == null || IsValidBool(value);
 
     private static void ValidatePlacements(PlacementJson[] placements, PieceTemplateRegistry templates, List<string> errors)
     {
@@ -100,28 +134,6 @@ public static class BoardLayoutLoader
             if (p.Player.IndexOfPlayerOnSide < 0)
                 errors.Add($"{prefix}: IndexOfPlayerOnSide не может быть отрицательным");
         }
-    }
-
-    private static ConfigOfBoard BuildConfig(BoardSizeJson grid)
-    {
-        bool wUp = ParseBool  ($"{grid.WUp}");
-        bool wDown = ParseBool($"{grid.WDown}");
-
-        int fieldSize = Math.Max(grid.X, Math.Max(grid.Y, grid.Z));
-
-        var axes = (wUp || wDown) ? MultipleAxesFromTwo.Four
-                 : (grid.Z > 1) ? MultipleAxesFromTwo.Three
-                 : MultipleAxesFromTwo.Two;
-
-        return new ConfigOfBoard
-        {
-            Axes = axes,
-            FieldSize = fieldSize,
-            WUp = wUp,
-            WDown = wDown,
-            NumberOfSides = 2,
-            NumberOfPlayersOnSide = 1
-        };
     }
 
     private static IReadOnlyList<StartingPlacement> BuildPlacements(PlacementJson[] placements, PieceTemplateRegistry templates)
