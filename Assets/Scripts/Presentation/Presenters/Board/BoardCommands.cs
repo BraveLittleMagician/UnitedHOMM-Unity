@@ -22,6 +22,7 @@ public sealed class BoardCommands
 
         int realAxis = GridAxes.FromUIAxis(uiAxis);
         if (realAxis == _viewState.AxisIndex) return;
+
         _viewState.SetAxis(realAxis);
         int maxLayer = GridAxes.GetGridSize(realAxis, _loaderOfBoard.GridSize) - 1;
         int target = Mathf.Clamp(_viewState.GetDefaultLayerForCurrentAxis(), 0, maxLayer);

@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System;
 using UnityEngine;
 
@@ -18,8 +17,10 @@ public sealed class ViewState
     public float LayerGap { get; private set; }
     public int AxisIndex { get; private set; }
     public int ActiveLayerIndex { get; private set; }
+    public int ActiveWIndex { get; private set; }
     public int LayerRollDegrees { get; private set; }
     public bool IsReverseView { get; private set; }
+    public int WWOffset { get; private set; }
     public int UIAxisIndex => GridAxes.ToUIAxis(AxisIndex);
 
     private int[] CurrentRoll => IsReverseView ? _reverseRoll : _normalRoll;
@@ -33,15 +34,26 @@ public sealed class ViewState
         }
     }
 
-    public void Initialize(int axisIndex, int activeLayerIndex)
+    public void Initialize(int axisIndex, int activeLayerIndex, int activeWIndex, int wwOffset)
     {
+        if (axisIndex == GridAxes.W)
+            throw new ArgumentOutOfRangeException(nameof(axisIndex),
+                "AxisIndex must be X, Y, or Z. W is controlled via ActiveWIndex.");
+
         AxisIndex = axisIndex;
         ActiveLayerIndex = activeLayerIndex;
+        ActiveWIndex = activeWIndex;
+        WWOffset = wwOffset;
         LayerRollDegrees = CurrentRoll[AxisIndex];
     }
 
     public void SetAxis(int axisIndex)
     {
+        if (axisIndex == GridAxes.W)
+        {
+            Debug.LogWarning("[ViewState] SetAxis(W) ignored: W is not a slice axis. Use SetActiveWIndex.");
+            return;
+        }
         if (axisIndex == AxisIndex) return;
         AxisIndex = axisIndex;
         int newRoll = CurrentRoll[AxisIndex];
@@ -49,6 +61,13 @@ public sealed class ViewState
         LayerRollDegrees = newRoll;
         AxisChanged?.Invoke();
         if (rollChanged) LayerRollChanged?.Invoke();
+    }
+
+    public void SetActiveWIndex(int index)
+    {
+        if (ActiveWIndex == index) return;
+        ActiveWIndex = index;
+        ActiveWIndexChanged?.Invoke();
     }
 
     public void SetActiveLayer(int index)
@@ -104,6 +123,7 @@ public sealed class ViewState
 
     public event Action? AxisChanged;
     public event Action? ActiveLayerChanged;
+    public event Action? ActiveWIndexChanged;
     public event Action? ViewFlipped;
     public event Action? LayerGapChanged;
     public event Action? LayerRollChanged;

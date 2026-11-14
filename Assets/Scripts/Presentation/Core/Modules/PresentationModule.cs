@@ -47,15 +47,11 @@ public static class PresentationModule
         loaderOfBoard.Run();
 
         var viewState = new ViewState();
-        int initialAxis;
-        if (boardSize.W > 1) initialAxis = GridAxes.W;
-        else if (boardSize.Z == 1 && boardSize.Y > 1 && boardSize.X > 1) initialAxis = GridAxes.W;
-        else if (boardSize.Z > 1) initialAxis = GridAxes.Z;
-        else if (boardSize.Y > 1) initialAxis = GridAxes.Y;
-        else initialAxis = GridAxes.X;
+        int initialAxis = GridAxes.X;
+        int initialW = 0;
         int maxLayer = GridAxes.GetGridSize(initialAxis, boardSize) - 1;
         int initialLayer = Mathf.Clamp(ViewState.GetDefaultLayerFor(initialAxis, false), 0, maxLayer);
-        viewState.Initialize(initialAxis, initialLayer);
+        viewState.Initialize(initialAxis, initialLayer, initialW, wwOffset);
 
         var selectionState = new SelectionState();
         var hoverState = new HoverState();
