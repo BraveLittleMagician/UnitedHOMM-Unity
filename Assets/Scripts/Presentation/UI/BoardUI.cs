@@ -8,7 +8,7 @@ public sealed class BoardUI : GuiPanelBehaviour, IRunnable
     [SerializeField] private float _panelHeight = 460f;
     [SerializeField] private float _panelMargin = 10f;
 
-    private static readonly string[] _axisNames = { "X", "Y", "Z", "W" };
+    private static readonly string[] _axisNames = { "X", "Y", "Z" };
 
     private LoaderOfBoard _boardLoader = null!;
     private ViewState _viewState = null!;
@@ -26,8 +26,7 @@ public sealed class BoardUI : GuiPanelBehaviour, IRunnable
     private float _feedbackClearTime = -1f;
     private const float _feedbackDuration = 3f;
 
-    protected override Rect ComputePanelRect(int screenWidth, int screenHeight)
-        => new(_panelMargin, _panelMargin, _panelWidth, _panelHeight);
+    protected override Rect ComputePanelRect(int screenWidth, int screenHeight) => new(_panelMargin, _panelMargin, _panelWidth, _panelHeight);
 
     public void Initialize(
         LoaderOfBoard boardLoader,
@@ -152,8 +151,14 @@ public sealed class BoardUI : GuiPanelBehaviour, IRunnable
     {
         GUILayout.BeginHorizontal();
         GUILayout.Label("Ось:", GUILayout.Width(40));
-        int newAxis = GUILayout.Toolbar(_viewState.UIAxisIndex, _axisNames);
-        if (newAxis != _viewState.UIAxisIndex) _boardCommands.SetAxis(newAxis);
+
+        int currentUiAxis = _viewState.UIAxisIndex;
+        int toolbarIndex = currentUiAxis < _axisNames.Length ? currentUiAxis : -1;
+
+        int newAxis = GUILayout.Toolbar(toolbarIndex, _axisNames);
+        if (newAxis >= 0 && newAxis != currentUiAxis)
+            _boardCommands.SetAxis(newAxis);
+
         GUILayout.EndHorizontal();
     }
 

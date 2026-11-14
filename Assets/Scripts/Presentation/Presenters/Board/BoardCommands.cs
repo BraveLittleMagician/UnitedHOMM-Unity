@@ -1,4 +1,5 @@
 ﻿#nullable enable
+
 using System;
 using UnityEngine;
 
@@ -17,7 +18,8 @@ public sealed class BoardCommands
 
     public void SetAxis(int uiAxis)
     {
-        if (uiAxis < 0 || uiAxis >= GridAxes.Count) return;
+        if (uiAxis < 0 || uiAxis >= 3) return;
+
         int realAxis = GridAxes.FromUIAxis(uiAxis);
         if (realAxis == _viewState.AxisIndex) return;
         _viewState.SetAxis(realAxis);
