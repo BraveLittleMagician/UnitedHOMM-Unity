@@ -7,4 +7,5 @@ public enum InteractionTargetKind
     MoveTarget,
     AttackTarget,
     TargetMarker,
+    WLayer,
 }

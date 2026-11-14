@@ -120,7 +120,7 @@ public static class PresentationModule
             Logger = logger,
         });
 
-        var sceneClickDispatcher = new SceneClickDispatcher(selectionController, targetSelectionController, domain.CellActionHandler, selectionState);
+        var sceneClickDispatcher = new SceneClickDispatcher(selectionController, targetSelectionController, domain.CellActionHandler, selectionState, viewState);
 
         var scenePointerGo = new GameObject("ScenePointer");
         scenePointerGo.transform.SetParent(host.transform, false);

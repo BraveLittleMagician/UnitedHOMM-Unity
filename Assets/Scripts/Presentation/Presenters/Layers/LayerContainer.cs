@@ -25,6 +25,7 @@ public class LayerContainer : MonoBehaviour
 
     public Transform? TargetTwin { get; private set; }
     private Transform? _visual;
+    private BoxCollider? _wLayerCollider;
 
     public void Initialize(
         int axis,
@@ -38,8 +39,11 @@ public class LayerContainer : MonoBehaviour
         LayerIndex = layerIndex;
         GridSize = gridSize;
         Step = step;
+
         if (visualMaterial != null)
             CreateVisual(GridAxes.ThinnedWorldSize(axis, gridSize, step), visualMaterial);
+
+        CreateWLayerCollider(gridSize, step);
         MoveTo(baseLocalPosition);
     }
 
@@ -57,6 +61,51 @@ public class LayerContainer : MonoBehaviour
         _visual = visualGo.transform;
     }
 
+    private void CreateWLayerCollider(Square gridSize, float step)
+    {
+        // Полный X/Y/Z-куб, соответствующий W-слою.
+        Vector3 size = GridAxes.ThinnedWorldSize(GridAxes.W, gridSize, step);
+
+        var go = new GameObject("WLayerCollider");
+        go.transform.SetParent(transform, false);
+        go.transform.localPosition = Vector3.zero;
+        go.transform.localRotation = Quaternion.identity;
+        go.transform.localScale = Vector3.one;
+
+        var box = go.AddComponent<BoxCollider>();
+        box.size = size;
+        box.center = Vector3.zero;
+        box.isTrigger = false;
+
+        var bg = go.AddComponent<WLayerBackground>();
+        bg.Initialize(LayerIndex);
+
+        _wLayerCollider = box;
+    }
+
+    public void SetWLayerColliderEnabled(bool enabled)
+    {
+        if (_wLayerCollider != null) _wLayerCollider.enabled = enabled;
+    }
+
+    public void SetVisibilitySelf(int targetLayer)
+    {
+        // Только root контейнера и его visual/twin. Дети (фигуры/маркеры)
+        // не трогаются — их видимостью управляет LayerVisibilityPresenter.
+        gameObject.layer = targetLayer;
+        if (_visual != null)
+            _visual.gameObject.SetLayerRecursively(targetLayer);
+        if (TargetTwin != null)
+            TargetTwin.gameObject.layer = targetLayer;
+    }
+
+    public void SetVisibilityRecursively(int targetLayer)
+    {
+        gameObject.SetLayerRecursively(targetLayer);
+        if (TargetTwin != null)
+            TargetTwin.gameObject.SetLayerRecursively(targetLayer);
+    }
+
     public void ResetPieceCount() => PieceCount = 0;
 
     public void AttachTargetTwin(Transform twin)
@@ -71,6 +120,8 @@ public class LayerContainer : MonoBehaviour
         Vector3 size = GridAxes.ThinnedWorldSize(Axis, GridSize, step);
         if (_visual != null && _visual.TryGetComponent<MeshFilter>(out var mf))
             mf.sharedMesh = BoxMeshCache.Get(size);
+        if (_wLayerCollider != null)
+            _wLayerCollider.size = GridAxes.ThinnedWorldSize(GridAxes.W, GridSize, step);
     }
 
     public void UpdateGridSize(Square gridSize, float step)
@@ -80,6 +131,8 @@ public class LayerContainer : MonoBehaviour
         Vector3 size = GridAxes.ThinnedWorldSize(Axis, gridSize, step);
         if (_visual != null && _visual.TryGetComponent<MeshFilter>(out var mf))
             mf.sharedMesh = BoxMeshCache.Get(size);
+        if (_wLayerCollider != null)
+            _wLayerCollider.size = GridAxes.ThinnedWorldSize(GridAxes.W, gridSize, step);
     }
 
     public void AddPiece(GameObject piece)
@@ -93,18 +146,5 @@ public class LayerContainer : MonoBehaviour
         TargetLocalPosition = position;
         transform.localPosition = position;
         if (TargetTwin != null) TargetTwin.localPosition = position;
-    }
-
-    public void SetVisibilitySelf(int targetLayer)
-    {
-        gameObject.layer = targetLayer;
-        if (_visual != null) _visual.gameObject.SetLayerRecursively(targetLayer);
-        if (TargetTwin != null) TargetTwin.gameObject.layer = targetLayer;
-    }
-
-    public void SetVisibilityRecursively(int targetLayer)
-    {
-        gameObject.SetLayerRecursively(targetLayer);
-        if (TargetTwin != null) TargetTwin.gameObject.SetLayerRecursively(targetLayer);
     }
 }

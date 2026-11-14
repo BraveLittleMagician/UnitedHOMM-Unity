@@ -7,17 +7,20 @@ public sealed class SceneClickDispatcher
     private readonly TargetSelectionController _targetSelectionController;
     private readonly CellActionHandler _cellActionHandler;
     private readonly SelectionState _selectionState;
+    private readonly ViewState _viewState;
 
     public SceneClickDispatcher(
         SelectionController selectionController,
         TargetSelectionController targetSelectionController,
         CellActionHandler cellActionHandler,
-        SelectionState selectionState)
+        SelectionState selectionState,
+        ViewState viewState)
     {
         _selectionController = selectionController ?? throw new ArgumentNullException(nameof(selectionController));
         _targetSelectionController = targetSelectionController ?? throw new ArgumentNullException(nameof(targetSelectionController));
         _cellActionHandler = cellActionHandler ?? throw new ArgumentNullException(nameof(cellActionHandler));
         _selectionState = selectionState ?? throw new ArgumentNullException(nameof(selectionState));
+        _viewState = viewState ?? throw new ArgumentNullException(nameof(viewState));
     }
 
     public void Dispatch(SceneTargetInfo target)
@@ -55,6 +58,11 @@ public sealed class SceneClickDispatcher
             case InteractionTargetKind.Piece:
                 if (target.Piece != null)
                     _selectionController.HandlePieceClick(target.Piece);
+                break;
+
+            case InteractionTargetKind.WLayer:
+                if (target.WLayerIndex.HasValue)
+                    _viewState.SetActiveWIndex(target.WLayerIndex.Value);
                 break;
 
             case InteractionTargetKind.None:

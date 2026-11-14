@@ -40,9 +40,22 @@ public sealed class SceneTargetClassifier
         priority = int.MaxValue;
         info = SceneTargetInfo.None;
 
+        // 1. W-куб (кликабелен только из main-camera; в layer-view фон не нужен)
+        var wLayerBg = hitTransform.GetComponentInParent<WLayerBackground>();
+        if (wLayerBg != null)
+        {
+            if (isLayerView) return false;
+            priority = 4;
+            info = new SceneTargetInfo(
+                InteractionTargetKind.WLayer, null, null, null, null, wLayerBg.LayerIndex);
+            return true;
+        }
+
+        // 2. Маркеры и фигуры — только в активном W-кубе
         var targetMarker = hitTransform.GetComponentInParent<TargetTargetMarker>();
         if (targetMarker != null)
         {
+            if (!IsInActiveW(targetMarker.Cell)) return false;
             if (isLayerView && !IsOnActiveLayer(targetMarker.Cell)) return false;
             priority = 0;
             info = new SceneTargetInfo(InteractionTargetKind.TargetMarker, null, null, null, targetMarker);
@@ -52,6 +65,7 @@ public sealed class SceneTargetClassifier
         var attackMarker = hitTransform.GetComponentInParent<AttackMarker>();
         if (attackMarker != null)
         {
+            if (!IsInActiveW(attackMarker.Cell)) return false;
             if (isLayerView && !IsOnActiveLayer(attackMarker.Cell)) return false;
             priority = 1;
             info = new SceneTargetInfo(InteractionTargetKind.AttackTarget, null, null, attackMarker, null);
@@ -61,6 +75,7 @@ public sealed class SceneTargetClassifier
         var moveTarget = hitTransform.GetComponentInParent<MoveTargetMarker>();
         if (moveTarget != null)
         {
+            if (!IsInActiveW(moveTarget.Cell)) return false;
             if (isLayerView && !IsOnActiveLayer(moveTarget.Cell)) return false;
             priority = 2;
             info = new SceneTargetInfo(InteractionTargetKind.MoveTarget, null, moveTarget, null, null);
@@ -70,6 +85,7 @@ public sealed class SceneTargetClassifier
         var piece = hitTransform.GetComponentInParent<InfoOfPiece>();
         if (piece != null)
         {
+            if (!IsInActiveW(piece.PositionInGrid)) return false;
             if (isLayerView && !IsOnActiveLayer(piece.PositionInGrid)) return false;
             priority = 3;
             info = new SceneTargetInfo(InteractionTargetKind.Piece, piece, null, null, null);
@@ -89,6 +105,12 @@ public sealed class SceneTargetClassifier
     {
         int layerIndex = GridAxes.GetLayerIndex(_viewState.AxisIndex, cell, _wwOffset);
         return layerIndex == _viewState.ActiveLayerIndex;
+    }
+
+    private bool IsInActiveW(Square cell)
+    {
+        int wIndex = GridAxes.GetLayerIndex(GridAxes.W, cell, _wwOffset);
+        return wIndex == _viewState.ActiveWIndex;
     }
 
     private SceneTargetInfo FindBestTarget(Vector2 screenPosition, Camera camera, bool isLayerView)

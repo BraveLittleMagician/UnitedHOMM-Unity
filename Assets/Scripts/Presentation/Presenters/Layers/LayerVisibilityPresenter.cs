@@ -19,10 +19,12 @@ public sealed class LayerVisibilityPresenter
             if (!isActiveW)
             {
                 container.SetVisibilityRecursively(layersLayer);
+                container.SetWLayerColliderEnabled(true);
                 continue;
             }
 
             container.SetVisibilitySelf(layersLayer);
+            container.SetWLayerColliderEnabled(false);
 
             foreach (Transform child in container.transform)
             {
