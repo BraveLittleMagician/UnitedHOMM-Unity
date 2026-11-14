@@ -2,7 +2,7 @@
 
 using System;
 
-public static partial class FacingRotation
+public static class FacingRotation
 {
     public static Square Rotate(Square local, FacingDirection facing) => facing switch
     {
