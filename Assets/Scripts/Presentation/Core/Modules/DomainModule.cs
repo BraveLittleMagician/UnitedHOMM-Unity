@@ -17,7 +17,8 @@ public static class DomainModule
         if (pieceLibraryJson == null) throw new ArgumentNullException(nameof(pieceLibraryJson));
 
         // --- Data ---
-        var piecePrefabs = PieceLibraryLoader.Load(pieceLibraryJson.text);
+        var piecePrefabMap = PieceLibraryLoader.Load(pieceLibraryJson.text);
+        var piecePrefabs = new PiecePrefabRegistry(piecePrefabMap);
         var deckSequences = new DeckSequenceProvider(eventBus);
         var templates = StandardPieceTemplates.CreateAll(deckSequences, eventBus);
         var pieceTemplateRegistry = new PieceTemplateRegistry(templates);

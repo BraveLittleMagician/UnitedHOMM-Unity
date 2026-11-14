@@ -1,0 +1,9 @@
+{
+    "name": "Logic",
+    "references": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "noEngineReferences": true
+}

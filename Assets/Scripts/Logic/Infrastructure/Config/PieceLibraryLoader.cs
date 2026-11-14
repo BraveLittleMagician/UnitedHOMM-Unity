@@ -5,14 +5,12 @@ using System.Collections.Generic;
 
 public static class PieceLibraryLoader
 {
-    public static PiecePrefabRegistry Load(string json)
+    public static Dictionary<string, string> Load(string json)
     {
         var dto = LoaderOfDataFromJSON.LoadFromJson<PieceLibraryJson>(json);
-
         var map = BuildMap(dto);
         ValidateMap(map);
-
-        return new PiecePrefabRegistry(map);
+        return map;
     }
 
     private static Dictionary<string, string> BuildMap(PieceLibraryJson dto)
