@@ -37,6 +37,8 @@ public sealed class MoveAnimator : MonoBehaviour
             var positions = path.Positions;
 
             AttachToPiece(piece, positions[0]);
+            int w0 = GridAxes.GetLayerIndex(GridAxes.W, positions[0], _boardLoader.WWOffset);
+            _viewState.SetActiveWIndex(w0);
             _viewState.SetActiveLayer(GridAxes.GetLayerIndex(_viewState.AxisIndex, positions[0], _boardLoader.WWOffset));
             yield return null;
 
@@ -46,6 +48,8 @@ public sealed class MoveAnimator : MonoBehaviour
             {
                 var cell = positions[i];
                 AttachToPiece(piece, cell);
+                int w = GridAxes.GetLayerIndex(GridAxes.W, cell, _boardLoader.WWOffset);
+                _viewState.SetActiveWIndex(w);
                 _viewState.SetActiveLayer(GridAxes.GetLayerIndex(_viewState.AxisIndex, cell, _boardLoader.WWOffset));
                 yield return wait;
             }
@@ -58,17 +62,11 @@ public sealed class MoveAnimator : MonoBehaviour
 
     private void AttachToPiece(InfoOfPiece piece, Square cell)
     {
-        int axis = _viewState.AxisIndex;
-        int layerIndex = GridAxes.GetLayerIndex(axis, cell, _boardLoader.WWOffset);
-
+        int wIndex = GridAxes.GetLayerIndex(GridAxes.W, cell, _boardLoader.WWOffset);
         LayerContainer? container = null;
         foreach (var c in _layerPresenter.Containers)
         {
-            if (c.LayerIndex == layerIndex)
-            {
-                container = c;
-                break;
-            }
+            if (c.LayerIndex == wIndex) { container = c; break; }
         }
         if (container == null) return;
 
@@ -81,13 +79,6 @@ public sealed class MoveAnimator : MonoBehaviour
             _boardLoader.WSpread,
             _boardLoader.WWOffset);
         Vector3 local = worldLocal - container.TargetLocalPosition;
-
-        if (axis != GridAxes.W)
-        {
-            int worldComp = GridAxes.GetWorldComponent(axis);
-            if (worldComp >= 0 && worldComp < 3) local[worldComp] = 0f;
-        }
-
         piece.transform.localPosition = local;
     }
 }

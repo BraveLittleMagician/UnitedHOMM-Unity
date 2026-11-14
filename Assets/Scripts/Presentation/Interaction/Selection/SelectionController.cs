@@ -69,6 +69,8 @@ public sealed class SelectionController : EventSubscriberBehaviour, IRunnable
 
         if (ReferenceEquals(_selectionState.SelectedInfo, info)) return;
 
+        int wIndex = GridAxes.GetLayerIndex(GridAxes.W, info.PositionInGrid, _boardLoader.WWOffset);
+        _viewState.SetActiveWIndex(wIndex);
         int layerIndex = GridAxes.GetLayerIndex(_viewState.AxisIndex, info.PositionInGrid, _boardLoader.WWOffset);
         _viewState.SetActiveLayer(layerIndex);
 

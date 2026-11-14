@@ -95,7 +95,14 @@ public class LayerContainer : MonoBehaviour
         if (TargetTwin != null) TargetTwin.localPosition = position;
     }
 
-    public void SetVisibility(int targetLayer)
+    public void SetVisibilitySelf(int targetLayer)
+    {
+        gameObject.layer = targetLayer;
+        if (_visual != null) _visual.gameObject.SetLayerRecursively(targetLayer);
+        if (TargetTwin != null) TargetTwin.gameObject.layer = targetLayer;
+    }
+
+    public void SetVisibilityRecursively(int targetLayer)
     {
         gameObject.SetLayerRecursively(targetLayer);
         if (TargetTwin != null) TargetTwin.gameObject.SetLayerRecursively(targetLayer);

@@ -28,11 +28,8 @@ public sealed class SelectionMarkerCoordinator : IMarkerCoordinator
         _modalManager = context.PendingModalManager;
         _matchState = context.MatchState;
 
-        _movePresenter = new MoveTargetPresenter(
-            _viewState, _layerPresenter, _boardLoader, context.MarkerMaterial, markerSizeFraction: 0.25f);
-        _attackPresenter = new AttackTargetPresenter(
-            _viewState, _layerPresenter, _boardLoader, context.MarkerMaterial,
-            context.CellActionProviders, markerSizeFraction: 0.75f);
+        _movePresenter = new MoveTargetPresenter(_layerPresenter, _boardLoader, context.MarkerMaterial, markerSizeFraction: 0.25f);
+        _attackPresenter = new AttackTargetPresenter(_layerPresenter, _boardLoader, context.MarkerMaterial, context.CellActionProviders, markerSizeFraction: 0.75f);
 
         _markers = new MarkerOrchestrator(_movePresenter, _attackPresenter);
     }

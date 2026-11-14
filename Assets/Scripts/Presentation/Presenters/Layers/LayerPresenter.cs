@@ -53,12 +53,14 @@ public sealed class LayerPresenter : EventSubscriberBehaviour, IRunnable
         _activeLayerLayer = LayerMask.NameToLayer(_activeLayerName);
         if (_activeLayerLayer < 0) throw new InvalidOperationException($"Слой '{_activeLayerName}' не найден.");
 
+        _viewState.ActiveWIndexChanged += OnViewChanged;
+        AddSubscription(() => _viewState.ActiveWIndexChanged -= OnViewChanged);
         _viewState.ActiveLayerChanged += OnViewChanged;
         AddSubscription(() => _viewState.ActiveLayerChanged -= OnViewChanged);
+        _viewState.AxisChanged += OnViewChanged;
+        AddSubscription(() => _viewState.AxisChanged -= OnViewChanged);
         _viewState.ViewFlipped += OnViewChanged;
         AddSubscription(() => _viewState.ViewFlipped -= OnViewChanged);
-        _viewState.AxisChanged += OnAxisChanged;
-        AddSubscription(() => _viewState.AxisChanged -= OnAxisChanged);
         _viewState.LayerGapChanged += OnLayerGapChanged;
         AddSubscription(() => _viewState.LayerGapChanged -= OnLayerGapChanged);
         _viewState.LayerRollChanged += OnLayerRollChanged;
@@ -71,44 +73,52 @@ public sealed class LayerPresenter : EventSubscriberBehaviour, IRunnable
         _eventBus.Subscribe<PieceRevivedEvent>(OnPieceRevived);
         AddSubscription(() => _eventBus.Unsubscribe<PieceRevivedEvent>(OnPieceRevived));
 
-        Rebuild(_viewState.AxisIndex);
+        Rebuild();
         _initialized = true;
     }
 
     private void OnViewChanged()
     {
-        _visibility.Apply(_viewState.ActiveLayerIndex, _viewState.ViewDirection, _layersLayer, _activeLayerLayer);
+        RefreshVisibility();
         RecalculateTargets();
     }
 
-    private void OnAxisChanged() => Rebuild(_viewState.AxisIndex);
-
     private void OnLayerGapChanged() => ReflowLayers();
-
     private void OnLayerRollChanged() => LayoutChanged?.Invoke();
 
     private void OnPieceDeployed(PieceDeployedEvent<Square> e)
     {
         if (!_viewRegistry.TryGetByIndex(e.Piece.IndexInHouse, out var view) || view == null) return;
-        _distributor.DistributeView(view, _viewState.AxisIndex);
-        _visibility.Apply(_viewState.ActiveLayerIndex, _viewState.ViewDirection, _layersLayer, _activeLayerLayer);
+        _distributor.DistributeView(view, GridAxes.W);
+        RefreshVisibility();
         RecalculateTargets();
     }
 
     private void OnPieceMoved(PieceMovedEvent<Square> e)
     {
         if (!_viewRegistry.TryGetByIndex(e.Piece.IndexInHouse, out var view) || view == null) return;
-        _distributor.DistributeView(view, _viewState.AxisIndex);
-        _visibility.Apply(_viewState.ActiveLayerIndex, _viewState.ViewDirection, _layersLayer, _activeLayerLayer);
+        _distributor.DistributeView(view, GridAxes.W);
+        RefreshVisibility();
         RecalculateTargets();
     }
 
     private void OnPieceRevived(PieceRevivedEvent e)
     {
         if (!_viewRegistry.TryGetByIndex(e.Piece.IndexInHouse, out var view) || view == null) return;
-        if (view.IsDead) return;  // view ещё не обновился?  SetDead(false) происходит раньше через LoaderOfBoard.OnPieceRevived
-        _distributor.DistributeView(view, _viewState.AxisIndex);
+        if (view.IsDead) return;
+        _distributor.DistributeView(view, GridAxes.W);
         RecalculateTargets();
+    }
+
+    private void RefreshVisibility()
+    {
+        _visibility.Apply(
+            _viewState.ActiveWIndex,
+            _viewState.AxisIndex,
+            _viewState.ActiveLayerIndex,
+            _boardLoader.WWOffset,
+            _layersLayer,
+            _activeLayerLayer);
     }
 
     private void RecalculateTargets()
@@ -122,15 +132,15 @@ public sealed class LayerPresenter : EventSubscriberBehaviour, IRunnable
         LayoutChanged?.Invoke();
     }
 
-    public void Rebuild(int axis)
+    public void Rebuild()
     {
         DestroyView();
 
         var ctx = new BoardViewFactoryContext
         {
             Parent = transform,
-            Axis = axis,
-            AxisName = GridAxes.GetAxisName(axis),
+            Axis = GridAxes.W,
+            AxisName = GridAxes.GetAxisName(GridAxes.W),
             GridSize = _boardLoader.GridSize,
             Step = _boardLoader.Step,
             LayerGap = _viewState.LayerGap,
@@ -144,12 +154,12 @@ public sealed class LayerPresenter : EventSubscriberBehaviour, IRunnable
         _visibility = new LayerVisibilityPresenter(containers);
         _distributor = new PieceDistributor(containers, _viewRegistry, _boardLoader);
 
-        _distributor.DistributeAll(axis);
-        _visibility.Apply(_viewState.ActiveLayerIndex, _viewState.ViewDirection, _layersLayer, _activeLayerLayer);
+        _distributor.DistributeAll(GridAxes.W);
+        RefreshVisibility();
         RecalculateTargets();
 
         Rebuilt?.Invoke();
-        _logger.LogDebug($"LayerPresenter rebuilt for axis {GridAxes.GetAxisName(axis)} ({containers.Count} layers)");
+        _logger.LogDebug($"LayerPresenter rebuilt with {containers.Count} W-containers");
     }
 
     public void RedistributePieces()
@@ -157,7 +167,7 @@ public sealed class LayerPresenter : EventSubscriberBehaviour, IRunnable
         if (_view.Containers.Count == 0 || _view.PiecesSource == null) return;
         int axis = _view.Containers[0].Axis;
         _distributor.ReattachAll(_view.PiecesSource.transform, axis);
-        _visibility.Apply(_viewState.ActiveLayerIndex, _viewState.ViewDirection, _layersLayer, _activeLayerLayer);
+        RefreshVisibility();
         RecalculateTargets();
         PiecesRepositioned?.Invoke();
     }
@@ -170,7 +180,7 @@ public sealed class LayerPresenter : EventSubscriberBehaviour, IRunnable
         _positioner.UpdateSizes(gridSize, step);
         _positioner.ApplyPositions(gridSize, step, layerGap);
         _distributor.RepositionInContainers();
-        _visibility.Apply(_viewState.ActiveLayerIndex, _viewState.ViewDirection, _layersLayer, _activeLayerLayer);
+        RefreshVisibility();
         PiecesRepositioned?.Invoke();
         LayoutChanged?.Invoke();
     }

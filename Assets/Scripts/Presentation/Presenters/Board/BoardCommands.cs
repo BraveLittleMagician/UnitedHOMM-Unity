@@ -61,7 +61,7 @@ public sealed class BoardCommands
         int maxLayer = GridAxes.GetGridSize(_viewState.AxisIndex, newSize) - 1;
         if (_viewState.ActiveLayerIndex > maxLayer)
             _viewState.SetActiveLayer(maxLayer);
-        _layerPresenter.Rebuild(_viewState.AxisIndex);
+        _layerPresenter.Rebuild();
     }
 
     public void SetReverseView(bool value)

@@ -38,9 +38,7 @@ public sealed class TargetSelectionController : EventSubscriberBehaviour, IRunna
         _modalManager = context.PendingModalManager;
         _logger = context.Logger;
 
-        _presenter = new TargetTargetPresenter(
-            context.ViewState, context.LayerPresenter, context.BoardLoader,
-            context.MarkerMaterial, _markerSizeFraction);
+        _presenter = new TargetTargetPresenter(context.LayerPresenter, context.BoardLoader, context.MarkerMaterial, _markerSizeFraction);
     }
 
     public void Run()

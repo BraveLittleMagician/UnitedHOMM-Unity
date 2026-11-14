@@ -39,7 +39,6 @@ public sealed class LayerCameraWork : MonoBehaviour, IRunnable, IDisposable
         int decorLayer = LayerMask.NameToLayer(_decorLayerName);
         if (decorLayer < 0)
         {
-            // Декоративный слой не обязателен (ghost убран) — если нет, просто игнорируем.
             _layerCamera.cullingMask = 1 << activeLayerLayer;
         }
         else
@@ -51,6 +50,7 @@ public sealed class LayerCameraWork : MonoBehaviour, IRunnable, IDisposable
         _viewState.LayerRollChanged += UpdateCamera;
         _viewState.AxisChanged += UpdateCamera;
         _viewState.ActiveLayerChanged += UpdateCamera;
+        _viewState.ActiveWIndexChanged += UpdateCamera;
         _layerPresenter.Rebuilt += UpdateCamera;
         UpdateCamera();
     }
@@ -62,13 +62,18 @@ public sealed class LayerCameraWork : MonoBehaviour, IRunnable, IDisposable
 
         Square gridSize = _boardLoader.GridSize;
         float step = _boardLoader.Step;
-
         int axis = _viewState.AxisIndex;
-        Vector3 activeSize = GridAxes.ThinnedWorldSize(axis, gridSize, step);
-        Vector3 activeCenter = active.TargetWorldPosition;
-        Bounds bbox = new(activeCenter, activeSize);
+        int activeLayer = _viewState.ActiveLayerIndex;
 
+        Vector3 cubeCenter = active.TargetWorldPosition;
         Vector3 axisDir = GridAxes.ToWorldDirection(axis);
+        int sizeAlongAxis = GridAxes.GetGridSize(axis, gridSize);
+        float sliceOffset = (activeLayer - (sizeAlongAxis - 1) * 0.5f) * step;
+        Vector3 sliceCenter = cubeCenter + axisDir * sliceOffset;
+
+        Vector3 sliceSize = GridAxes.ThinnedWorldSize(axis, gridSize, step);
+        Bounds bbox = new(sliceCenter, sliceSize);
+
         int viewDir = _viewState.ViewDirection;
         Vector3 cameraDir = axisDir * viewDir;
         Vector3 up = LayerLayout.ComputeLayerCameraUp(axis, viewDir, _viewState.LayerRollDegrees);
@@ -82,7 +87,7 @@ public sealed class LayerCameraWork : MonoBehaviour, IRunnable, IDisposable
                 for (int sz = -1; sz <= 1; sz += 2)
                 {
                     Vector3 corner = bboxCenter + new Vector3(sx * bboxExtents.x, sy * bboxExtents.y, sz * bboxExtents.z);
-                    Vector3 d = corner - activeCenter;
+                    Vector3 d = corner - sliceCenter;
                     halfW = Mathf.Max(halfW, Mathf.Abs(Vector3.Dot(right, d)));
                     halfH = Mathf.Max(halfH, Mathf.Abs(Vector3.Dot(up, d)));
                 }
@@ -94,15 +99,15 @@ public sealed class LayerCameraWork : MonoBehaviour, IRunnable, IDisposable
         float distance = Mathf.Max(dV, dH) * _padding;
 
         _layerCamera.transform.SetPositionAndRotation(
-            activeCenter - cameraDir * distance,
+            sliceCenter - cameraDir * distance,
             Quaternion.LookRotation(cameraDir, up));
     }
 
     private LayerContainer? FindActiveContainer()
     {
-        int activeIndex = _viewState.ActiveLayerIndex;
+        int activeW = _viewState.ActiveWIndex;
         foreach (var c in _layerPresenter.Containers)
-            if (c.LayerIndex == activeIndex) return c;
+            if (c.LayerIndex == activeW) return c;
         return null;
     }
 
@@ -120,6 +125,7 @@ public sealed class LayerCameraWork : MonoBehaviour, IRunnable, IDisposable
             _viewState.LayerRollChanged -= UpdateCamera;
             _viewState.AxisChanged -= UpdateCamera;
             _viewState.ActiveLayerChanged -= UpdateCamera;
+            _viewState.ActiveWIndexChanged -= UpdateCamera;
         }
     }
 
