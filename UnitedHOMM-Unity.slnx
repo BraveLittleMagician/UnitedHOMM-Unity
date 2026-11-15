@@ -1,4 +1,6 @@
 ﻿<Solution>
   <Project Path="Presentation.csproj" />
   <Project Path="Logic.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
 </Solution>

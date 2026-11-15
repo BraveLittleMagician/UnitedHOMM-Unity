@@ -61,6 +61,8 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
         if (fromPosition is not Square fromSquare) return false;
         if (target is not Square targetSquare) return false;
         if (targetSquare.Equals(fromSquare)) return false;
+        if (room is not ISquarePositionRoom sqRoom) return false;
+        if (!sqRoom.IsInside(targetSquare)) return false;
         if (room.TryToGetPiece<Square>(targetSquare, out _)) return false;
 
         var enumerator = CreateWorldEnumerator(piece, fromSquare);
@@ -80,6 +82,7 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
             {
                 if (!visited.Add(neighbor)) continue;
                 if (!positions.ContainsKey(neighbor)) continue;
+                if (!sqRoom.IsInside(neighbor)) continue;
                 if (room.TryToGetPiece<Square>(neighbor, out _)) continue;
                 parent[neighbor] = current;
                 if (neighbor.Equals(targetSquare)) { found = true; break; }
@@ -142,15 +145,16 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
     public IReadOnlyList<ShapeCell> GetShape<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room, bool includeOccupied) where TPos : struct
     {
         if (fromPosition is not Square fromSquare) return Array.Empty<ShapeCell>();
+        if (room is not ISquarePositionRoom sqRoom) return Array.Empty<ShapeCell>();
 
         var enumerator = CreateWorldEnumerator(piece, fromSquare);
         var positions = enumerator.PositionsAll;
         var attackables = enumerator.PositionsAttackable;
         var result = new List<ShapeCell>();
-
         foreach (var (cell, stayable) in positions)
         {
             if (cell.Equals(fromSquare)) continue;
+            if (!sqRoom.IsInside(cell)) continue;
             if (!includeOccupied && room.TryToGetPiece<Square>(cell, out _)) continue;
             var attackable = attackables.TryGetValue(cell, out var a) ? a : Attackable.NotAttack;
             result.Add(new ShapeCell(cell, stayable, attackable));
@@ -160,14 +164,15 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
     public IReadOnlyList<TPos> GetValidMoves<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room) where TPos : struct
     {
         if (fromPosition is not Square fromSquare) return Array.Empty<TPos>();
+        if (room is not ISquarePositionRoom sqRoom) return Array.Empty<TPos>();
 
         var enumerator = CreateWorldEnumerator(piece, fromSquare);
         var positions = enumerator.PositionsAll;
         var result = new List<TPos>();
-
         foreach (var (cell, stayable) in positions)
         {
             if (cell.Equals(fromSquare)) continue;
+            if (!sqRoom.IsInside(cell)) continue;
             if (stayable != Stayable.Stay) continue;
             if (room.TryToGetPiece<Square>(cell, out _)) continue;
             result.Add((TPos)(object)cell);
