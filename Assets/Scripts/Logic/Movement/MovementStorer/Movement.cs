@@ -22,6 +22,11 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
         _owner = owner ?? throw new System.ArgumentNullException(nameof(owner));
     }
 
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+    }
     private ISequenceEnumerator<Square> CreateWorldEnumerator(IPiece piece, Square fromWorld)
     {
         var transforms = _modifierHost.GetShapeTransforms<TSequence, Square>(piece.IndexInHouse);
@@ -50,11 +55,6 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
         return new FacingEnumerator(combined, piece.Facing, fromWorld);
     }
 
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-    }
     public bool TryFindPath<TPos>(IPiece piece, TPos fromPosition, TPos target, IReadOnlyRoom room, out IPath<TPos>? path) where TPos : struct
     {
         path = null;
@@ -189,7 +189,6 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
 
         return result;
     }
-
     public IReadOnlyList<TPos> GetValidMoves<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room) where TPos : struct
     {
         if (fromPosition is not Square) return Array.Empty<TPos>();
