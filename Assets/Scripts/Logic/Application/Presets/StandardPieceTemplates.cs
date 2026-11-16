@@ -11,7 +11,9 @@ public static class StandardPieceTemplates
 
         var kingMovement = new IMovementFactory[]
         {
-            new MovementFactory<RelativeArea<Square>>(new RelativeArea<Square>(MultipleAxes.Two, isCircle: false))
+            new MovementFactory<RelativeArea<Square>>(
+                new RelativeArea<Square>(MultipleAxes.Two, isCircle: false),
+                new RelativeArea<Square>(MultipleAxes.Two, isCircle: false))
         };
 
         var pawnMovement = new IMovementFactory[]

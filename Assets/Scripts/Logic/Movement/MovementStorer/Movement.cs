@@ -150,32 +150,56 @@ public sealed class Movement<TSequence> : IMovement where TSequence : notnull, I
         var enumerator = CreateWorldEnumerator(piece, fromSquare);
         var positions = enumerator.PositionsAll;
         var attackables = enumerator.PositionsAttackable;
+        int maxDepth = enumerator.MaxDepth;
+
         var result = new List<ShapeCell>();
-        foreach (var (cell, stayable) in positions)
+        var visited = new HashSet<Square> { fromSquare };
+        var queue = new Queue<(Square cell, int depth)>();
+        queue.Enqueue((fromSquare, 0));
+
+        while (queue.Count > 0)
         {
-            if (cell.Equals(fromSquare)) continue;
-            if (!sqRoom.IsInside(cell)) continue;
-            if (!includeOccupied && room.TryToGetPiece<Square>(cell, out _)) continue;
-            var attackable = attackables.TryGetValue(cell, out var a) ? a : Attackable.NotAttack;
-            result.Add(new ShapeCell(cell, stayable, attackable));
+            var (current, depth) = queue.Dequeue();
+            if (depth >= maxDepth) continue;
+
+            foreach (var neighbor in enumerator.GetNeighbors(current))
+            {
+                if (!visited.Add(neighbor)) continue;
+                if (!positions.ContainsKey(neighbor)) continue;
+                if (!sqRoom.IsInside(neighbor)) continue;
+
+                bool occupied = room.TryToGetPiece<Square>(neighbor, out var targetPiece);
+                var attackable = attackables.TryGetValue(neighbor, out var a) ? a : Attackable.NotAttack;
+
+                if (!occupied)
+                {
+                    result.Add(new ShapeCell(neighbor, positions[neighbor], attackable));
+                    if (depth + 1 < maxDepth)
+                        queue.Enqueue((neighbor, depth + 1));
+                }
+                else if (includeOccupied
+                         && attackable == Attackable.Attack
+                         && targetPiece != null
+                         && !targetPiece.Owner.Equals(piece.Owner))
+                {
+                    result.Add(new ShapeCell(neighbor, Stayable.NotStay, Attackable.Attack));
+                }
+            }
         }
+
         return result;
     }
+
     public IReadOnlyList<TPos> GetValidMoves<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room) where TPos : struct
     {
-        if (fromPosition is not Square fromSquare) return Array.Empty<TPos>();
-        if (room is not ISquarePositionRoom sqRoom) return Array.Empty<TPos>();
+        if (fromPosition is not Square) return Array.Empty<TPos>();
 
-        var enumerator = CreateWorldEnumerator(piece, fromSquare);
-        var positions = enumerator.PositionsAll;
-        var result = new List<TPos>();
-        foreach (var (cell, stayable) in positions)
+        var shape = GetShape(piece, fromPosition, room, includeOccupied: false);
+        var result = new List<TPos>(shape.Count);
+        for (int i = 0; i < shape.Count; i++)
         {
-            if (cell.Equals(fromSquare)) continue;
-            if (!sqRoom.IsInside(cell)) continue;
-            if (stayable != Stayable.Stay) continue;
-            if (room.TryToGetPiece<Square>(cell, out _)) continue;
-            result.Add((TPos)(object)cell);
+            if (shape[i].Stayable != Stayable.Stay) continue;
+            result.Add((TPos)(object)shape[i].Cell);
         }
         return result;
     }

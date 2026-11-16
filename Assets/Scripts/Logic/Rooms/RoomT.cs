@@ -26,6 +26,12 @@ public abstract class RoomT<TPosition> : Room, IRoomT<TPosition> where TPosition
     private void OnPieceDied(PieceDiedEvent e)
     {
         Logger.Log($"Фигура {e.Piece} удалена из {Name} после смерти");
+
+        if (_indexToPosition.TryGetValue(e.Piece.IndexInHouse, out var pos))
+        {
+            _pieces.Remove(pos);
+            _indexToPosition.Remove(e.Piece.IndexInHouse);
+        }
     }
     protected abstract bool ValidateAdd(IPiece piece, TPosition position, out string error);
     protected abstract bool ValidateDisplace(IPath<TPosition> path, IPiece piece, out string error);

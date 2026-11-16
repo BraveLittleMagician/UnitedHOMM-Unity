@@ -59,4 +59,8 @@ internal sealed class WorldState
         }
         return new WorldState(dict);
     }
+    internal void Restore(IRegistry registry, ModifierHost modifierHost, IEventBus eventBus, ILogger logger)
+    {
+        new WorldDelta(this, this, registry, modifierHost, eventBus, logger).Undo();
+    }
 }

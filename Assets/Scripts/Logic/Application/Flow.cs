@@ -46,6 +46,108 @@ public sealed class Flow : IFlow, IDisposable
             return Result<TRoom>.Failure($"Комната {typeof(TRoom).Name} не найдена");
         return Result<TRoom>.Success(room);
     }
+    private bool TryFindApproachPath(IPiece attacker, Square fromPos, Square target, IPiece targetPiece, IReadOnlyRoom room, out IPath<Square>? path, out string error)
+    {
+        path = null;
+        error = "";
+
+        if (room is not ISquarePositionRoom sqRoom)
+        {
+            error = "Room is not square-positioned";
+            return false;
+        }
+
+        var parents = new Dictionary<Square, Square?>();
+        var queue = new Queue<Square>();
+        parents[fromPos] = null;
+        queue.Enqueue(fromPos);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var movement in attacker.Movements)
+            {
+                if (!movement.IsApplicableToRoom(room)) continue;
+                var enumerator = movement.CreateEnumeratorFor(attacker, current);
+                if (enumerator == null) continue;
+                foreach (var neighbor in enumerator.GetNeighbors(current))
+                {
+                    if (parents.ContainsKey(neighbor)) continue;
+                    if (!enumerator.PositionsAll.ContainsKey(neighbor)) continue;
+                    if (!sqRoom.IsInside(neighbor)) continue;
+                    if (room.TryToGetPiece<Square>(neighbor, out _)) continue;
+                    parents[neighbor] = current;
+                    queue.Enqueue(neighbor);
+                }
+            }
+        }
+
+        var attackCells = new List<Square>();
+        if (CellAttacksTarget(attacker, fromPos, target, room))
+            attackCells.Add(fromPos);
+
+        foreach (var cell in parents.Keys)
+        {
+            if (cell.Equals(fromPos)) continue;
+            if (CellAttacksTarget(attacker, cell, target, room))
+                attackCells.Add(cell);
+        }
+
+        if (attackCells.Count == 0)
+        {
+            error = $"Cannot approach {targetPiece} for attack";
+            return false;
+        }
+
+        Square? adjacent = null;
+        foreach (var cell in attackCells)
+        {
+            if (!cell.Equals(fromPos) && cell.IsAdjacent(target))
+            {
+                adjacent = cell;
+                break;
+            }
+        }
+
+        Square best;
+        if (adjacent.HasValue) best = adjacent.Value;
+        else if (attackCells.Contains(fromPos)) best = fromPos;
+        else best = attackCells[0];
+
+        if (best.Equals(fromPos))
+        {
+            path = null;
+            return true;
+        }
+
+        var pathList = new List<Square>();
+        Square? node = best;
+        while (node.HasValue && !node.Value.Equals(fromPos))
+        {
+            pathList.Add(node.Value);
+            node = parents[node.Value];
+        }
+        pathList.Add(fromPos);
+        pathList.Reverse();
+
+        path = new PathSequence<Square>(pathList.ToArray());
+        return true;
+    }
+
+    private static bool CellAttacksTarget(IPiece attacker, Square fromCell, Square target, IReadOnlyRoom room)
+    {
+        foreach (var movement in attacker.Movements)
+        {
+            if (!movement.IsApplicableToRoom(room)) continue;
+            var shape = movement.GetShape<Square>(attacker, fromCell, room, includeOccupied: true);
+            for (int i = 0; i < shape.Count; i++)
+            {
+                if (shape[i].Cell.Equals(target) && shape[i].Attackable == Attackable.Attack)
+                    return true;
+            }
+        }
+        return false;
+    }
 
     public IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position) where TRoom : IRoom where TPos : struct
     {
@@ -118,17 +220,38 @@ public sealed class Flow : IFlow, IDisposable
         if (!room.TryToGetPiece(target, out var targetPiece) || targetPiece == null)
             return Result.Failure($"No piece at {target}");
 
+        if (!room.TryToGetPosition<Square>(attacker.IndexInHouse, out var fromPos))
+            return Result.Failure($"Attacker {attacker} is not on the board");
+
         var before = WorldState.Capture(_registry, _modifierHost);
 
-        var result = _combatService.PerformAttack(attacker, targetPiece, room, AttackKind.Melee);
-        if (!result.IsSuccess) return result;
+        if (!TryFindApproachPath(attacker, fromPos, target, targetPiece, room, out var approachPath, out var approachError))
+            return Result.Failure(approachError);
 
-        // Jump на клетку убитой цели (как в P2 AttackAction)
+        if (approachPath != null)
+        {
+            if (!room.Displace(approachPath, attacker.Owner, out var moveError))
+            {
+                before.Restore(_registry, _modifierHost, _eventBus, _logger);
+                return Result.Failure($"Approach failed: {moveError}");
+            }
+            var approachTarget = approachPath.Positions[^1];
+            _eventBus.Publish(new PieceMovedEvent<Square>(attacker, fromPos, approachTarget, room));
+            _logger.Log($"Approach: {attacker} {fromPos} -> {approachTarget}");
+        }
+
+        var result = _combatService.PerformAttack(attacker, targetPiece, room, AttackKind.Melee);
+        if (!result.IsSuccess)
+        {
+            before.Restore(_registry, _modifierHost, _eventBus, _logger);
+            return result;
+        }
+
         if (targetPiece.IsDead && !room.TryToGetPiece(target, out _))
         {
-            if (room.TryToGetPosition<Square>(attacker.IndexInHouse, out var fromPos))
+            if (room.TryToGetPosition<Square>(attacker.IndexInHouse, out var currentPos))
             {
-                if (room.Remove(fromPos, attacker.Owner))
+                if (room.Remove(currentPos, attacker.Owner))
                 {
                     if (!room.Add(attacker, target, true, out var jumpErr))
                         _logger.LogError($"Jump failed: {jumpErr}");
