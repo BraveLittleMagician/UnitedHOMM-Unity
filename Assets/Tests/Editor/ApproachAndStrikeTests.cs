@@ -25,11 +25,10 @@ public class ApproachAndStrikeTests
         house.AddRoom(board);
         host.Registry = registry;
 
-        var mv = new MovementValidator(logger);
         var ab = new AbilityService(bus, logger);
         var atp = new AttackTargetProvider(host);
         var cs = new CombatService(logger, bus, atp, host);
-        var flow = new Flow(house, registry, bus, logger, mv, ab, cs, host);
+        var flow = new Flow(house, registry, bus, logger, ab, cs, host);
 
         return new Fixture { House = house, Board = board, Registry = registry, Flow = flow };
     }

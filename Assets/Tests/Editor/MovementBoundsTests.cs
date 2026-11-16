@@ -38,7 +38,7 @@ public class MovementBoundsTests
             new MovementFactory<PathSetPattern>(new PathSetPattern(RookRules.Create(), 8)),
             new Square { X = 0, Y = 0, Z = 0 });
 
-        var shape = rook.Movements[0].GetShape<Square>(rook, new Square { X = 0, Y = 0, Z = 0 }, board, includeOccupied: false);
+        var shape = rook.Movements[0].GetShape(rook, new Square { X = 0, Y = 0, Z = 0 }, board, includeOccupied: false);
 
         Assert.IsNotEmpty(shape);
         foreach (var sc in shape)

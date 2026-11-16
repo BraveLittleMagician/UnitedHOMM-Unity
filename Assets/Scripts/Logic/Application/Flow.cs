@@ -9,7 +9,6 @@ public sealed class Flow : IFlow, IDisposable
     private readonly IRegistry _registry;
     private readonly IEventBus _eventBus;
     private readonly ILogger _logger;
-    private readonly IMovementValidator _movementValidator;
     private readonly IAbilityService _abilityService;
     private readonly ICombatService _combatService;
     private readonly ModifierHost _modifierHost;
@@ -22,13 +21,12 @@ public sealed class Flow : IFlow, IDisposable
     private readonly EnPassantService? _enPassantService;
     private readonly AmbushService? _ambushService;
 
-    public Flow(IHouse house, IRegistry registry, IEventBus eventBus, ILogger logger, IMovementValidator movementValidator, IAbilityService abilityService, ICombatService combatService, ModifierHost modifierHost, EnPassantService? enPassantService = null, AmbushService? ambushService = null, Action? onCommitted = null)
+    public Flow(IHouse house, IRegistry registry, IEventBus eventBus, ILogger logger, IAbilityService abilityService, ICombatService combatService, ModifierHost modifierHost, EnPassantService? enPassantService = null, AmbushService? ambushService = null, Action? onCommitted = null)
     {
         _house = house ?? throw new ArgumentNullException(nameof(house));
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _movementValidator = movementValidator ?? throw new ArgumentNullException(nameof(movementValidator));
         _abilityService = abilityService ?? throw new ArgumentNullException(nameof(abilityService));
         _combatService = combatService ?? throw new ArgumentNullException(nameof(combatService));
         _modifierHost = modifierHost ?? throw new ArgumentNullException(nameof(modifierHost));

@@ -49,7 +49,6 @@ public static class DomainModule
         }
 
         // --- Validators & combat ---
-        var movementValidator = new MovementValidator(logger);
         var abilityService = new AbilityService(eventBus, logger);
         var attackTargetProvider = new AttackTargetProvider(modifierHost);
         var combatService = new CombatService(logger, eventBus, attackTargetProvider, modifierHost);
@@ -78,7 +77,6 @@ public static class DomainModule
             registry,
             eventBus,
             logger,
-            movementValidator,
             abilityService,
             combatService,
             modifierHost,
