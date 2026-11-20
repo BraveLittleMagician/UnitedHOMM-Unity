@@ -55,67 +55,63 @@ public sealed class Flow : IFlow, IDisposable
             return false;
         }
 
+        // Приоритет 0: уже смежны с целью и можем её атаковать — не двигаемся.
+        if (fromPos.IsAdjacent(target) && CellAttacksTarget(attacker, fromPos, target, room))
+            return true;
+
         var parents = new Dictionary<Square, Square?>();
+        var distance = new Dictionary<Square, int> { [fromPos] = 0 };
         var queue = new Queue<Square>();
         parents[fromPos] = null;
         queue.Enqueue(fromPos);
 
+        Square? best = null;
+        int bestDistance = int.MaxValue;
+        int bestStraightness = int.MaxValue;
+
         while (queue.Count > 0)
         {
             var current = queue.Dequeue();
+            int currentDist = distance[current];
+
             foreach (var movement in attacker.Movements)
             {
                 if (!movement.IsApplicableToRoom(room)) continue;
                 var enumerator = movement.CreateEnumeratorFor(attacker, current);
                 if (enumerator == null) continue;
+
                 foreach (var neighbor in enumerator.GetNeighbors(current))
                 {
                     if (parents.ContainsKey(neighbor)) continue;
                     if (!enumerator.PositionsAll.ContainsKey(neighbor)) continue;
                     if (!sqRoom.IsInside(neighbor)) continue;
                     if (room.TryToGetPiece<Square>(neighbor, out _)) continue;
+
                     parents[neighbor] = current;
+                    distance[neighbor] = currentDist + 1;
                     queue.Enqueue(neighbor);
+
+                    // Кандидат: смежён с целью и атакует её.
+                    if (!neighbor.IsAdjacent(target)) continue;
+                    if (!CellAttacksTarget(attacker, neighbor, target, room)) continue;
+
+                    int dist = distance[neighbor];
+                    int straightness = CountNonZeroAxes(neighbor, target);
+
+                    if (dist < bestDistance || (dist == bestDistance && straightness < bestStraightness))
+                    {
+                        best = neighbor;
+                        bestDistance = dist;
+                        bestStraightness = straightness;
+                    }
                 }
             }
         }
 
-        var attackCells = new List<Square>();
-        if (CellAttacksTarget(attacker, fromPos, target, room))
-            attackCells.Add(fromPos);
-
-        foreach (var cell in parents.Keys)
-        {
-            if (cell.Equals(fromPos)) continue;
-            if (CellAttacksTarget(attacker, cell, target, room))
-                attackCells.Add(cell);
-        }
-
-        if (attackCells.Count == 0)
+        if (best == null)
         {
             error = $"Cannot approach {targetPiece} for attack";
             return false;
-        }
-
-        Square? adjacent = null;
-        foreach (var cell in attackCells)
-        {
-            if (!cell.Equals(fromPos) && cell.IsAdjacent(target))
-            {
-                adjacent = cell;
-                break;
-            }
-        }
-
-        Square best;
-        if (adjacent.HasValue) best = adjacent.Value;
-        else if (attackCells.Contains(fromPos)) best = fromPos;
-        else best = attackCells[0];
-
-        if (best.Equals(fromPos))
-        {
-            path = null;
-            return true;
         }
 
         var pathList = new List<Square>();
@@ -130,6 +126,16 @@ public sealed class Flow : IFlow, IDisposable
 
         path = new PathSequence<Square>(pathList.ToArray());
         return true;
+    }
+
+    private static int CountNonZeroAxes(Square a, Square b)
+    {
+        int n = 0;
+        if (a.X != b.X) n++;
+        if (a.Y != b.Y) n++;
+        if (a.Z != b.Z) n++;
+        if (a.W != b.W) n++;
+        return n - 1;
     }
 
     private static bool CellAttacksTarget(IPiece attacker, Square fromCell, Square target, IReadOnlyRoom room)
