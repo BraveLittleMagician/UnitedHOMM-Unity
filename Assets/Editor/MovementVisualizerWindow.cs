@@ -15,8 +15,8 @@ public sealed class MovementVisualizerWindow : EditorWindow
     private int _sliceW = 0;
     private float _cellSize = 25f;
 
-    [MenuItem("Window/Movement Visualizer")]
-    public static void Open() => GetWindow<MovementVisualizerWindow>("Movement Vis");
+    [MenuItem("Window/MovementInRoom Visualizer")]
+    public static void Open() => GetWindow<MovementVisualizerWindow>("MovementInRoom Vis");
 
     public static void Show(
         string title,
@@ -24,7 +24,7 @@ public sealed class MovementVisualizerWindow : EditorWindow
         Square start = default,
         int radius = 7)
     {
-        var w = GetWindow<MovementVisualizerWindow>("Movement Vis");
+        var w = GetWindow<MovementVisualizerWindow>("MovementInRoom Vis");
         w._title = title;
         w._factory = factory;
         w._start = start;

@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
-public sealed class MovementFactory<TSequence> : IMovementFactory where TSequence : notnull, ISequence<Square, TSequence>
+public sealed class MovementFactory<TSequence> : IMovementFactory
+    where TSequence : notnull, ISequence<Square, TSequence>
 {
     private readonly TSequence _moveSequence;
     private readonly TSequence? _attackSequence;
@@ -20,5 +21,9 @@ public sealed class MovementFactory<TSequence> : IMovementFactory where TSequenc
     }
 
     public IMovement CreateFor(IEventBus eventBus, ModifierHost modifierHost, IPiece owner)
-        => new Movement<TSequence>(_moveSequence, _attackSequence, _hasAttackSequence, eventBus, modifierHost, owner);
+    {
+        if (_hasAttackSequence)
+            return new MovementSeparated<TSequence>(_moveSequence, _attackSequence!, eventBus, modifierHost, owner);
+        return new MovementCombined<TSequence>(_moveSequence, eventBus, modifierHost, owner);
+    }
 }

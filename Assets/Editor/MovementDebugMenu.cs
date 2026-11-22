@@ -5,7 +5,7 @@ using UnityEditor;
 
 public static class MovementDebugMenu
 {
-    [MenuItem("Debug/Movement/Circle r=3")]
+    [MenuItem("Debug/MovementInRoom/Circle r=3")]
     public static void CircleArea()
     {
         var a = new RelativeArea<Square>(

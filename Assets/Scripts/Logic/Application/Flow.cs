@@ -55,7 +55,6 @@ public sealed class Flow : IFlow, IDisposable
             return false;
         }
 
-        // Приоритет 0: уже смежны с целью и можем её атаковать — не двигаемся.
         if (fromPos.IsAdjacent(target) && CellAttacksTarget(attacker, fromPos, target, room))
             return true;
 
@@ -77,7 +76,7 @@ public sealed class Flow : IFlow, IDisposable
             foreach (var movement in attacker.Movements)
             {
                 if (!movement.IsApplicableToRoom(room)) continue;
-                var enumerator = movement.CreateEnumeratorFor(attacker, current);
+                var enumerator = movement.CreateMoveEnumeratorFor(attacker, current);
                 if (enumerator == null) continue;
 
                 foreach (var neighbor in enumerator.GetNeighbors(current))
@@ -91,7 +90,6 @@ public sealed class Flow : IFlow, IDisposable
                     distance[neighbor] = currentDist + 1;
                     queue.Enqueue(neighbor);
 
-                    // Кандидат: смежён с целью и атакует её.
                     if (!neighbor.IsAdjacent(target)) continue;
                     if (!CellAttacksTarget(attacker, neighbor, target, room)) continue;
 
@@ -143,12 +141,9 @@ public sealed class Flow : IFlow, IDisposable
         foreach (var movement in attacker.Movements)
         {
             if (!movement.IsApplicableToRoom(room)) continue;
-            var shape = movement.GetShape<Square>(attacker, fromCell, room, includeOccupied: true);
-            for (int i = 0; i < shape.Count; i++)
-            {
-                if (shape[i].Cell.Equals(target) && shape[i].Attackable == Attackable.Attack)
-                    return true;
-            }
+            var enumerator = movement.CreateAttackEnumeratorFor(attacker, fromCell);
+            if (enumerator.CanAttack(target))
+                return true;
         }
         return false;
     }
