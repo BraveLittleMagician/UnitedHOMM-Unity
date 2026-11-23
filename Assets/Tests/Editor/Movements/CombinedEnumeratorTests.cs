@@ -9,7 +9,7 @@ public sealed class CombinedEnumeratorTests
     public void PositionsAll_IsUnionOfMoveAndAttack()
     {
         var moveP = new Pattern<Square>(new Square { X = 1, Y = 0 });
-        var attackP = new Pattern<Square>(new Square { X = 0, Y = 1 }, Attackable.Attack);
+        var attackP = new Pattern<Square>(new Square { X = 0, Y = 1 });
         var combined = new CombinedEnumerator(
             moveP.GetEnumerator(Square.Zero),
             attackP.GetEnumerator(Square.Zero));
@@ -22,7 +22,7 @@ public sealed class CombinedEnumeratorTests
     public void AttackOnlyCell_IsNotStay()
     {
         var moveP = new Pattern<Square>(new Square { X = 1, Y = 0 });
-        var attackP = new Pattern<Square>(new Square { X = 0, Y = 1 }, Attackable.Attack);
+        var attackP = new Pattern<Square>(new Square { X = 0, Y = 1 });
         var combined = new CombinedEnumerator(
             moveP.GetEnumerator(Square.Zero),
             attackP.GetEnumerator(Square.Zero));
@@ -36,7 +36,7 @@ public sealed class CombinedEnumeratorTests
     public void ExplicitAttackable_IsPreserved()
     {
         var moveP = new Pattern<Square>(new Square { X = 1, Y = 0 });
-        var attackP = new Pattern<Square>(new Square { X = 0, Y = 1 }, Attackable.Attack);
+        var attackP = new Pattern<Square>(new Square { X = 0, Y = 1 });
         var combined = new CombinedEnumerator(
             moveP.GetEnumerator(Square.Zero),
             attackP.GetEnumerator(Square.Zero));
@@ -66,7 +66,7 @@ public sealed class CombinedEnumeratorTests
     public void StartPosition_IsAlwaysInPositionsAll()
     {
         var moveP = new Pattern<Square>(new Square { X = 1, Y = 0 });
-        var attackP = new Pattern<Square>(new Square { X = 0, Y = 1 }, Attackable.Attack);
+        var attackP = new Pattern<Square>(new Square { X = 0, Y = 1 });
         var combined = new CombinedEnumerator(
             moveP.GetEnumerator(Square.Zero),
             attackP.GetEnumerator(Square.Zero));

@@ -62,10 +62,8 @@ public static class KnightRules
     {
         return new MoveRule(new[]
         {
-        new RuleStep(new Square { X = wx, Y = wy, Z = wz }, Stayable.NotStay, repeat: 1),
-        new RuleStep(
-            new Square { X = dx - wx, Y = dy - wy, Z = dz - wz },
-            Stayable.Stay, repeat: 1, attackable: Attackable.Attack),
-    });
+            new RuleStep(new Square { X = wx, Y = wy, Z = wz }, Stayable.NotStay, repeat: 1),
+            new RuleStep(new Square { X = dx - wx, Y = dy - wy, Z = dz - wz }, Stayable.Stay, repeat: 1),
+        });
     }
 }

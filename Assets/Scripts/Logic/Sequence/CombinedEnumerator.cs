@@ -57,22 +57,8 @@ public sealed class CombinedEnumerator : ISequenceEnumerator<Square>
         {
             if (_attackableCache != null) return _attackableCache;
             var result = new Dictionary<Square, Attackable>();
-
-            foreach (var kv in _move.PositionsAttackable)
-                result[kv.Key] = kv.Value;
-
-            if (_attack.SupportsExplicitAttackable)
-            {
-                foreach (var kv in _attack.PositionsAttackable)
-                    if (kv.Value == Attackable.Attack)
-                        result[kv.Key] = Attackable.Attack;
-            }
-            else
-            {
-                foreach (var cell in _attack.PositionsStayables)
-                    result[cell] = Attackable.Attack;
-            }
-
+            foreach (var kv in _move.PositionsAttackable) result[kv.Key] = kv.Value;
+            foreach (var cell in _attack.PositionsStayables) result[cell] = Attackable.Attack;
             _attackableCache = result;
             return result;
         }

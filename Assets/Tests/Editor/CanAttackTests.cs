@@ -1,16 +1,33 @@
 #nullable enable
 
+using System.Collections.Immutable;
 using NUnit.Framework;
 
 public sealed class CanAttackTests
 {
+    private static ISequenceEnumerator<Square> MakeAttackable(params Square[] attackCells)
+    {
+        var move = new Pattern<Square>(new Square { X = 1, Y = 0 })
+            .GetEnumerator(Square.Zero);
+
+        var attackBuilder = ImmutableDictionary.CreateBuilder<Square, Stayable>();
+        attackBuilder[Square.Zero] = Stayable.NotStay;
+        foreach (var cell in attackCells)
+            attackBuilder[cell] = Stayable.Stay;
+
+        var attack = new Pattern<Square>(attackBuilder.ToImmutable(), guarantee: true)
+            .GetEnumerator(Square.Zero);
+
+        return new CombinedEnumerator(move, attack);
+    }
+
     [Test]
     public void Squares_ContainsAllPositions_AndPropagatesAttackable()
     {
-        var p = new Pattern<Square>(new Square { X = 1, Y = 0 }, Attackable.Attack);
-        var e = p.GetEnumerator(Square.Zero);
+        var e = MakeAttackable(new Square { X = 1, Y = 0 });
 
         Assert.That(e.Squares, Has.Count.EqualTo(e.PositionsAll.Count));
+
         var target = new Square { X = 1, Y = 0 };
         Assert.That(e.Squares[target].IsAttackable, Is.True);
         Assert.That(e.Squares[Square.Zero].IsAttackable, Is.False);
@@ -19,8 +36,7 @@ public sealed class CanAttackTests
     [Test]
     public void Squares_AreConsistentWithPositions()
     {
-        var p = new Pattern<Square>(new Square { X = 1, Y = 0 }, Attackable.Attack);
-        var e = p.GetEnumerator(Square.Zero);
+        var e = MakeAttackable(new Square { X = 1, Y = 0 });
 
         foreach (var kv in e.Squares)
         {
@@ -32,54 +48,61 @@ public sealed class CanAttackTests
     [Test]
     public void CanAttack_TrueForAttackableCell()
     {
-        var p = new Pattern<Square>(new Square { X = 1, Y = 0 }, Attackable.Attack);
-        var e = p.GetEnumerator(Square.Zero);
+        var e = MakeAttackable(new Square { X = 1, Y = 0 });
         Assert.That(e.CanAttack(new Square { X = 1, Y = 0 }), Is.True);
     }
 
     [Test]
     public void CanAttack_FalseForNonAttackableCell()
     {
-        var p = new Pattern<Square>(new Square { X = 1, Y = 0 }, Attackable.Attack);
-        var e = p.GetEnumerator(Square.Zero);
+        var e = MakeAttackable(new Square { X = 1, Y = 0 });
         Assert.That(e.CanAttack(new Square { X = 0, Y = 1 }), Is.False);
     }
 
     [Test]
     public void CanAttack_TrueForSingleStepAttackPath()
     {
-        var p = new Pattern<Square>(new Square { X = 1, Y = 0 }, Attackable.Attack);
-        var e = p.GetEnumerator(Square.Zero);
+        var e = MakeAttackable(new Square { X = 1, Y = 0 });
+
         var path = e.CombinePositionsIntoPath(new[]
         {
             Square.Zero, new Square { X = 1, Y = 0 }
         });
+
         Assert.That(e.CanAttack(path), Is.True);
     }
 
     [Test]
     public void CanAttack_False_IfIntermediateCellIsNotAttackable()
     {
-        // Attackable только конечная клетка, промежуточная — NotAttack.
-        var b = System.Collections.Immutable.ImmutableDictionary.CreateBuilder<Square, Stayable>();
-        b[Square.Zero] = Stayable.NotStay;
-        b[new Square { X = 1, Y = 0 }] = Stayable.NotStay;
-        b[new Square { X = 2, Y = 0 }] = Stayable.NotStay;
-        var p = new Pattern<Square>(b.ToImmutable());
-        p = p.WithAddedAttackable(new[] { new Square { X = 2, Y = 0 } }, Attackable.Attack);
-        var e = p.GetEnumerator(Square.Zero);
-        var path = e.CombinePositionsIntoPath(new[]
+        var move = new Pattern<Square>(new Square { X = 1, Y = 0 })
+            .WithAdded(new Square { X = 2, Y = 0 }, Stayable.Stay)
+            .GetEnumerator(Square.Zero);
+
+        var attackBuilder = ImmutableDictionary.CreateBuilder<Square, Stayable>();
+        attackBuilder[Square.Zero] = Stayable.NotStay;
+        attackBuilder[new Square { X = 1, Y = 0 }] = Stayable.NotStay;
+        attackBuilder[new Square { X = 2, Y = 0 }] = Stayable.Stay;
+
+        var attack = new Pattern<Square>(attackBuilder.ToImmutable(), guarantee: true)
+            .GetEnumerator(Square.Zero);
+
+        ISequenceEnumerator<Square> combined = new CombinedEnumerator(move, attack);
+
+        var path = combined.CombinePositionsIntoPath(new[]
         {
-            Square.Zero, new Square { X = 1, Y = 0 }, new Square { X = 2, Y = 0 }
-        });
-        Assert.That(e.CanAttack(path), Is.False);
+        Square.Zero,
+        new Square { X = 1, Y = 0 },
+        new Square { X = 2, Y = 0 }
+    });
+
+        Assert.That(combined.CanAttack(path), Is.False);
     }
 
     [Test]
     public void StayAndAttackSquares_AreConsistent()
     {
-        var p = new Pattern<Square>(new Square { X = 1, Y = 0 }, Attackable.Attack);
-        var e = p.GetEnumerator(Square.Zero);
+        var e = MakeAttackable(new Square { X = 1, Y = 0 });
 
         Assert.That(e.StaySquares, Is.EquivalentTo(e.PositionsStayables));
         Assert.That(e.AttackSquares, Is.EquivalentTo(e.PositionsAttackable.Keys));

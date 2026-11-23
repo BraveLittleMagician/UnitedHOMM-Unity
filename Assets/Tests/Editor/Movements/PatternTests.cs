@@ -27,17 +27,6 @@ public sealed class PatternTests
     }
 
     [Test]
-    public void SingleCell_Attackable_PropagatesToPositionsAttackable()
-    {
-        var p = new Pattern<Square>(new Square { X = 1, Y = 0 }, Attackable.Attack);
-        var e = p.GetEnumerator(Square.Zero);
-
-        Assert.That(e.PositionsAttackable, Does.ContainKey(new Square { X = 1, Y = 0 }));
-        Assert.That(e.PositionsAttackable[new Square { X = 1, Y = 0 }],
-                    Is.EqualTo(Attackable.Attack));
-    }
-
-    [Test]
     public void SingleCell_NotAttackable_PositionsAttackableIsEmpty()
     {
         var p = new Pattern<Square>(new Square { X = 1, Y = 0 });

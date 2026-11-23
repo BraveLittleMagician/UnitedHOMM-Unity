@@ -22,16 +22,10 @@ public sealed class MovementCombined<TSequence> : MovementInRoom<TSequence> wher
         var transforms = GetShapeTransforms(piece);
         bool hasAttackModifier = false;
         for (int i = 0; i < transforms.Count; i++)
-        {
-            if ((transforms[i].Target & ShapeTarget.Attack) != 0)
-            {
-                hasAttackModifier = true;
-                break;
-            }
-        }
+            if ((transforms[i].Target & ShapeTarget.Attack) != 0) { hasAttackModifier = true; break; }
 
         if (!hasAttackModifier)
-            return CreateMoveEnumeratorFor(piece, fromPosition);
+            return WithAttackSemantics(CreateMoveEnumeratorFor(piece, fromPosition));
 
         var moveModified = ApplyMovementModifiers(MovementSequence, piece);
         var attackModified = ApplyAttackModifiers(AttackSequence, piece);

@@ -11,7 +11,7 @@ public sealed class InvariantsTests
 
         // Pattern
         list.Add(new Pattern<Square>(new Square { X = 1, Y = 0 }).GetEnumerator(Square.Zero));
-        list.Add(new Pattern<Square>(new Square { X = 1, Y = 0 }, Attackable.Attack).GetEnumerator(Square.Zero));
+        list.Add(new Pattern<Square>(new Square { X = 1, Y = 0 }).GetEnumerator(Square.Zero));
 
         // King via dictionary
         var kingDict = ImmutableDictionary.CreateBuilder<Square, Stayable>();
@@ -32,7 +32,7 @@ public sealed class InvariantsTests
         // Combined
         list.Add(new CombinedEnumerator(
             new Pattern<Square>(new Square { X = 1, Y = 0 }).GetEnumerator(Square.Zero),
-            new Pattern<Square>(new Square { X = 0, Y = 1 }, Attackable.Attack).GetEnumerator(Square.Zero)));
+            new Pattern<Square>(new Square { X = 0, Y = 1 }).GetEnumerator(Square.Zero)));
 
         return list;
     }

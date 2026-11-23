@@ -11,21 +11,21 @@ public readonly struct StepBudgetPattern : ISequence<Square, StepBudgetPattern>
     private readonly int _maxSteps;
     private readonly MultipleAxes _activeAxes;
     private readonly ImmutableDictionary<Square, Stayable> _relativePositions;
-    private readonly ImmutableDictionary<Square, Attackable> _attackable;
     private readonly int _cachedHash;
 
-    private StepBudgetPattern(ImmutableHashSet<Square> stayCells, int maxSteps, MultipleAxes activeAxes, ImmutableDictionary<Square, Stayable> relativePositions, ImmutableDictionary<Square, Attackable> attackable, bool guaranteesAtLeastOneStayable, int cachedHash)
+    private StepBudgetPattern(ImmutableHashSet<Square> stayCells, int maxSteps, MultipleAxes activeAxes, ImmutableDictionary<Square, Stayable> relativePositions, bool guaranteesAtLeastOneStayable, int cachedHash)
     {
         _stayCells = stayCells;
         _maxSteps = maxSteps;
         _activeAxes = activeAxes;
         _relativePositions = relativePositions;
-        _attackable = attackable;
         GuaranteesAtLeastOneStayable = guaranteesAtLeastOneStayable;
         _cachedHash = cachedHash;
     }
+
     public StepBudgetPattern(IReadOnlyCollection<Square> stayCells, int maxSteps) : this(stayCells, maxSteps, MultipleAxes.Three) { }
-    public StepBudgetPattern( IReadOnlyCollection<Square> stayCells, int maxSteps, MultipleAxes activeAxes)
+
+    public StepBudgetPattern(IReadOnlyCollection<Square> stayCells, int maxSteps, MultipleAxes activeAxes)
     {
         if (stayCells == null) throw new ArgumentNullException(nameof(stayCells));
         if (maxSteps <= 0) throw new ArgumentOutOfRangeException(nameof(maxSteps), "maxSteps must be positive.");
@@ -46,7 +46,6 @@ public readonly struct StepBudgetPattern : ISequence<Square, StepBudgetPattern>
         var offsets = BuildOffsets(activeAxes);
         var builder = ImmutableDictionary.CreateBuilder<Square, Stayable>();
         builder[Square.Zero] = Stayable.NotStay;
-
         var visited = new HashSet<Square> { Square.Zero };
         var queue = new Queue<(Square pos, int depth)>();
         queue.Enqueue((Square.Zero, 0));
@@ -67,40 +66,30 @@ public readonly struct StepBudgetPattern : ISequence<Square, StepBudgetPattern>
         }
 
         _relativePositions = builder.ToImmutable();
-        _attackable = ImmutableDictionary<Square, Attackable>.Empty;
 
         bool hasStay = false;
         foreach (var s in _relativePositions.Values)
             if (s == Stayable.Stay) { hasStay = true; break; }
         GuaranteesAtLeastOneStayable = hasStay;
 
-        _cachedHash = ComputeHash(_relativePositions, _attackable, GuaranteesAtLeastOneStayable, maxSteps, activeAxes);
+        _cachedHash = ComputeHash(_relativePositions, GuaranteesAtLeastOneStayable, maxSteps, activeAxes);
     }
 
-    private static int ComputeHash(ImmutableDictionary<Square, Stayable> relativePositions, ImmutableDictionary<Square, Attackable> attackable, bool guarantee, int maxSteps, MultipleAxes activeAxes)
+    private static int ComputeHash(ImmutableDictionary<Square, Stayable> relativePositions, bool guarantee, int maxSteps, MultipleAxes activeAxes)
     {
         var hash = new HashCode();
         hash.Add(guarantee);
         hash.Add(maxSteps);
         hash.Add((int)activeAxes);
-        foreach (var kv in relativePositions)
-        {
-            hash.Add(kv.Key);
-            hash.Add(kv.Value);
-        }
-        foreach (var kv in attackable)
-        {
-            hash.Add(kv.Key);
-            hash.Add(kv.Value);
-        }
+        foreach (var kv in relativePositions) { hash.Add(kv.Key); hash.Add(kv.Value); }
         return hash.ToHashCode();
     }
+
     private static IReadOnlyList<Square> BuildOffsets(MultipleAxes axes)
     {
         int dyRange = axes.HasFlag(MultipleAxes.Two) ? 1 : 0;
         int dzRange = axes.HasFlag(MultipleAxes.Three) ? 1 : 0;
         int dwRange = axes.HasFlag(MultipleAxes.Four) ? 1 : 0;
-
         var list = new List<Square>();
         for (int dx = -1; dx <= 1; dx++)
             for (int dy = -dyRange; dy <= dyRange; dy++)
@@ -118,103 +107,43 @@ public readonly struct StepBudgetPattern : ISequence<Square, StepBudgetPattern>
     public MultipleAxes ActiveAxes => _activeAxes;
     public IReadOnlyCollection<Square> StayCells => _stayCells;
 
-    public ISequenceEnumerator<Square> GetEnumerator(Square start) => new Enumerable(_relativePositions, _attackable, start, _maxSteps);
+    public ISequenceEnumerator<Square> GetEnumerator(Square start) => new Enumerable(_relativePositions, start, _maxSteps);
 
     public StepBudgetPattern Copy() => this;
     ISequence ICopyable<ISequence>.Copy() => this;
 
     public bool Equals(StepBudgetPattern other)
     {
-        if (_relativePositions == null || _attackable == null) return other._relativePositions == null && other._attackable == null;
-        if (other._relativePositions == null || other._attackable == null) return false;
-
-        if (_maxSteps != other._maxSteps) return false;
-        if (_activeAxes != other._activeAxes) return false;
+        if (_relativePositions == null) return other._relativePositions == null;
+        if (other._relativePositions == null) return false;
+        if (_maxSteps != other._maxSteps || _activeAxes != other._activeAxes) return false;
         if (_relativePositions.Count != other._relativePositions.Count) return false;
         foreach (var kv in _relativePositions)
         {
             if (!other._relativePositions.TryGetValue(kv.Key, out var v)) return false;
             if (v != kv.Value) return false;
         }
-        if (_attackable.Count != other._attackable.Count) return false;
-        foreach (var kv in _attackable)
-        {
-            if (!other._attackable.TryGetValue(kv.Key, out var v)) return false;
-            if (kv.Value != v) return false;
-        }
         return true;
     }
+
     public override bool Equals(object? obj) => obj is StepBudgetPattern p && Equals(p);
     public override int GetHashCode() => _cachedHash;
     public static bool operator ==(StepBudgetPattern a, StepBudgetPattern b) => a.Equals(b);
     public static bool operator !=(StepBudgetPattern a, StepBudgetPattern b) => !(a == b);
 
-    public StepBudgetPattern WithAddedAttackable(IEnumerable<Square> ienum, Attackable attackable)
-    {
-        if (attackable == Attackable.NotAttack) return WithRemovedAttackable(ienum);
-        var relative = _relativePositions;
-        var attackables = _attackable;
-        var forChange = ienum.Where(s => !s.IsZero && relative.ContainsKey(s)).ToHashSet();
-        forChange.RemoveWhere(s => attackables.TryGetValue(s, out var v) && v == attackable);
-        if (forChange.Count == 0) return this;
-        var newAttack = attackables.SetItems(forChange.Select(s => new KeyValuePair<Square, Attackable>(s, attackable)));
-        return new StepBudgetPattern(
-            _stayCells, _maxSteps, _activeAxes,
-            _relativePositions, newAttack,
-            GuaranteesAtLeastOneStayable,
-            ComputeHash(_relativePositions, newAttack, GuaranteesAtLeastOneStayable, _maxSteps, _activeAxes));
-    }
-    public StepBudgetPattern WithRemovedAttackable(IEnumerable<Square> ienum)
-    {
-        if (_attackable.Count == 0) return this;
-        var attackables = _attackable;
-        var forRemove = ienum.Where(s => !s.IsZero && attackables.ContainsKey(s)).ToHashSet();
-        if (forRemove.Count == 0) return this;
-        var newAttack = attackables.RemoveRange(forRemove);
-        return new StepBudgetPattern(
-            _stayCells, _maxSteps, _activeAxes,
-            _relativePositions, newAttack,
-            GuaranteesAtLeastOneStayable,
-            ComputeHash(_relativePositions, newAttack, GuaranteesAtLeastOneStayable, _maxSteps, _activeAxes));
-    }
-    public (ImmutableDictionary<Square, Stayable> relativePositions, ImmutableDictionary<Square, Attackable> attackable, bool guarantee) DataWithAddedAttackable(IEnumerable<Square> ienum, Attackable attackable)
-    {
-        if (attackable == Attackable.NotAttack) return DataWithRemovedAttackable(ienum);
-        var relative = _relativePositions;
-        var attackables = _attackable;
-        var forChange = ienum.Where(s => !s.IsZero && relative.ContainsKey(s)).ToHashSet();
-        forChange.RemoveWhere(s => attackables.TryGetValue(s, out var v) && v == attackable);
-        if (forChange.Count == 0) return (_relativePositions, _attackable, GuaranteesAtLeastOneStayable);
-        var newAttack = attackables.SetItems(forChange.Select(s => new KeyValuePair<Square, Attackable>(s, attackable)));
-        return (_relativePositions, newAttack, GuaranteesAtLeastOneStayable);
-    }
-    public (ImmutableDictionary<Square, Stayable> relativePositions, ImmutableDictionary<Square, Attackable> attackable, bool guarantee) DataWithRemovedAttackable(IEnumerable<Square> ienum)
-    {
-        if (_attackable.Count == 0) return (_relativePositions, _attackable, GuaranteesAtLeastOneStayable);
-        var attackables = _attackable;
-        var forRemove = ienum.Where(s => !s.IsZero && attackables.ContainsKey(s)).ToHashSet();
-        if (forRemove.Count == 0) return (_relativePositions, attackables, GuaranteesAtLeastOneStayable);
-        var newAttack = attackables.RemoveRange(forRemove);
-        return (_relativePositions, newAttack, GuaranteesAtLeastOneStayable);
-    }
-
     private sealed class Enumerable : SequenceEnumerable<Square>
     {
         private readonly int _maxDepth;
         private readonly ImmutableDictionary<Square, Stayable> _relativePositions;
-        private readonly ImmutableDictionary<Square, Attackable> _attackable;
         private List<Square>? _stayablesCache;
         private Dictionary<Square, Stayable>? _allPositionsCache;
-        private Dictionary<Square, Attackable>? _attackableCache;
 
-        public Enumerable(ImmutableDictionary<Square, Stayable> relativePositions, ImmutableDictionary<Square, Attackable> attackable, Square start, int maxDepth) : base(start)
+        public Enumerable(ImmutableDictionary<Square, Stayable> relativePositions, Square start, int maxDepth) : base(start)
         {
             _relativePositions = relativePositions;
-            _attackable = attackable;
             _maxDepth = maxDepth;
         }
 
-        public override bool SupportsExplicitAttackable => true;
         public override int MaxDepth => _maxDepth;
 
         protected override List<Square> CreateOnlyStayablesPositions
@@ -236,22 +165,8 @@ public readonly struct StepBudgetPattern : ISequence<Square, StepBudgetPattern>
             {
                 if (_allPositionsCache != null) return _allPositionsCache;
                 var dict = new Dictionary<Square, Stayable>(_relativePositions.Count);
-                foreach (var kv in _relativePositions)
-                    dict[StartPosition + kv.Key] = kv.Value;
+                foreach (var kv in _relativePositions) dict[StartPosition + kv.Key] = kv.Value;
                 _allPositionsCache = dict;
-                return dict;
-            }
-        }
-
-        public override IReadOnlyDictionary<Square, Attackable> PositionsAttackable
-        {
-            get
-            {
-                if (_attackableCache != null) return _attackableCache;
-                var dict = new Dictionary<Square, Attackable>(_attackable.Count);
-                foreach (var (rel, attack) in _attackable)
-                    dict[StartPosition + rel] = attack;
-                _attackableCache = dict;
                 return dict;
             }
         }
@@ -263,29 +178,21 @@ public readonly struct StepBudgetPattern : ISequence<Square, StepBudgetPattern>
             if (positions.Count - 1 > _maxDepth) return false;
             if (!positions[0].Equals(StartPosition)) return false;
             for (int i = 0; i < positions.Count - 1; i++)
-            {
                 if (!positions[i].IsAdjacent(positions[i + 1])) return false;
-            }
             var all = CreateAllPossiblePositions;
             foreach (var p in positions)
                 if (!all.ContainsKey(p)) return false;
-            var last = positions[^1];
-            return all.TryGetValue(last, out var flag) && flag == Stayable.Stay;
+            return all.TryGetValue(positions[^1], out var flag) && flag == Stayable.Stay;
         }
 
         public override IEnumerable<Square> GetNeighbors(Square cell)
         {
             var all = CreateAllPossiblePositions;
             foreach (var n in cell.UnitNeighbors())
-                if (all.ContainsKey(n))
-                    yield return n;
+                if (all.ContainsKey(n)) yield return n;
         }
 
-        public override bool CanMoveTo(Square target)
-        {
-            return CreateAllPossiblePositions.TryGetValue(target, out var flag)
-                && flag == Stayable.Stay;
-        }
+        public override bool CanMoveTo(Square target) => CreateAllPossiblePositions.TryGetValue(target, out var flag) && flag == Stayable.Stay;
 
         public override IPath<Square> CombinePositionsIntoPath(Square[] positions) => new PathSequence<Square>(positions);
     }
