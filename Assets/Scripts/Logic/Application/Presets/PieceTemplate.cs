@@ -14,14 +14,10 @@ public sealed record PieceTemplate
         IReadOnlyList<IAbility> abilities,
         IReadOnlyList<ModifierDto>? modifiers = null)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Имя шаблона не может быть пустым", nameof(name));
-        if (health <= 0)
-            throw new ArgumentOutOfRangeException(nameof(health), "Здоровье должно быть > 0");
-        if (attackDamage < 0)
-            throw new ArgumentOutOfRangeException(nameof(attackDamage), "AttackDamage должен быть >= 0");
-        if (attackCharges < 0)
-            throw new ArgumentOutOfRangeException(nameof(attackCharges), "AttackCharges должен быть >= 0");
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Имя шаблона не может быть пустым", nameof(name));
+        if (health <= 0) throw new ArgumentOutOfRangeException(nameof(health), "Здоровье должно быть > 0");
+        if (attackDamage < 0) throw new ArgumentOutOfRangeException(nameof(attackDamage), "AttackDamage должен быть >= 0");
+        if (attackCharges < 0) throw new ArgumentOutOfRangeException(nameof(attackCharges), "AttackCharges должен быть >= 0");
 
         Name = name;
         Health = health;

@@ -9,9 +9,6 @@ public abstract class MovementInRoom<TSequence> : IMovement where TSequence : no
     private readonly IPiece _owner;
     private bool _disposed;
 
-    protected TSequence MovementSequence { get; }
-    protected TSequence AttackSequence { get; }
-
     protected MovementInRoom(TSequence moveSequence, TSequence attackSequence, IEventBus eventBus, ModifierHost modifierHost, IPiece owner)
     {
         MovementSequence = moveSequence;
@@ -21,17 +18,8 @@ public abstract class MovementInRoom<TSequence> : IMovement where TSequence : no
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
     }
 
-    public abstract ISequenceEnumerator<Square> CreateMoveEnumeratorFor(IPiece piece, Square fromPosition);
-    public abstract ISequenceEnumerator<Square> CreateAttackEnumeratorFor(IPiece piece, Square fromPosition);
-    public abstract ISequenceEnumerator<Square> CreateCombinedEnumeratorFor(IPiece piece, Square fromPosition);
-
-    protected IReadOnlyList<IShapeTransformModifier<TSequence, Square>> GetShapeTransforms(IPiece piece) => _modifierHost.GetShapeTransforms<TSequence, Square>(piece.IndexInHouse);
-    protected TSequence ApplyMovementModifiers(TSequence baseSequence, IPiece piece) => ApplyModifiers(baseSequence, piece, ShapeTarget.Movement);
-    protected TSequence ApplyAttackModifiers(TSequence baseSequence, IPiece piece) => ApplyModifiers(baseSequence, piece, ShapeTarget.Attack);
-
-    protected ISequenceEnumerator<Square> WrapWithFacing(ISequenceEnumerator<Square> innerLocal, IPiece piece, Square fromWorld) => new FacingEnumerator(innerLocal, piece.Facing, fromWorld);
-    protected static ISequenceEnumerator<Square> WithAttackSemantics(ISequenceEnumerator<Square> inner)
-        => inner.SupportsExplicitAttackable ? inner : new AttackSemanticsEnumerator(inner);
+    protected TSequence MovementSequence { get; }
+    protected TSequence AttackSequence { get; }
 
     private TSequence ApplyModifiers(TSequence baseSequence, IPiece piece, ShapeTarget flag)
     {
@@ -46,8 +34,18 @@ public abstract class MovementInRoom<TSequence> : IMovement where TSequence : no
         return modified;
     }
 
-    public IReadOnlyDictionary<Square, SquareInfo> GetInfos(IPiece piece, Square fromPosition) => CreateCombinedEnumeratorFor(piece, fromPosition).Squares;
+    protected IReadOnlyList<IShapeTransformModifier<TSequence, Square>> GetShapeTransforms(IPiece piece) => _modifierHost.GetShapeTransforms<TSequence, Square>(piece.IndexInHouse);
+    protected TSequence ApplyMovementModifiers(TSequence baseSequence, IPiece piece) => ApplyModifiers(baseSequence, piece, ShapeTarget.Movement);
+    protected TSequence ApplyAttackModifiers(TSequence baseSequence, IPiece piece) => ApplyModifiers(baseSequence, piece, ShapeTarget.Attack);
+    protected ISequenceEnumerator<Square> WrapWithFacing(ISequenceEnumerator<Square> innerLocal, IPiece piece, Square fromWorld) => new FacingEnumerator(innerLocal, piece.Facing, fromWorld);
+    protected static ISequenceEnumerator<Square> WithAttackSemantics(ISequenceEnumerator<Square> inner)
+        => inner.SupportsExplicitAttackable ? inner : new AttackSemanticsEnumerator(inner);
 
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+    }
     public bool CanAttack<TPos>(IPiece piece, IPath<TPos> path, IReadOnlyRoom room, out string error) where TPos : struct
     {
         if (path == null)
@@ -175,10 +173,22 @@ public abstract class MovementInRoom<TSequence> : IMovement where TSequence : no
         error = "";
         return true;
     }
-
     public bool IsApplicableToRoom(IReadOnlyRoom room) => room is ISquarePositionRoom;
-    public ISequenceEnumerator<Square>? CreateEnumeratorFor(IPiece piece, Square fromPosition) => CreateCombinedEnumeratorFor(piece, fromPosition);
+    public bool HasAtLeastOneStayableCell(IPiece piece, Square fromPosition) => CreateCombinedEnumeratorFor(piece, fromPosition).PositionsStayables.Count > 0;
+    public IReadOnlyList<TPos> GetValidMoves<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room)
+        where TPos : struct
+    {
+        if (fromPosition is not Square) return Array.Empty<TPos>();
 
+        var shape = GetShape(piece, fromPosition, room, includeOccupied: false);
+        var result = new List<TPos>(shape.Count);
+        for (int i = 0; i < shape.Count; i++)
+        {
+            if (shape[i].Stayable != Stayable.Stay) continue;
+            result.Add((TPos)(object)shape[i].Cell);
+        }
+        return result;
+    }
     public IReadOnlyList<ShapeCell> GetShape<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room, bool includeOccupied) where TPos : struct
     {
         if (fromPosition is not Square fromSquare) return Array.Empty<ShapeCell>();
@@ -226,26 +236,12 @@ public abstract class MovementInRoom<TSequence> : IMovement where TSequence : no
 
         return result;
     }
-    public IReadOnlyList<TPos> GetValidMoves<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room)
-        where TPos : struct
-    {
-        if (fromPosition is not Square) return Array.Empty<TPos>();
+    public IReadOnlyDictionary<Square, SquareInfo> GetInfos(IPiece piece, Square fromPosition) => CreateCombinedEnumeratorFor(piece, fromPosition).Squares;
+    public ISequenceEnumerator<Square>? CreateEnumeratorFor(IPiece piece, Square fromPosition) => CreateCombinedEnumeratorFor(piece, fromPosition);
 
-        var shape = GetShape(piece, fromPosition, room, includeOccupied: false);
-        var result = new List<TPos>(shape.Count);
-        for (int i = 0; i < shape.Count; i++)
-        {
-            if (shape[i].Stayable != Stayable.Stay) continue;
-            result.Add((TPos)(object)shape[i].Cell);
-        }
-        return result;
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-    }
+    public abstract ISequenceEnumerator<Square> CreateMoveEnumeratorFor(IPiece piece, Square fromPosition);
+    public abstract ISequenceEnumerator<Square> CreateAttackEnumeratorFor(IPiece piece, Square fromPosition);
+    public abstract ISequenceEnumerator<Square> CreateCombinedEnumeratorFor(IPiece piece, Square fromPosition);
 
     private sealed class AttackSemanticsEnumerator : ISequenceEnumerator<Square>
     {

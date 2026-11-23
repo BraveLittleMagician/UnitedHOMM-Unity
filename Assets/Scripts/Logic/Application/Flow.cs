@@ -148,13 +148,16 @@ public sealed class Flow : IFlow, IDisposable
         return false;
     }
 
-    public IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position) where TRoom : IRoom where TPos : struct
+    public IResult<IPiece> AddPiece<TRoom, TPos>(PieceDefinition definition, TPos position)
+        where TRoom : IRoom where TPos : struct
     {
         var roomResult = GetRoom<TRoom>();
         if (!roomResult.IsSuccess) return Result<IPiece>.Failure(roomResult.Error!);
         var room = roomResult.Value!;
 
-        var piece = _house.CreatePiece(definition);
+        var pieceResult = _house.CreatePiece(definition);
+        if (!pieceResult.IsSuccess) return pieceResult;
+        var piece = pieceResult.Value!;
 
         if (!room.Add(piece, position, false, out var error))
         {

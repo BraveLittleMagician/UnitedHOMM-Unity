@@ -70,10 +70,16 @@ public sealed class House : IHouse
                 return true;
         return false;
     }
-    public IPiece CreatePiece(PieceDefinition definition)
+    public IResult<IPiece> CreatePiece(PieceDefinition definition)
     {
         var index = _indexes.GetNext();
-        return _pieceFactory.Create(index, definition);
+        var result = _pieceFactory.TryCreate(index, definition);
+        if (!result.IsSuccess)
+        {
+            _indexes.MakeFree(index);
+            return result;
+        }
+        return result;
     }
 
     public event Action<IRoom>? RoomAdded;
