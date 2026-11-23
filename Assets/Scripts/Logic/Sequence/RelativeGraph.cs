@@ -13,30 +13,17 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
     private static readonly int[] _fullRange = { -1, 0, 1 };
     private static readonly int[] _zeroRange = { 0 };
 
-    public RelativeGraph() : this(true) { }
-    public RelativeGraph(bool guaranteesAtLeastOneStayable)
+    public RelativeGraph()
     {
-        GuaranteesAtLeastOneStayable = guaranteesAtLeastOneStayable;
-        if (guaranteesAtLeastOneStayable)
-        {
-            var zeroNode = new SegmentNode<TSquare>(new TSquare(), new Stayables(1, new[] { 1 }));
-            AddToIndex(zeroNode);
-            _totalStayablesCount = 1;
-            Count = 1;
-            OriginNode = zeroNode;
-        }
-        else
-        {
-            var zeroNode = new SegmentNode<TSquare>(new TSquare(), new Stayables(0));
-            AddToIndex(zeroNode);
-            _totalStayablesCount = 0;
-            Count = 1;
-            OriginNode = zeroNode;
-        }
+        var zeroNode = new SegmentNode<TSquare>(new TSquare(), new Stayables(0));
+        AddToIndex(zeroNode);
+        _totalStayablesCount = 0;
+        Count = 1;
+        OriginNode = zeroNode;
     }
 
     public int Count { get; private set; }
-    public bool GuaranteesAtLeastOneStayable { get; private set; }
+    public bool GuaranteesAtLeastOneStayable => _totalStayablesCount > 0;
     public SegmentNode<TSquare>? OriginNode { get; private set; }
     public IEnumerable<SegmentNode<TSquare>> Nodes => _lineIndex.Values.SelectMany(list => list);
 
@@ -73,30 +60,7 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
         ReconnectNode(merged);
         return true;
     }
-    /// <summary>
-    /// Удаляет из графа всё, что оказалось отрезано от origin-сегмента.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Инвариант класса: граф всегда связен и содержит origin-сегмент
-    /// (или пуст при <see cref="GuaranteesAtLeastOneStayable"/> = <c>false</c>).
-    /// </para>
-    /// <para>
-    /// <see cref="Remove(TSquare)"/> может разрезать сегмент пополам. Если после
-    /// разреза одна из половин не соединена с origin напрямую и не «подхвачена»
-    /// параллельной линией (соседний Y/Z-сегмент, с которым у неё есть
-    /// перекрытие по X) — эта половина становится недостижимой. Такие «сироты»
-    /// бесполезны: BFS из точки старта их всё равно не увидит, но они занимают
-    /// память и искажают <see cref="Count"/>.
-    /// </para>
-    /// <para>
-    /// Вызывается после каждого <see cref="Remove(TSquare)"/>. При
-    /// <see cref="GuaranteesAtLeastOneStayable"/> = <c>false</c> допускается
-    /// отсутствие origin (например, после удаления origin-сегмента) — в этом
-    /// случае <see cref="OriginNode"/> уже сброшен в <c>null</c> и метод становится
-    /// no-op.
-    /// </para>
-    /// </remarks>
+
     private void PruneDisconnectedFromOrigin()
     {
         SegmentNode<TSquare>? anchor = OriginNode;
@@ -212,7 +176,7 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
     }
     private RelativeGraph<TSquare> PrivateCopy()
     {
-        var copy = new RelativeGraph<TSquare>(GuaranteesAtLeastOneStayable);
+        var copy = new RelativeGraph<TSquare>();
         copy._lineIndex.Clear();
         copy.Count = 0;
         copy._totalStayablesCount = 0;
@@ -405,7 +369,7 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
         }
         else
         {
-            if (_totalStayablesCount == 0 || (GuaranteesAtLeastOneStayable && _totalStayablesCount <= 1)) return false;
+            if (_totalStayablesCount == 0) return false;
             if (node.Stayables.RemoveStayable(offset))
             {
                 _totalStayablesCount--;
@@ -488,6 +452,21 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
     public RelativeGraph<TSquare> Copy() => PrivateCopy();
     public ISequenceEnumerator<TSquare> GetEnumerator(TSquare start) => new Enumerable(this, start);
     ISequence ICopyable<ISequence>.Copy() => PrivateCopy();
+
+    public static RelativeGraph<TSquare> CreateWithOriginStayable()
+    {
+        var graph = new RelativeGraph<TSquare>();
+        graph._lineIndex.Clear();
+        graph.Count = 0;
+        graph._totalStayablesCount = 0;
+        graph.OriginNode = null;
+
+        var zeroNode = new SegmentNode<TSquare>(new TSquare(), new Stayables(1, new[] { 1 }));
+        graph.AddToIndex(zeroNode);
+        graph._totalStayablesCount = 1;
+        graph.OriginNode = zeroNode;
+        return graph;
+    }
 
     private class Enumerable : SequenceEnumerable<TSquare>
     {

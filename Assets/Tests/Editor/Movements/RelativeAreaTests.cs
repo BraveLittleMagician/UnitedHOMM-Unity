@@ -9,9 +9,9 @@ public sealed class RelativeAreaTests
     public void LargerRadius_HasMorePositions()
     {
         var small = new RelativeArea<Square>(
-            MultipleAxes.Two, ImmutableHashSet.Create(1), length: 1, isCircle: false, guarantee: true);
+            MultipleAxes.Two, ImmutableHashSet.Create(1), length: 1, isCircle: false);
         var large = new RelativeArea<Square>(
-            MultipleAxes.Two, ImmutableHashSet.Create(1, 2, 3), length: 3, isCircle: false, guarantee: true);
+            MultipleAxes.Two, ImmutableHashSet.Create(1, 2, 3), length: 3, isCircle: false);
 
         var smallCount = small.GetEnumerator(Square.Zero).PositionsAll.Count;
         var largeCount = large.GetEnumerator(Square.Zero).PositionsAll.Count;
@@ -24,7 +24,7 @@ public sealed class RelativeAreaTests
     public void StartPosition_IsInPositionsAll()  // BASELINE CHECK
     {
         var area = new RelativeArea<Square>(
-            MultipleAxes.Two, ImmutableHashSet.Create(1), length: 1, isCircle: false, guarantee: true);
+            MultipleAxes.Two, ImmutableHashSet.Create(1), length: 1, isCircle: false);
         var e = area.GetEnumerator(Square.Zero);
 
         Assert.That(e.PositionsAll, Does.ContainKey(Square.Zero));
@@ -34,7 +34,7 @@ public sealed class RelativeAreaTests
     public void SupportsExplicitAttackable_IsFalse()  // BASELINE CHECK
     {
         var area = new RelativeArea<Square>(
-            MultipleAxes.Two, ImmutableHashSet.Create(1), length: 1, isCircle: false, guarantee: true);
+            MultipleAxes.Two, ImmutableHashSet.Create(1), length: 1, isCircle: false);
         var e = area.GetEnumerator(Square.Zero);
 
         Assert.That(e.SupportsExplicitAttackable, Is.False,
@@ -45,9 +45,9 @@ public sealed class RelativeAreaTests
     public void SquareVsCircle_ShapesDiffer()  // BASELINE CHECK
     {
         var square = new RelativeArea<Square>(
-            MultipleAxes.Two, ImmutableHashSet.Create(1, 2), length: 2, isCircle: false, guarantee: true);
+            MultipleAxes.Two, ImmutableHashSet.Create(1, 2), length: 2, isCircle: false);
         var circle = new RelativeArea<Square>(
-            MultipleAxes.Two, ImmutableHashSet.Create(1, 2), length: 2, isCircle: true, guarantee: true);
+            MultipleAxes.Two, ImmutableHashSet.Create(1, 2), length: 2, isCircle: true);
 
         var sqCount = square.GetEnumerator(Square.Zero).PositionsAll.Count;
         var circleCount = circle.GetEnumerator(Square.Zero).PositionsAll.Count;

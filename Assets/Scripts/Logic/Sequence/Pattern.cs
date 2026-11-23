@@ -12,7 +12,7 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
     private readonly int _cachedHash;
     private readonly ImmutableDictionary<TSquare, Stayable> _squares;
 
-    private Pattern(ImmutableDictionary<TSquare, Stayable> squares, bool guarantee, bool recalculate)
+    private Pattern(ImmutableDictionary<TSquare, Stayable> squares, bool recalculate)
     {
         ImmutableDictionary<TSquare, Stayable> finalSquares;
         if (recalculate)
@@ -28,20 +28,10 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
             finalSquares = squares;
         }
 
-        int countOfStayables = finalSquares.Values.Count(v => v == Stayable.Stay);
-
-        if (guarantee && (finalSquares.Count == 1 || countOfStayables < 1))
-        {
-            var firstCell = new TSquare().WithOffset(1, 0, 0, 0);
-            finalSquares = finalSquares.SetItem(firstCell, Stayable.Stay);
-            countOfStayables = finalSquares.Values.Count(v => v == Stayable.Stay);
-        }
-
         _squares = finalSquares;
-        CountOfStayables = countOfStayables;
-        GuaranteesAtLeastOneStayable = guarantee;
+        CountOfStayables = finalSquares.Values.Count(v => v == Stayable.Stay);
         MaxDepth = ComputeMaxDepth(finalSquares);
-        _cachedHash = ComputeHash(finalSquares, guarantee);
+        _cachedHash = ComputeHash(finalSquares);
     }
 
     public Pattern(TSquare square)
@@ -56,22 +46,25 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
 
         _squares = builder.ToImmutable();
         CountOfStayables = 1;
-        GuaranteesAtLeastOneStayable = true;
         MaxDepth = ComputeMaxDepth(_squares);
-        _cachedHash = ComputeHash(_squares, GuaranteesAtLeastOneStayable);
+        _cachedHash = ComputeHash(_squares);
     }
-    public Pattern(ImmutableDictionary<TSquare, Stayable> squares, bool guarantee = false) : this(squares, guarantee, recalculate: true) { }
 
-    public bool GuaranteesAtLeastOneStayable { get; }
+    public Pattern(ImmutableDictionary<TSquare, Stayable> squares)
+        : this(squares, recalculate: true) { }
+
+    // Computed: true, если сейчас в паттерне есть хотя бы одна stayable-клетка.
+    // После Step 4a это runtime-диагностика, а не config-гарантия
+    // (обездвиживание модификатором допустимо).
+    public bool GuaranteesAtLeastOneStayable => CountOfStayables > 0;
     public int Count => _squares.Count;
     public int MaxDepth { get; }
     public int CountOfStayables { get; }
     public ImmutableDictionary<TSquare, Stayable> Values => _squares;
 
-    private static int ComputeHash(ImmutableDictionary<TSquare, Stayable> squares, bool guarantee)
+    private static int ComputeHash(ImmutableDictionary<TSquare, Stayable> squares)
     {
         var hash = new HashCode();
-        hash.Add(guarantee);
         foreach (var kv in squares) { hash.Add(kv.Key); hash.Add(kv.Value); }
         return hash.ToHashCode();
     }
@@ -91,6 +84,7 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
         }
         return builder.Count == 0 ? null : builder.ToImmutable();
     }
+
     private (HashSet<TSquare>? forRemove, ImmutableDictionary<TSquare, Stayable>? newSquares) ComputeRemoval(IEnumerable<TSquare> ienum)
     {
         if (_squares.Count == 1) return (null, null);
@@ -99,6 +93,7 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
         if (forRemove.Count == 0) return (null, null);
         return (forRemove, squares.RemoveRange(forRemove));
     }
+
     private HashSet<TSquare>? ComputeForChange(IEnumerable<TSquare> ienum)
     {
         var squares = _squares;
@@ -114,6 +109,7 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
         MultipleAxes.Four => (_fullRange, _fullRange, _fullRange),
         _ => throw new ArgumentOutOfRangeException(nameof(axes)),
     };
+
     private static IEnumerable<TSquare> GetNeighbors(TSquare pos)
     {
         var (dyRange, dzRange, dwRange) = GetRanges(pos.ActiveAxes);
@@ -126,6 +122,7 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
                         yield return pos.WithOffset(dx, dy, dz, dw);
                     }
     }
+
     private static HashSet<TSquare> GetConnectedToOrigin(IEnumerable<TSquare> cells)
     {
         var cellSet = new HashSet<TSquare>(cells);
@@ -147,6 +144,7 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
         }
         return result;
     }
+
     private static int ComputeMaxDepth(ImmutableDictionary<TSquare, Stayable> squares)
     {
         var origin = new TSquare();
@@ -173,51 +171,51 @@ public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> w
     public Pattern<TSquare> WithRemoved(TSquare square) => WithRemoved(new[] { square });
     public Pattern<TSquare> WithSetStayable(TSquare square, Stayable stayable) => WithSetStayable(new[] { square }, stayable);
 
-    public (ImmutableDictionary<TSquare, Stayable> squares, bool guarantee) DataWithAdded(TSquare square, Stayable stayable) => DataWithAdded(new[] { square }, stayable);
-    public (ImmutableDictionary<TSquare, Stayable> squares, bool guarantee) DataWithRemoved(TSquare square) => DataWithRemoved(new[] { square });
-    public (ImmutableDictionary<TSquare, Stayable> squares, bool guarantee) DataWithSetStayable(TSquare square, Stayable stayable) => DataWithSetStayable(new[] { square }, stayable);
+    public ImmutableDictionary<TSquare, Stayable> DataWithAdded(TSquare square, Stayable stayable) => DataWithAdded(new[] { square }, stayable);
+    public ImmutableDictionary<TSquare, Stayable> DataWithRemoved(TSquare square) => DataWithRemoved(new[] { square });
+    public ImmutableDictionary<TSquare, Stayable> DataWithSetStayable(TSquare square, Stayable stayable) => DataWithSetStayable(new[] { square }, stayable);
 
     public Pattern<TSquare> WithAdded(IEnumerable<TSquare> newSquares, Stayable stayable)
     {
         var added = ComputeAdded(newSquares, stayable);
         if (added == null) return this;
-        return new Pattern<TSquare>(_squares.SetItems(added.Value), GuaranteesAtLeastOneStayable, recalculate: false);
+        return new Pattern<TSquare>(_squares.SetItems(added.Value), recalculate: false);
     }
-    public (ImmutableDictionary<TSquare, Stayable> squares, bool guarantee) DataWithAdded(IEnumerable<TSquare> newSquares, Stayable stayable)
+
+    public ImmutableDictionary<TSquare, Stayable> DataWithAdded(IEnumerable<TSquare> newSquares, Stayable stayable)
     {
         var added = ComputeAdded(newSquares, stayable);
-        if (added == null) return (_squares, GuaranteesAtLeastOneStayable);
-        return (_squares.SetItems(added.Value), false);
+        if (added == null) return _squares;
+        return _squares.SetItems(added.Value);
     }
+
     public Pattern<TSquare> WithRemoved(IEnumerable<TSquare> ienum)
     {
         var (forRemove, newSquares) = ComputeRemoval(ienum);
         if (forRemove == null) return this;
-        var squares = _squares;
-        if (GuaranteesAtLeastOneStayable && CountOfStayables == 1 && forRemove.Any(s => squares[s] == Stayable.Stay)) return this;
-        return new Pattern<TSquare>(newSquares!, GuaranteesAtLeastOneStayable, recalculate: true);
+        return new Pattern<TSquare>(newSquares!, recalculate: true);
     }
-    public (ImmutableDictionary<TSquare, Stayable> squares, bool guarantee) DataWithRemoved(IEnumerable<TSquare> ienum)
+
+    public ImmutableDictionary<TSquare, Stayable> DataWithRemoved(IEnumerable<TSquare> ienum)
     {
         var (forRemove, newSquares) = ComputeRemoval(ienum);
-        if (forRemove == null) return (_squares, GuaranteesAtLeastOneStayable);
-        return (newSquares!, false);
+        if (forRemove == null) return _squares;
+        return newSquares!;
     }
+
     public Pattern<TSquare> WithSetStayable(IEnumerable<TSquare> ienum, Stayable stayable)
     {
-        var squares = _squares;
         var forChange = ComputeForChange(ienum);
         if (forChange == null) return this;
-        if (stayable == Stayable.NotStay && GuaranteesAtLeastOneStayable && CountOfStayables == 1 && forChange.Any(s => squares[s] == Stayable.Stay)) return this;
         var newDict = _squares.SetItems(forChange.Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable)));
-        return new Pattern<TSquare>(newDict, GuaranteesAtLeastOneStayable, recalculate: false);
+        return new Pattern<TSquare>(newDict, recalculate: false);
     }
-    public (ImmutableDictionary<TSquare, Stayable> squares, bool guarantee) DataWithSetStayable(IEnumerable<TSquare> ienum, Stayable stayable)
+
+    public ImmutableDictionary<TSquare, Stayable> DataWithSetStayable(IEnumerable<TSquare> ienum, Stayable stayable)
     {
         var forChange = ComputeForChange(ienum);
-        if (forChange == null) return (_squares, GuaranteesAtLeastOneStayable);
-        var newDict = _squares.SetItems(forChange.Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable)));
-        return (newDict, false);
+        if (forChange == null) return _squares;
+        return _squares.SetItems(forChange.Select(s => new KeyValuePair<TSquare, Stayable>(s, stayable)));
     }
 
     public override string ToString() => $"Паттерн с {Count} клетками, из них {CountOfStayables} стоячих";

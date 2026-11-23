@@ -51,7 +51,7 @@ public sealed class CombinedEnumeratorTests
     {
         var moveP = new Pattern<Square>(new Square { X = 1, Y = 0 });
         var attackArea = new RelativeArea<Square>(
-            MultipleAxes.Two, ImmutableHashSet.Create(1), length: 1, isCircle: false, guarantee: true);
+            MultipleAxes.Two, ImmutableHashSet.Create(1), length: 1, isCircle: false);
         var attackEnum = attackArea.GetEnumerator(Square.Zero);
 
         var combined = new CombinedEnumerator(moveP.GetEnumerator(Square.Zero), attackEnum);

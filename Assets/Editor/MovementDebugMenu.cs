@@ -12,8 +12,7 @@ public static class MovementDebugMenu
             MultipleAxes.Three,
             ImmutableHashSet.Create(1, 3),
             length: 3,
-            isCircle: true,
-            guarantee: false);
+            isCircle: true);
         MovementVisualizerWindow.Show("Circle r=3", s => a.GetEnumerator(s));
     }
 }

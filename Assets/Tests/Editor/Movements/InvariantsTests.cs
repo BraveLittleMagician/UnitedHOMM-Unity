@@ -26,7 +26,7 @@ public sealed class InvariantsTests
 
         // RelativeArea
         list.Add(new RelativeArea<Square>(
-            MultipleAxes.Two, ImmutableHashSet.Create(1), length: 1, isCircle: false, guarantee: true)
+            MultipleAxes.Two, ImmutableHashSet.Create(1), length: 1, isCircle: false)
             .GetEnumerator(Square.Zero));
 
         // Combined

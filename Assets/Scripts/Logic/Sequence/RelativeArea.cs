@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -9,35 +8,35 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
 {
     private readonly int _cachedHash;
 
-    public RelativeArea(MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle, bool guarantee)
+    public RelativeArea(MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle)
     {
         if (length < 0)
             throw new ArgumentOutOfRangeException(nameof(length), "Length не может быть отрицательным");
-        
-        ActiveAxes = activeAxes;
-        
-        if (guarantee)
-        {
-            length = Math.Max(length, 1);
-            stayables = stayables.Add(1).Where(i => i > 0 && i <= length).ToImmutableHashSet();
-        }
 
+        ActiveAxes = activeAxes;
         Length = length;
         IsCircle = isCircle;
         Stayables = stayables;
-        GuaranteesAtLeastOneStayable = guarantee;
 
         var hash = new HashCode();
-        hash.Add(GuaranteesAtLeastOneStayable);
         hash.Add(IsCircle);
         hash.Add(length);
         hash.Add((int)activeAxes);
         foreach (var item in stayables) hash.Add(item);
         _cachedHash = hash.ToHashCode();
     }
-    public RelativeArea(MultipleAxes activeAxes, bool isCircle) : this(activeAxes, ImmutableHashSet.Create(0, 1), 1, isCircle, guarantee: true) { }
+    public RelativeArea(MultipleAxes activeAxes, bool isCircle) : this(activeAxes, ImmutableHashSet.Create(1), 1, isCircle) { }
 
-    public bool GuaranteesAtLeastOneStayable { get; }
+    public bool GuaranteesAtLeastOneStayable
+    {
+        get
+        {
+            for (int r = 1; r <= Length; r++)
+                if (Stayables.Contains(r)) return true;
+            return false;
+        }
+    }
+
     public bool IsCircle { get; }
     public int Length { get; }
     public MultipleAxes ActiveAxes { get; }
@@ -52,69 +51,72 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
     }
 
     public RelativeArea<TSquare> WithIncreasedRadius()
-    {
-        int newLength = Length + 1;
-        return new RelativeArea<TSquare>(ActiveAxes, Stayables, newLength, IsCircle, GuaranteesAtLeastOneStayable);
-    }
+        => new(ActiveAxes, Stayables, Length + 1, IsCircle);
+
     public RelativeArea<TSquare> WithDecreasedRadius()
     {
         if (Length <= 1) return this;
-        if (Stayables.Count == 1 && Stayables.Contains(Length)) return this;
         int newLength = Length - 1;
         var newStayables = Stayables.Where(r => r <= newLength).ToImmutableHashSet();
-        return new (ActiveAxes, newStayables, newLength, IsCircle, GuaranteesAtLeastOneStayable);
+        return new(ActiveAxes, newStayables, newLength, IsCircle);
     }
+
     public RelativeArea<TSquare> WithAddedStayable(int radius)
     {
         if (radius < 0 || radius > Length) return this;
         if (Stayables.Contains(radius)) return this;
-        return new (ActiveAxes, Stayables.Add(radius), Length, IsCircle, GuaranteesAtLeastOneStayable);
+        return new(ActiveAxes, Stayables.Add(radius), Length, IsCircle);
     }
+
     public RelativeArea<TSquare> WithRemovedStayable(int radius)
     {
         if (radius < 0 || radius > Length) return this;
-        if (!Stayables.Contains(radius)) return this; 
-        if (Stayables.Count == 1 && Stayables.Contains(radius)) return this;
-        return new RelativeArea<TSquare>(ActiveAxes, Stayables.Remove(radius), Length, IsCircle, GuaranteesAtLeastOneStayable);
+        if (!Stayables.Contains(radius)) return this;
+        return new(ActiveAxes, Stayables.Remove(radius), Length, IsCircle);
     }
-    public RelativeArea<TSquare> WithCircle(bool isCircle) => new (ActiveAxes, Stayables, Length, isCircle, GuaranteesAtLeastOneStayable);
 
-    public (MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle, bool guarantees) DataWithIncreasedRadius() => (ActiveAxes, Stayables, Length + 1, IsCircle, GuaranteesAtLeastOneStayable);
-    
-    public (MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle, bool guarantees) DataWithDecreasedRadius()
+    public RelativeArea<TSquare> WithCircle(bool isCircle) => new(ActiveAxes, Stayables, Length, isCircle);
+
+    public (MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle) DataWithIncreasedRadius()
+        => (ActiveAxes, Stayables, Length + 1, IsCircle);
+
+    public (MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle) DataWithDecreasedRadius()
     {
-        var data = (ActiveAxes, Stayables, Length, IsCircle, GuaranteesAtLeastOneStayable);
-        if (Length < 1) return data;
+        if (Length < 1) return (ActiveAxes, Stayables, Length, IsCircle);
         int newLength = Length - 1;
         var newStayables = Stayables.Where(r => r <= newLength).ToImmutableHashSet();
-        return (ActiveAxes, newStayables, newLength, IsCircle, false);
+        return (ActiveAxes, newStayables, newLength, IsCircle);
     }
-    public (MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle, bool guarantees) DataWithAddedStayable(int radius)
-    {
-        var data = (ActiveAxes, Stayables, Length, IsCircle, GuaranteesAtLeastOneStayable);
-        if (radius < 0 || radius > Length) return data;
-        if (Stayables.Contains(radius)) return data;
-        return (ActiveAxes, Stayables.Add(radius), Length, IsCircle, GuaranteesAtLeastOneStayable);
-    }
-    public (MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle, bool guarantees) DataWithRemovedStayable(int radius)
-    {
-        var data = (ActiveAxes, Stayables, Length, IsCircle, GuaranteesAtLeastOneStayable);
-        if (radius < 0 || radius > Length) return data;
-        if (!Stayables.Contains(radius)) return data;
-        return (ActiveAxes, Stayables.Remove(radius), Length, IsCircle, GuaranteesAtLeastOneStayable);
-    }
-    public (MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle, bool guarantees) DataWithCircle(bool isCircle) => (ActiveAxes, Stayables, Length, isCircle, GuaranteesAtLeastOneStayable);
 
-    public readonly ISequenceEnumerator<TSquare> GetEnumerator(TSquare start) => 
-        IsCircle ? 
-            new EnumerableCircle(ActiveAxes, BuildStayableList(), start): 
-            new EnumerableSquare(ActiveAxes, BuildStayableList(), start);
+    public (MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle) DataWithAddedStayable(int radius)
+    {
+        if (radius < 0 || radius > Length) return (ActiveAxes, Stayables, Length, IsCircle);
+        if (Stayables.Contains(radius)) return (ActiveAxes, Stayables, Length, IsCircle);
+        return (ActiveAxes, Stayables.Add(radius), Length, IsCircle);
+    }
+
+    public (MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle) DataWithRemovedStayable(int radius)
+    {
+        if (radius < 0 || radius > Length) return (ActiveAxes, Stayables, Length, IsCircle);
+        if (!Stayables.Contains(radius)) return (ActiveAxes, Stayables, Length, IsCircle);
+        return (ActiveAxes, Stayables.Remove(radius), Length, IsCircle);
+    }
+
+    public (MultipleAxes activeAxes, IImmutableSet<int> stayables, int length, bool isCircle) DataWithCircle(bool isCircle)
+        => (ActiveAxes, Stayables, Length, isCircle);
+
+    public readonly ISequenceEnumerator<TSquare> GetEnumerator(TSquare start)
+        => IsCircle
+            ? new EnumerableCircle(ActiveAxes, BuildStayableList(), start)
+            : new EnumerableSquare(ActiveAxes, BuildStayableList(), start);
+
     public RelativeArea<TSquare> Copy() => this;
     ISequence ICopyable<ISequence>.Copy() => this;
+
     public bool Equals(RelativeArea<TSquare> other)
     {
         if (ReferenceEquals(Stayables, other.Stayables)) return true;
-        if (GuaranteesAtLeastOneStayable != other.GuaranteesAtLeastOneStayable || IsCircle != other.IsCircle || Length != other.Length || ActiveAxes != other.ActiveAxes) return false;
+        if (IsCircle != other.IsCircle || Length != other.Length || ActiveAxes != other.ActiveAxes) return false;
         if (Stayables == null && other.Stayables == null) return true;
         if (Stayables == null || other.Stayables == null) return false;
         return Stayables.SetEquals(other.Stayables);
@@ -158,6 +160,7 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
         public override IEnumerable<TSquare> GetNeighbors(TSquare cell) => cell.UnitNeighbors();
         public override IPath<TSquare> CombinePositionsIntoPath(TSquare[] positions) => new PathSequence<TSquare>(positions);
     }
+
     private class EnumerableCircle : SequenceEnumerable<TSquare>
     {
         private readonly List<Stayable> _stayables;

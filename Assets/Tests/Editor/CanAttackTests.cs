@@ -15,7 +15,7 @@ public sealed class CanAttackTests
         foreach (var cell in attackCells)
             attackBuilder[cell] = Stayable.Stay;
 
-        var attack = new Pattern<Square>(attackBuilder.ToImmutable(), guarantee: true)
+        var attack = new Pattern<Square>(attackBuilder.ToImmutable())
             .GetEnumerator(Square.Zero);
 
         return new CombinedEnumerator(move, attack);
@@ -84,7 +84,7 @@ public sealed class CanAttackTests
         attackBuilder[new Square { X = 1, Y = 0 }] = Stayable.NotStay;
         attackBuilder[new Square { X = 2, Y = 0 }] = Stayable.Stay;
 
-        var attack = new Pattern<Square>(attackBuilder.ToImmutable(), guarantee: true)
+        var attack = new Pattern<Square>(attackBuilder.ToImmutable())
             .GetEnumerator(Square.Zero);
 
         ISequenceEnumerator<Square> combined = new CombinedEnumerator(move, attack);

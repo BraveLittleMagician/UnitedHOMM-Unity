@@ -16,6 +16,6 @@ public static class KingCellSet
                     var cell = new Square { X = dx, Y = dy, Z = dz };
                     stayables[cell] = Stayable.Stay;
                 }
-        return new Pattern<Square>(stayables.ToImmutable(), guarantee: true);
+        return new Pattern<Square>(stayables.ToImmutable());
     }
 }
