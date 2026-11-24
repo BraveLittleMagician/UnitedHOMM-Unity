@@ -15,5 +15,5 @@ public interface IMovement
     IReadOnlyList<TPos> GetValidMoves<TPos>(IPiece piece, TPos fromPosition, IReadOnlyRoom room) where TPos : struct;
     ISequenceEnumerator<Square> CreateMoveEnumeratorFor(IPiece piece, Square fromPosition);
     ISequenceEnumerator<Square> CreateAttackEnumeratorFor(IPiece piece, Square fromPosition);
-    IReadOnlyDictionary<Square, SquareInfo> GetInfos(IPiece piece, Square fromPosition);
+    IReadOnlyDictionary<Square, PositionInfo> GetInfos(IPiece piece, Square fromPosition);
 }

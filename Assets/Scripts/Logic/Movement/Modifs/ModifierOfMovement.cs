@@ -1,7 +1,7 @@
 ﻿#nullable enable
 
 public abstract class ModifierOfMovement { }
-
+/*
 public abstract class ModifierOfMovement<TSequence, TPosition> : ModifierOfMovement, IModifier, IShapeTransformModifier<TSequence, TPosition> where TSequence : notnull, ISequence<TPosition, TSequence> where TPosition : struct, ISquare<TPosition>
 {
     public virtual ShapeTarget Target => ShapeTarget.Both;
@@ -25,3 +25,4 @@ public abstract class ModifierOfMovement<TSequence, TPosition> : ModifierOfMovem
     public virtual void RestoreDuration(int duration) { }
     public abstract TSequence Apply(TSequence sequence);
 }
+*/

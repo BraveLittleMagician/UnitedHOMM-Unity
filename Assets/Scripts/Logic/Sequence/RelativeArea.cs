@@ -27,7 +27,7 @@ public readonly struct RelativeArea<TSquare> : ISequence<TSquare, RelativeArea<T
     }
     public RelativeArea(MultipleAxes activeAxes, bool isCircle) : this(activeAxes, ImmutableHashSet.Create(1), 1, isCircle) { }
 
-    public bool GuaranteesAtLeastOneStayable
+    public bool HaveStayable
     {
         get
         {

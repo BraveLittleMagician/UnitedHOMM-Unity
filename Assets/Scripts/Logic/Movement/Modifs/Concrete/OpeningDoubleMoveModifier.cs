@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 
+/*
 public sealed class OpeningDoubleMoveModifier : IModifier, IShapeTransformModifier<Pattern<Square>, Square>
 {
     private IPiece _owner = null!;
@@ -64,3 +65,4 @@ public sealed class OpeningDoubleMoveModifier : IModifier, IShapeTransformModifi
             _selfRemove(this);
     }
 }
+*/

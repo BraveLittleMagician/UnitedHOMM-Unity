@@ -1,7 +1,7 @@
 ﻿#nullable enable
 
 using System.Collections.Generic;
-
+/*
 public class IncreaserOfGraph<TSquare> : ModificatorOfGraph<TSquare> where TSquare : struct, ISquare<TSquare>
 {
     public IEnumerable<(TSquare position, int length, IEnumerable<int> stayableIndices)> Nodes { get; }
@@ -14,3 +14,4 @@ public class IncreaserOfGraph<TSquare> : ModificatorOfGraph<TSquare> where TSqua
         return copy;
     }
 }
+*/

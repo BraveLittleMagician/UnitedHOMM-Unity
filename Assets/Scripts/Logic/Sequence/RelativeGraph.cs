@@ -23,7 +23,7 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
     }
 
     public int Count { get; private set; }
-    public bool GuaranteesAtLeastOneStayable => _totalStayablesCount > 0;
+    public bool HaveStayable => _totalStayablesCount > 0;
     public SegmentNode<TSquare>? OriginNode { get; private set; }
     public IEnumerable<SegmentNode<TSquare>> Nodes => _lineIndex.Values.SelectMany(list => list);
 
@@ -161,7 +161,7 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
     private bool Remove(SegmentNode<TSquare> node) => RemoveInternal(node, false);
     private bool RemoveInternal(SegmentNode<TSquare> node, bool force)
     {
-        if (!force && GuaranteesAtLeastOneStayable && node.Position.X <= 0 && node.XMax >= 0 && node.Position.IsZeroLine()) return false;
+        if (!force && HaveStayable && node.Position.X <= 0 && node.XMax >= 0 && node.Position.IsZeroLine()) return false;
         if (!Contains(node)) return false;
         if (ReferenceEquals(OriginNode, node)) OriginNode = null;
         _totalStayablesCount -= node.Stayables.Count;
@@ -393,7 +393,7 @@ public sealed class RelativeGraph<TSquare> : ISequence<TSquare, RelativeGraph<TS
         var leftNode = (offset > 0) ? RelativeGraph<TSquare>.CreateSubNode(node, 0, offset - 1) : null;
         var rightNode = (offset < node.LastRelativeIndex) ? RelativeGraph<TSquare>.CreateSubNode(node, offset + 1, node.LastRelativeIndex) : null;
 
-        if (GuaranteesAtLeastOneStayable && node.Position.X <= 0 && node.XMax >= 0 && node.Position.IsZeroLine())
+        if (HaveStayable && node.Position.X <= 0 && node.XMax >= 0 && node.Position.IsZeroLine())
         {
             bool leftHasOrigin = leftNode != null && leftNode.Position.X <= 0 && leftNode.XMax >= 0 && leftNode.Position.IsZeroLine();
             bool rightHasOrigin = rightNode != null && rightNode.Position.X <= 0 && rightNode.XMax >= 0 && rightNode.Position.IsZeroLine();

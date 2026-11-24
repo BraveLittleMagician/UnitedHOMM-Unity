@@ -19,7 +19,7 @@ public sealed class SizeAwareInt : ISequence<int, SizeAwareInt>, IDisposable
         _eventBus.Subscribe<DeckSizeChangedEvent>(OnDeckSizeChanged);
     }
 
-    public bool GuaranteesAtLeastOneStayable => _count > 0;
+    public bool HaveStayable => _count > 0;
 
     public ISequenceEnumerator<int> GetEnumerator(int start) => new Enumerator(start, () => _count);
 

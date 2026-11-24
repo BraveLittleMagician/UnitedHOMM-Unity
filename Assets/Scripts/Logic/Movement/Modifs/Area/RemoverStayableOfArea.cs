@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+/*
 public class RemoverStayableOfArea<TSquare> : ModificatorOfArea<TSquare> where TSquare : struct, ISquare<TSquare>
 {
     public int Index { get; }
@@ -10,3 +11,4 @@ public class RemoverStayableOfArea<TSquare> : ModificatorOfArea<TSquare> where T
         return new RelativeArea<TSquare>(activeAxes, stayables, length, isCircle);
     }
 }
+*/

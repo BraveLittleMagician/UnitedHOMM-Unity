@@ -14,7 +14,7 @@ public readonly struct PathSetPattern : ISequence<Square, PathSetPattern>
     {
         _squares = squares;
         _nextMap = nextMap;
-        GuaranteesAtLeastOneStayable = guaranteesAtLeastOneStayable;
+        HaveStayable = guaranteesAtLeastOneStayable;
         _cachedHash = cachedHash;
     }
     public PathSetPattern(IReadOnlyList<MoveRule> rules, int maxRepeat)
@@ -47,11 +47,11 @@ public readonly struct PathSetPattern : ISequence<Square, PathSetPattern>
 
         _squares = squares.ToImmutable();
         _nextMap = nextMap.ToImmutable();
-        GuaranteesAtLeastOneStayable = _squares.Values.Any(s => s == Stayable.Stay);
-        _cachedHash = ComputeHash(_squares, _nextMap, GuaranteesAtLeastOneStayable);
+        HaveStayable = _squares.Values.Any(s => s == Stayable.Stay);
+        _cachedHash = ComputeHash(_squares, _nextMap, HaveStayable);
     }
 
-    public bool GuaranteesAtLeastOneStayable { get; }
+    public bool HaveStayable { get; }
 
     private static int ComputeHash(ImmutableDictionary<Square, Stayable> squares, ImmutableDictionary<Square, ImmutableHashSet<Square>> nextMap, bool guarantee)
     {

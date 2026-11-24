@@ -19,7 +19,7 @@ public readonly struct StepBudgetPattern : ISequence<Square, StepBudgetPattern>
         _maxSteps = maxSteps;
         _activeAxes = activeAxes;
         _relativePositions = relativePositions;
-        GuaranteesAtLeastOneStayable = guaranteesAtLeastOneStayable;
+        HaveStayable = guaranteesAtLeastOneStayable;
         _cachedHash = cachedHash;
     }
 
@@ -70,9 +70,9 @@ public readonly struct StepBudgetPattern : ISequence<Square, StepBudgetPattern>
         bool hasStay = false;
         foreach (var s in _relativePositions.Values)
             if (s == Stayable.Stay) { hasStay = true; break; }
-        GuaranteesAtLeastOneStayable = hasStay;
+        HaveStayable = hasStay;
 
-        _cachedHash = ComputeHash(_relativePositions, GuaranteesAtLeastOneStayable, maxSteps, activeAxes);
+        _cachedHash = ComputeHash(_relativePositions, HaveStayable, maxSteps, activeAxes);
     }
 
     private static int ComputeHash(ImmutableDictionary<Square, Stayable> relativePositions, bool guarantee, int maxSteps, MultipleAxes activeAxes)
@@ -102,7 +102,7 @@ public readonly struct StepBudgetPattern : ISequence<Square, StepBudgetPattern>
         return list;
     }
 
-    public bool GuaranteesAtLeastOneStayable { get; }
+    public bool HaveStayable { get; }
     public int MaxSteps => _maxSteps;
     public MultipleAxes ActiveAxes => _activeAxes;
     public IReadOnlyCollection<Square> StayCells => _stayCells;

@@ -2,10 +2,9 @@
 using System;
 using System.Collections.Generic;
 
-public abstract class MovementInRoom<TSequence> : IMovement where TSequence : notnull, ISequence<Square, TSequence>
+public abstract class MovementInRoom<TPosition, TSequence> : IMovement where TSequence : notnull, ISequence<TPosition, TSequence> where TPosition : struct
 {
     private readonly IEventBus _eventBus;
-    private readonly ModifierHost _modifierHost;
     private readonly IPiece _owner;
     private bool _disposed;
 
@@ -14,32 +13,11 @@ public abstract class MovementInRoom<TSequence> : IMovement where TSequence : no
         MovementSequence = moveSequence;
         AttackSequence = attackSequence;
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _modifierHost = modifierHost ?? throw new ArgumentNullException(nameof(modifierHost));
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
     }
 
     protected TSequence MovementSequence { get; }
     protected TSequence AttackSequence { get; }
-
-    private TSequence ApplyModifiers(TSequence baseSequence, IPiece piece, ShapeTarget flag)
-    {
-        var modified = baseSequence;
-        var transforms = GetShapeTransforms(piece);
-        for (int i = 0; i < transforms.Count; i++)
-        {
-            var t = transforms[i];
-            if ((t.Target & flag) != 0)
-                modified = t.Apply(modified);
-        }
-        return modified;
-    }
-
-    protected IReadOnlyList<IShapeTransformModifier<TSequence, Square>> GetShapeTransforms(IPiece piece) => _modifierHost.GetShapeTransforms<TSequence, Square>(piece.IndexInHouse);
-    protected TSequence ApplyMovementModifiers(TSequence baseSequence, IPiece piece) => ApplyModifiers(baseSequence, piece, ShapeTarget.Movement);
-    protected TSequence ApplyAttackModifiers(TSequence baseSequence, IPiece piece) => ApplyModifiers(baseSequence, piece, ShapeTarget.Attack);
-    protected ISequenceEnumerator<Square> WrapWithFacing(ISequenceEnumerator<Square> innerLocal, IPiece piece, Square fromWorld) => new FacingEnumerator(innerLocal, piece.Facing, fromWorld);
-    protected static ISequenceEnumerator<Square> WithAttackSemantics(ISequenceEnumerator<Square> inner)
-        => inner.SupportsExplicitAttackable ? inner : new AttackSemanticsEnumerator(inner);
 
     public void Dispose()
     {
@@ -235,48 +213,5 @@ public abstract class MovementInRoom<TSequence> : IMovement where TSequence : no
         }
 
         return result;
-    }
-    public IReadOnlyDictionary<Square, SquareInfo> GetInfos(IPiece piece, Square fromPosition) => CreateCombinedEnumeratorFor(piece, fromPosition).Squares;
-    public ISequenceEnumerator<Square>? CreateEnumeratorFor(IPiece piece, Square fromPosition) => CreateCombinedEnumeratorFor(piece, fromPosition);
-
-    public abstract ISequenceEnumerator<Square> CreateMoveEnumeratorFor(IPiece piece, Square fromPosition);
-    public abstract ISequenceEnumerator<Square> CreateAttackEnumeratorFor(IPiece piece, Square fromPosition);
-    public abstract ISequenceEnumerator<Square> CreateCombinedEnumeratorFor(IPiece piece, Square fromPosition);
-
-    private sealed class AttackSemanticsEnumerator : ISequenceEnumerator<Square>
-    {
-        private readonly ISequenceEnumerator<Square> _inner;
-        private Dictionary<Square, Attackable>? _attackableCache;
-
-        public AttackSemanticsEnumerator(ISequenceEnumerator<Square> inner)
-        {
-            _inner = inner;
-        }
-
-        public Square StartPosition => _inner.StartPosition;
-        public int MaxDepth => _inner.MaxDepth;
-        public Dictionary<Square, Stayable> PositionsAll => _inner.PositionsAll;
-        public List<Square> PositionsStayables => _inner.PositionsStayables;
-        public bool SupportsExplicitAttackable => true;
-
-        public IReadOnlyDictionary<Square, Attackable> PositionsAttackable
-        {
-            get
-            {
-                if (_attackableCache != null) return _attackableCache;
-                var stayables = _inner.PositionsStayables;
-                var dict = new Dictionary<Square, Attackable>(stayables.Count);
-                for (int i = 0; i < stayables.Count; i++)
-                    dict[stayables[i]] = Attackable.Attack;
-                _attackableCache = dict;
-                return dict;
-            }
-        }
-
-        public IEnumerable<Square> GetNeighbors(Square cell) => _inner.GetNeighbors(cell);
-        public bool CanMoveTo(Square target) => _inner.CanMoveTo(target);
-        public bool CanMoveTo(IPath<Square> path) => _inner.CanMoveTo(path);
-        public IPath<Square> CombinePositionsIntoPath(Square[] positions)
-            => _inner.CombinePositionsIntoPath(positions);
     }
 }

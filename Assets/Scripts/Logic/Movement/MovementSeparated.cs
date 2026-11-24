@@ -1,4 +1,5 @@
 ﻿#nullable enable
+/*
 public sealed class MovementSeparated<TSequence> : MovementInRoom<TSequence> where TSequence : notnull, ISequence<Square, TSequence>
 {
     public MovementSeparated(
@@ -36,3 +37,4 @@ public sealed class MovementSeparated<TSequence> : MovementInRoom<TSequence> whe
         return WrapWithFacing(combined, piece, fromPosition);
     }
 }
+*/

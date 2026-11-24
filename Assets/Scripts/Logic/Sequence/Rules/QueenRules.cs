@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public static class QueenRules
 {
+    /*
     public static IReadOnlyList<MoveRule> Create()
     {
         var rook = RookRules.Create();
@@ -13,4 +14,5 @@ public static class QueenRules
         result.AddRange(bishop);
         return result;
     }
+    */
 }

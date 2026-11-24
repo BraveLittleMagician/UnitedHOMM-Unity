@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 public static class RookRules
 {
+    /*
     public static IReadOnlyList<MoveRule> Create() => new[]
     {
         SingleSlide( 1,  0,  0), 
@@ -17,4 +18,5 @@ public static class RookRules
     {
         new RuleStep(new Square { X = dx, Y = dy, Z = dz }, Stayable.Stay, repeat: -1),
     });
+    */
 }

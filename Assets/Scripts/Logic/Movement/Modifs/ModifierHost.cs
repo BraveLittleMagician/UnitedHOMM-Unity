@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
-
+/*
 public sealed class ModifierHost : IDisposable
 {
     private sealed class ModifierBucket
@@ -246,3 +246,4 @@ public sealed class ModifierHost : IDisposable
         return result;
     }
 }
+*/

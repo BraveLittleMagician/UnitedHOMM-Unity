@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 
+/*
 public class SetStayableOfGraph<TSquare> : ModificatorOfGraph<TSquare> where TSquare : struct, ISquare<TSquare>
 {
     public IEnumerable<(TSquare position, Stayable stayable)> Cells { get; }
@@ -14,3 +15,4 @@ public class SetStayableOfGraph<TSquare> : ModificatorOfGraph<TSquare> where TSq
         return copy;
     }
 }
+*/
