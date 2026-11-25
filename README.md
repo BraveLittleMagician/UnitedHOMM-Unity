@@ -1,22 +1,22 @@
-# UnitedHOMM — Core Game Logic
+# UnitedHOMM — Core Game Logic + Unity
 
-Учебный проект по мотивам Heroes of Might and Magic: слой игровой логики на C# (.NET 6), отделённый от Unity.
+Учебный проект по мотивам Heroes of Might and Magic: слой игровой логики на C# (.NET 6), отделённый от Unity, и Unity-слой на MVP.
 
 ## О проекте
 
-Третья итерация проекта. Первые две версии были переписаны после анализа проблем с расширяемостью архитектуры. Текущая версия — чистая доменная логика без привязки к рендерингу и вводу, что позволяет тестировать её независимо от Unity.
+Третья итерация проекта. Первые две версии были переписаны после анализа проблем с расширяемостью архитектуры. Текущая версия — чистая доменная логика без привязки к рендерингу и вводу, что позволяет тестировать её независимо от Unity. Unity-слой подключается через интерфейсы и реализует MVP.
 
 ## Архитектура
 
-- **Слои**: доменная логика (Core) ↔ инфраструктура (EventBus, Logger) ↔ Unity-слой (рендеринг, ввод) — последний подключается через интерфейсы.
+- **Слои**: доменная логика (`Logic`) ↔ инфраструктура (`EventBus`, `Logger`) ↔ Unity-слой (`Presentation`).
 - **Сервисы**: `AbilityService`, `CombatService`.
-- **Оркестратор**: `Flow` — единая точка входа (Move, MeleeAttack, ActivateModifier, EnPassantAttack, AmbushAttack) с undo/redo.
-- **Событийная модель**: `EventBus` (`PieceMovedEvent`, `PieceAttackedEvent`, `PieceDiedEvent`, ...).
-- **Result-паттерн**: `Result` / `Result<T>` вместо исключений для ожидаемых ошибок.
-- **Движение**: иммутабельные `Pattern`, `RelativeArea`, `RelativeGraph`, `PathSetPattern`; `FacingEnumerator` — поворот формы относительно направления фигуры; `Movement` объединяет move- и attack-последовательности.
-- **Модификаторы**: `ModifierHost`, `IActiveModifier`, `ITargetedModifier` (En Passant, Ambush).
+- **Оркестратор**: `Flow` — единая точка входа для действий (`Move`, `MeleeAttack`, `ActivateModifier`, `EnPassantAttack`, `AmbushAttack`) с undo/redo.
+- **Событийная модель**: `EventBus` (`PieceMovedEvent`, `PieceAttackedEvent`, `PieceDiedEvent`, `TurnStartedEvent` и др.).
+- **Result-паттерн**: `Result` / `Result<T>` вместо исключений для ожидаемых ошибок (невалидный ход, нет зарядов и т.п.).
+- **Движение**: иммутабельные `Pattern`, `RelativeArea`, `RelativeGraph`, `PathSetPattern`, `StepBudgetPattern`; `FacingEnumerator` — поворот формы относительно направления фигуры; `CombinedEnumerator` объединяет move- и attack-последовательности.
+- **Модификаторы**: `ModifierHost`, `IActiveModifier`, `ITargetedModifier`, `IPureShapeModifier`, `IShapeTransformModifier`; отдельные модификаторы формы для `Pattern`, `RelativeArea`, `RelativeGraph`, `PathSetPattern`, `StepBudgetPattern`.
 - **4D-координаты** (`Square`: X, Y, Z, W) — поддержка многослойных досок.
-- **Undo/Redo**: `IUndoableOperation`, `WorldState.Capture/Restore`.
+- **Undo/Redo**: `IUndoableOperation`, `MoveUndo`, `WorldDelta`, `WorldState.Capture/Restore`.
 
 ## Unity-слой (Presentation)
 
@@ -30,12 +30,15 @@
 
 ## Реализованные механики
 
-- Перемещение фигур с проверкой пути, занятости и границ доски.
+- Перемещение фигур с проверкой пути, занятости клеток и границ доски.
 - Атака в ближнем бою с автоматическим подходом к цели (BFS-поиск пути).
 - Способности: En Passant, Ambush.
-- Модификаторы с зарядами и триггерами.
-- Смерть фигур и автоматическое удаление из комнат.
+- Модификаторы с зарядами и триггерами (Attack Boost, Blind, Counter Attack, Fireball, Opening Double Move, Rotate, Self Heal, Stun и др.).
+- Смерть фигур и автоматическое удаление из комнат (`Board`, `Decks`, `Graveyard`).
+- Повышение фигур (Promotion) с выбором варианта.
 - Undo/Redo и Commit плана действий.
+- Управление ходами (`TurnManager`), проверка конца матча (`MatchEndChecker`).
+- Загрузка конфигураций доски и библиотеки фигур из JSON.
 
 ## Тестирование
 
@@ -52,11 +55,37 @@ NUnit. 11 тестовых классов, покрывают:
 
 ## Технологии
 
-C# 10+, .NET 6, nullable reference types, `System.Collections.Immutable`, `ArrayPool<T>`, кэширование (иерархия типов событий, хэши паттернов), `IDisposable`-паттерн, NUnit.
+C# 10+, .NET 6, nullable reference types, `System.Collections.Immutable`, `ArrayPool<T>`, кэширование (иерархия типов событий, хэши паттернов), `IDisposable`-паттерн, NUnit, Unity 6, UGUI, Shader Graph, ClosedXML (для утилиты TruthTable).
 
 ## Структура решения
 
-[скриншот Solution Explorer или список проектов: Core, Tests, Unity — что есть]
+```
+Scripts/
+├── Logic/
+│   ├── Abstractions/     — интерфейсы, enum'ы, события
+│   ├── Application/      — сервисы, Flow, оркестрация
+│   ├── Domain/           — доменные модели (Piece, Properties, Abilities, Modifiers, Reactive)
+│   ├── Geometry/         — Square, Square2D/3D, FacingRotation, Paths
+│   ├── Infrastructure/    — EventBus, Logging, JSON-загрузка
+│   ├── Movement/         — Movement, ModifierHost, модификаторы формы
+│   ├── Rooms/            — Board, Decks, Graveyard, House, Registry
+│   └── Sequence/         — Pattern, RelativeArea, RelativeGraph, PathSetPattern, Rules
+└── Presentation/
+    ├── Camera/           — работа с камерой и слоями
+    ├── Core/             — GameCompositionRoot, DI-модули, контексты
+    ├── Debug/            — отладочные дамперы и логгеры
+    ├── Infrastructure/   — Unity-логгер, реестр префабов
+    ├── Interaction/      — ввод, выделение, маркеры, сцена
+    ├── Presenters/       — MVP-презентеры (Board, Layers, Markers, Piece)
+    ├── State/            — состояние представления
+    ├── UI/               — UGUI-панели
+    └── Views/            — визуализация фигур
+```
+
+## Как запустить
+
+- **Тесты**: `dotnet test`.
+- **Unity-проект**: открыть в Unity 6, сцена `[укажи имя сцены]`, запустить Play.
 
 ## Статус
 
@@ -64,4 +93,4 @@ C# 10+, .NET 6, nullable reference types, `System.Collections.Immutable`, `Array
 
 ## Лицензия / ассеты
 
-[если использовались сторонние ассеты — указать]
+[Укажи лицензию, если есть. Если использовались сторонние ассеты — перечисли и укажи их лицензии.]
