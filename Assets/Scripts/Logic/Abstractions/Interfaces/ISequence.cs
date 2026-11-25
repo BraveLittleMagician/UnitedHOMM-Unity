@@ -1,14 +1,12 @@
 ﻿#nullable enable
 
-using System;
-
 public interface ISequence : ICopyable<ISequence> 
 {
     int Count { get; }
     int CountOfAbles { get; }
 }
 
-public interface ISequence<TPosition, TPurpose, TSelf> : ISequence where TPosition : struct where TPurpose : struct, Enum
+public interface ISequence<TPosition, TSelf> : ISequence where TPosition : struct
 {
-    public ISequenceEnumerator<TPosition, TPurpose> GetEnumerator(TPosition start);
+    public ISequenceEnumerator<TPosition> GetEnumerator(TPosition start);
 }

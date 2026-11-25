@@ -1,13 +1,12 @@
 ﻿#nullable enable
 
-using System;
 using System.Collections.Generic;
 
-public interface ISequenceEnumerator<TPosition, TPurpose> where TPosition : struct where TPurpose : struct, Enum
+public interface ISequenceEnumerator<TPosition> where TPosition : struct
 {
     int MaxDepth { get; }
     TPosition StartPosition { get; }
-    Dictionary<TPosition, TPurpose> PositionsAll { get; }
+    Dictionary<TPosition, bool> PositionsAll { get; }
     List<TPosition> PositionsAble { get; }
 
     bool CanReach(TPosition target);

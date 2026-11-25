@@ -5,21 +5,20 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
-public readonly struct Pattern<TSquare, TPurpose> : ISequence<TSquare, TPurpose, Pattern<TSquare, TPurpose>> where TSquare : struct, ISquare<TSquare> where TPurpose : struct, Enum
+public readonly struct Pattern<TSquare> : ISequence<TSquare, Pattern<TSquare>> where TSquare : struct, ISquare<TSquare>
 {
-    private static readonly TPurpose _activePurpose = (TPurpose)Enum.ToObject(typeof(TPurpose), Convert.ChangeType(1, Enum.GetUnderlyingType(typeof(TPurpose))));
     private static readonly int[] _fullRange = { -1, 0, 1 };
     private static readonly int[] _zeroRange = { 0 };
     private readonly int _cachedHash;
-    private readonly ImmutableDictionary<TSquare, TPurpose> _squares;
+    private readonly ImmutableDictionary<TSquare, bool> _squares;
 
-    private Pattern(ImmutableDictionary<TSquare, TPurpose> squares, bool recalculate)
+    private Pattern(ImmutableDictionary<TSquare, bool> squares, bool recalculate)
     {
-        ImmutableDictionary<TSquare, TPurpose> finalSquares;
+        ImmutableDictionary<TSquare, bool> finalSquares;
         if (recalculate)
         {
             var connected = GetConnectedToOrigin(squares.Keys);
-            var sb = ImmutableDictionary.CreateBuilder<TSquare, TPurpose>();
+            var sb = ImmutableDictionary.CreateBuilder<TSquare, bool>();
             foreach (var s in connected)
                 sb.Add(s, s.IsZero ? default : squares[s]);
             finalSquares = sb.ToImmutable();
@@ -29,37 +28,37 @@ public readonly struct Pattern<TSquare, TPurpose> : ISequence<TSquare, TPurpose,
 
         _squares = finalSquares;
 
-        CountOfAbles = finalSquares.Values.Count(static v => EqualityComparer<TPurpose>.Default.Equals(v, _activePurpose));
+        CountOfAbles = finalSquares.Values.Count(v => v == true);
         MaxDepth = ComputeMaxDepth(finalSquares);
         _cachedHash = ComputeHash(finalSquares);
     }
     public Pattern(TSquare square)
     {
-        var builder = ImmutableDictionary.CreateBuilder<TSquare, TPurpose>();
+        var builder = ImmutableDictionary.CreateBuilder<TSquare, bool>();
         var center = new TSquare();
 
         builder.Add(center, default);
 
         TSquare cell = square.IsAdjacent(center) ? square : center.WithOffset(1, 0, 0, 0);
 
-        builder.Add(cell, _activePurpose);
+        builder.Add(cell, true);
 
         _squares = builder.ToImmutable();
         CountOfAbles = 1;
         MaxDepth = ComputeMaxDepth(_squares);
         _cachedHash = ComputeHash(_squares);
     }
-    public Pattern(ImmutableDictionary<TSquare, TPurpose> squares) : this(squares, recalculate: true) { }
+    public Pattern(ImmutableDictionary<TSquare, bool> squares) : this(squares, recalculate: true) { }
 
     public int MaxDepth { get; }
     public int Count => _squares.Count;
     public int CountOfAbles { get; }
-    public ImmutableDictionary<TSquare, TPurpose> Values => _squares;
+    public ImmutableDictionary<TSquare, bool> Values => _squares;
 
-    private ImmutableArray<KeyValuePair<TSquare, TPurpose>>? ComputeAdded(IEnumerable<TSquare> newSquares, TPurpose purpose)
+    private ImmutableArray<KeyValuePair<TSquare, bool>>? ComputeAdded(IEnumerable<TSquare> newSquares, bool purpose)
     {
         var squares = _squares;
-        var builder = ImmutableArray.CreateBuilder<KeyValuePair<TSquare, TPurpose>>();
+        var builder = ImmutableArray.CreateBuilder<KeyValuePair<TSquare, bool>>();
         var seen = new HashSet<TSquare>();
         foreach (var s in newSquares)
         {
@@ -67,7 +66,7 @@ public readonly struct Pattern<TSquare, TPurpose> : ISequence<TSquare, TPurpose,
             bool touches = false;
             foreach (var neighbor in GetNeighbors(s))
                 if (squares.ContainsKey(neighbor)) { touches = true; break; }
-            if (touches) builder.Add(new KeyValuePair<TSquare, TPurpose>(s, purpose));
+            if (touches) builder.Add(new KeyValuePair<TSquare, bool>(s, purpose));
         }
         return builder.Count == 0 ? null : builder.ToImmutable();
     }
@@ -77,7 +76,7 @@ public readonly struct Pattern<TSquare, TPurpose> : ISequence<TSquare, TPurpose,
         var forChange = ienum.Where(s => !s.IsZero && squares.ContainsKey(s)).ToHashSet();
         return forChange.Count == 0 ? null : forChange;
     }
-    private (HashSet<TSquare>? forRemove, ImmutableDictionary<TSquare, TPurpose>? newSquares) ComputeRemoval(IEnumerable<TSquare> ienum)
+    private (HashSet<TSquare>? forRemove, ImmutableDictionary<TSquare, bool>? newSquares) ComputeRemoval(IEnumerable<TSquare> ienum)
     {
         if (_squares.Count == 1) return (null, null);
         var squares = _squares;
@@ -85,7 +84,7 @@ public readonly struct Pattern<TSquare, TPurpose> : ISequence<TSquare, TPurpose,
         if (forRemove.Count == 0) return (null, null);
         return (forRemove, squares.RemoveRange(forRemove));
     }
-    private static int ComputeHash(ImmutableDictionary<TSquare, TPurpose> squares)
+    private static int ComputeHash(ImmutableDictionary<TSquare, bool> squares)
     {
         var hash = new HashCode();
         foreach (var kv in squares) { hash.Add(kv.Key); hash.Add(kv.Value); }
@@ -133,7 +132,7 @@ public readonly struct Pattern<TSquare, TPurpose> : ISequence<TSquare, TPurpose,
         }
         return result;
     }
-    private static int ComputeMaxDepth(ImmutableDictionary<TSquare, TPurpose> squares)
+    private static int ComputeMaxDepth(ImmutableDictionary<TSquare, bool> squares)
     {
         var origin = new TSquare();
         if (!squares.ContainsKey(origin)) return 0;
@@ -155,35 +154,34 @@ public readonly struct Pattern<TSquare, TPurpose> : ISequence<TSquare, TPurpose,
         return maxDepth;
     }
 
-    public Pattern<TSquare, TPurpose> WithRemoved(TSquare square) => WithRemoved(new[] { square });
-    public Pattern<TSquare, TPurpose> WithAdded(TSquare square, TPurpose purpose) => WithAdded(new[] { square }, purpose);
-    public Pattern<TSquare, TPurpose> WithSetStayable(TSquare square, TPurpose purpose) => WithSetStayable(new[] { square }, purpose);
-    public Pattern<TSquare, TPurpose> WithRemoved(IEnumerable<TSquare> ienum)
+    public Pattern<TSquare> WithRemoved(TSquare square) => WithRemoved(new[] { square });
+    public Pattern<TSquare> WithAdded(TSquare square, bool purpose) => WithAdded(new[] { square }, purpose);
+    public Pattern<TSquare> WithSetStayable(TSquare square, bool purpose) => WithSetStayable(new[] { square }, purpose);
+    public Pattern<TSquare> WithRemoved(IEnumerable<TSquare> ienum)
     {
         var (forRemove, newSquares) = ComputeRemoval(ienum);
         if (forRemove == null) return this;
-        return new Pattern<TSquare, TPurpose>(newSquares!, recalculate: true);
+        return new Pattern<TSquare>(newSquares!, recalculate: true);
     }
-    public Pattern<TSquare, TPurpose> WithAdded(IEnumerable<TSquare> ienum, TPurpose purpose)
+    public Pattern<TSquare> WithAdded(IEnumerable<TSquare> ienum, bool purpose)
     {
         var added = ComputeAdded(ienum, purpose);
         if (added == null) return this;
-        return new Pattern<TSquare, TPurpose>(_squares.SetItems(added.Value), recalculate: false);
+        return new Pattern<TSquare>(_squares.SetItems(added.Value), recalculate: false);
     }
-    public Pattern<TSquare, TPurpose> WithSetStayable(IEnumerable<TSquare> ienum, TPurpose purpose)
+    public Pattern<TSquare> WithSetStayable(IEnumerable<TSquare> ienum, bool purpose)
     {
         var forChange = ComputeForChange(ienum);
         if (forChange == null) return this;
-        var newDict = _squares.SetItems(forChange.Select(s => new KeyValuePair<TSquare, TPurpose>(s, purpose)));
-        return new Pattern<TSquare, TPurpose>(newDict, recalculate: false);
+        var newDict = _squares.SetItems(forChange.Select(s => new KeyValuePair<TSquare, bool>(s, purpose)));
+        return new Pattern<TSquare>(newDict, recalculate: false);
     }
-
-    public override string ToString() => $"Паттерн с {Count} клетками, из них {CountOfAbles} активных";
-    public Pattern<TSquare, TPurpose> Copy() => this;
+    public Pattern<TSquare> Copy() => this;
     ISequence ICopyable<ISequence>.Copy() => this;
-    public ISequenceEnumerator<TSquare, TPurpose> GetEnumerator(TSquare start) => new Enumerable(_squares, start, MaxDepth);
+    public ISequenceEnumerator<TSquare> GetEnumerator(TSquare start) => new Enumerable(_squares, start, MaxDepth);
+    public override string ToString() => $"Паттерн с {Count} клетками, из них {CountOfAbles} активных";
 
-    public bool Equals(Pattern<TSquare, TPurpose> other)
+    public bool Equals(Pattern<TSquare> other)
     {
         if (_squares == null) return other._squares == null;
         if (other._squares == null) return false;
@@ -192,24 +190,24 @@ public readonly struct Pattern<TSquare, TPurpose> : ISequence<TSquare, TPurpose,
         foreach (var kv in _squares)
         {
             if (!other._squares.TryGetValue(kv.Key, out var v)) return false;
-            if (!EqualityComparer<TPurpose>.Default.Equals(kv.Value, v)) return false;
+            if (!EqualityComparer<bool>.Default.Equals(kv.Value, v)) return false;
         }
         return true;
     }
 
-    public override bool Equals(object? obj) => obj is Pattern<TSquare, TPurpose> other && Equals(other);
+    public override bool Equals(object? obj) => obj is Pattern<TSquare> other && Equals(other);
     public override int GetHashCode() => _cachedHash;
-    public static bool operator ==(Pattern<TSquare, TPurpose> left, Pattern<TSquare, TPurpose> right) => left.Equals(right);
-    public static bool operator !=(Pattern<TSquare, TPurpose> left, Pattern<TSquare, TPurpose> right) => !(left == right);
+    public static bool operator ==(Pattern<TSquare> left, Pattern<TSquare> right) => left.Equals(right);
+    public static bool operator !=(Pattern<TSquare> left, Pattern<TSquare> right) => !(left == right);
 
-    private class Enumerable : SequenceEnumerable<TSquare, TPurpose>
+    private class Enumerable : SequenceEnumerable<TSquare>
     {
-        private readonly ImmutableDictionary<TSquare, TPurpose> _baseSquares;
+        private readonly ImmutableDictionary<TSquare, bool> _baseSquares;
 
-        private Dictionary<TSquare, TPurpose>? _allPositionsCache;
+        private Dictionary<TSquare, bool>? _allPositionsCache;
         private List<TSquare>? _onlyAblesCache;
 
-        public Enumerable(ImmutableDictionary<TSquare, TPurpose> baseSquares, TSquare startSquare, int maxDepth) : base(startSquare, maxDepth)
+        public Enumerable(ImmutableDictionary<TSquare, bool> baseSquares, TSquare startSquare, int maxDepth) : base(startSquare, maxDepth)
         {
             _baseSquares = baseSquares;
         }
@@ -222,14 +220,14 @@ public readonly struct Pattern<TSquare, TPurpose> : ISequence<TSquare, TPurpose,
             var all = CreateAllPositions;
             foreach (var pos in positions)
                 if (!all.ContainsKey(pos)) return false;
-            return all.TryGetValue(positions[^1], out var purpose) && EqualityComparer<TPurpose>.Default.Equals(purpose, _activePurpose);
+            return all.TryGetValue(positions[^1], out var purpose) && purpose == true;
         }
-        protected override Dictionary<TSquare, TPurpose> CreateAllPositions
+        protected override Dictionary<TSquare, bool> CreateAllPositions
         {
             get
             {
                 if (_allPositionsCache != null) return _allPositionsCache;
-                var dict = new Dictionary<TSquare, TPurpose> { [StartPosition] = new ()};
+                var dict = new Dictionary<TSquare, bool> { [StartPosition] = new ()};
                 foreach (var (relPos, purpose) in _baseSquares)
                 {
                     var absPos = StartPosition.Add(relPos);
@@ -247,13 +245,13 @@ public readonly struct Pattern<TSquare, TPurpose> : ISequence<TSquare, TPurpose,
             {
                 if (_onlyAblesCache != null) return _onlyAblesCache;
                 _onlyAblesCache = CreateAllPositions
-                    .Where(static kv => EqualityComparer<TPurpose>.Default.Equals(kv.Value, _activePurpose))
-                    .Select(static kv => kv.Key).ToList();
+                    .Where(kv => kv.Value == true)
+                    .Select(kv => kv.Key).ToList();
                 return _onlyAblesCache;
             }
         }
 
-        public override bool CanReach(TSquare target) => CreateAllPositions.TryGetValue(target, out var purpose) && EqualityComparer<TPurpose>.Default.Equals(purpose, _activePurpose);
+        public override bool CanReach(TSquare target) => CreateAllPositions.TryGetValue(target, out var purpose) && purpose == true;
 
         public override IEnumerable<TSquare> GetNeighbors(TSquare square) => square.UnitNeighbors();
         public override IPath<TSquare> CombinePositionsIntoPath(TSquare[] positions) => new PathSequence<TSquare>(positions);
